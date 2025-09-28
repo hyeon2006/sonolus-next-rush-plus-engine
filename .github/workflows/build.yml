@@ -1,0 +1,36 @@
+name: Build Engine
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "latest"
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Build engine
+        run: uv run sonolus-py build
+
+      - name: Create engine artifact archive
+        run: |
+          cd build/dist
+          zip -r engine.zip engine/
+
+      - name: Upload engine artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: engine
+          path: build/dist/engine.zip
