@@ -372,9 +372,11 @@ class BaseNote(PlayArchetype):
         has_touch = False
         has_correct_direction_touch = False
         for touch in touches():
-            if not self.check_touch_is_eligible_for_trace_flick(hitbox, touch):
+            if not self.check_touch_is_eligible_for_trace(hitbox, touch):
                 continue
             input_manager.disallow_empty(touch)
+            if not self.check_touch_is_eligible_for_trace_flick(hitbox, touch):
+                continue
             has_touch = True
             if self.check_direction_matches(touch.angle):
                 has_correct_direction_touch = True
