@@ -1,5 +1,5 @@
 from enum import IntEnum
-from math import ceil, floor, log, pi
+from math import atan, ceil, floor, log, pi
 from typing import assert_never
 
 from sonolus.script.globals import level_data
@@ -407,6 +407,19 @@ def layout_linear_effect(lane: float, shear: float) -> Quad:
         tl=bl + up,
         tr=br + up,
     )
+
+
+def layout_rotated_linear_effect(lane: float, shear: float) -> Quad:
+    w = Options.note_effect_size
+    bl = transform_vec(Vec2(lane - w, 1))
+    br = transform_vec(Vec2(lane + w, 1))
+    up = (br - bl).orthogonal()
+    return Quad(
+        bl=bl,
+        br=br,
+        tl=bl + up,
+        tr=br + up,
+    ).rotate_about(atan(-(shear + 0.125 * lane) / 2), pivot=(bl + br) / 2)
 
 
 def layout_circular_effect(lane: float, w: float, h: float) -> Quad:

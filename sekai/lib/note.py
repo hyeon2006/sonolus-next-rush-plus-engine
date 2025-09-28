@@ -51,6 +51,7 @@ from sekai.lib.layout import (
     layout_linear_effect,
     layout_regular_note_body,
     layout_regular_note_body_fallback,
+    layout_rotated_linear_effect,
     layout_slim_note_body,
     layout_slim_note_body_fallback,
     layout_tick,
@@ -802,7 +803,7 @@ def play_note_hit_effects(kind: NoteKind, lane: float, size: float, direction: F
                     shear = 1
                 case _:
                     assert_never(direction)
-            layout = layout_linear_effect(lane, shear=shear)
+            layout = layout_rotated_linear_effect(lane, shear=shear)
             particles.directional.spawn(layout, duration=0.32)
         if particles.tick.is_available:
             layout = layout_tick_effect(lane)
