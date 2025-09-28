@@ -24,13 +24,8 @@ jobs:
       - name: Build engine
         run: uv run sonolus-py build
 
-      - name: Create engine artifact archive
-        run: |
-          cd build/dist
-          zip -r engine.zip engine/
-
       - name: Upload engine artifact
         uses: actions/upload-artifact@v4
         with:
-          name: engine
-          path: build/dist/engine.zip
+          name: engine.zip
+          path: build/dist/
