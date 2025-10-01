@@ -382,11 +382,13 @@ def draw_connector(
         next_alpha = lerp(head_alpha, tail_alpha, next_frac)
         next_target_time = lerp(head_target_time, tail_target_time, next_frac)
 
-        base_a = (
+        base_a = clamp(
             get_alpha((last_target_time + next_target_time) / 2)
             * (last_alpha + next_alpha)
             / 2
-            * get_connector_alpha_option(kind)
+            * get_connector_alpha_option(kind),
+            0,
+            1,
         )
 
         layout = layout_slide_connector_segment(
