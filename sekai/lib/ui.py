@@ -11,6 +11,7 @@ from sonolus.script.ui import (
 )
 from sonolus.script.vec import Vec2
 
+from sekai.lib.layout import Layout
 from sekai.lib.options import Options
 
 ui_config = UiConfig(
@@ -110,25 +111,25 @@ def init_ui():
         background=False,
     )
     ui.combo_value.update(
-        anchor=Vec2(screen().w * 0.355, screen().h * 0.0875),
+        anchor=Vec2(Layout.field_w * 0.355, Layout.field_h * 0.0875),
         pivot=Vec2(0.5, 0.5),
-        dimensions=Vec2(0, screen().h * 0.14) * ui.combo_config.scale,
+        dimensions=Vec2(0, Layout.field_h * 0.14) * ui.combo_config.scale,
         alpha=ui.combo_config.alpha * show_ui,
         horizontal_align=HorizontalAlign.CENTER,
         background=False,
     )
     ui.combo_text.update(
-        anchor=Vec2(screen().w * 0.355, screen().h * 0.0875),
+        anchor=Vec2(Layout.field_w * 0.355, Layout.field_h * 0.0875),
         pivot=Vec2(0.5, -2.25),
-        dimensions=Vec2(0, screen().h * 0.14 * 0.25) * ui.combo_config.scale,
+        dimensions=Vec2(0, Layout.field_h * 0.14 * 0.25) * ui.combo_config.scale,
         alpha=ui.combo_config.alpha * show_ui,
         horizontal_align=HorizontalAlign.CENTER,
         background=False,
     )
     ui.judgment.update(
-        anchor=Vec2(0, screen().h * -0.115),
+        anchor=Vec2(0, Layout.field_h * -0.115),
         pivot=Vec2(0.5, 0.5),
-        dimensions=Vec2(0, screen().h * 0.0475) * ui.judgment_config.scale,
+        dimensions=Vec2(0, Layout.field_h * 0.0475) * ui.judgment_config.scale,
         alpha=ui.judgment_config.alpha * show_ui,
         horizontal_align=HorizontalAlign.CENTER,
         background=False,
