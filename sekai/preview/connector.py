@@ -2,7 +2,7 @@ from math import ceil
 from typing import assert_never
 
 from sonolus.script.archetype import EntityRef, PreviewArchetype, callback, entity_data, imported
-from sonolus.script.interval import lerp, remap_clamped
+from sonolus.script.interval import clamp, lerp, remap_clamped
 from sonolus.script.sprite import Sprite
 
 from sekai.lib import archetype_names
@@ -179,11 +179,13 @@ def draw_connector(
         next_target_time = lerp(head_target_time, tail_target_time, next_frac)
         next_col = time_to_preview_col(next_target_time)
 
-        a = (
+        a = clamp(
             get_alpha((last_target_time + next_target_time) / 2)
             * (last_alpha + next_alpha)
             / 2
-            * get_connector_alpha_option(kind)
+            * get_connector_alpha_option(kind),
+            0,
+            1,
         )
 
         for col in range(last_col, next_col + 1):
