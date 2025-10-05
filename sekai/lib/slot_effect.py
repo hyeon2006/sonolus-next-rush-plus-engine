@@ -1,4 +1,4 @@
-from sonolus.script.interval import interp_clamped, lerp, unlerp_clamped
+from sonolus.script.interval import lerp, unlerp_clamped
 from sonolus.script.runtime import time
 from sonolus.script.sprite import Sprite
 
@@ -17,11 +17,7 @@ def draw_slot_glow_effect(
     size: float,
 ):
     progress = unlerp_clamped(start_time, end_time, time())
-    height = interp_clamped(
-        (0, 0.1, 0.8, 1),
-        (0, 1, 1, 0),
-        progress,
-    )
+    height = unlerp_clamped(1, 0.8, progress)
     layout = layout_slot_glow_effect(lane, size, height)
     z = get_z(LAYER_SLOT_GLOW_EFFECT, -start_time, lane)
     a = lerp(1, 0, progress)
