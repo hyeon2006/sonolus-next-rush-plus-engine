@@ -178,10 +178,12 @@ class Connector(PlayArchetype):
                 head_size=head.size,
                 head_progress=head.progress,
                 head_target_time=head.target_time,
+                head_ease_frac=head.head_ease_frac,
                 tail_lane=tail.lane,
                 tail_size=tail.size,
                 tail_progress=tail.progress,
                 tail_target_time=tail.target_time,
+                tail_ease_frac=tail.tail_ease_frac,
                 segment_head_target_time=segment_head.target_time,
                 segment_head_lane=segment_head.lane,
                 segment_head_alpha=segment_head.segment_alpha,
@@ -190,8 +192,8 @@ class Connector(PlayArchetype):
             )
 
     def get_attached_params(self, target_time: float) -> tuple[float, float]:
-        head = self.head_ref.get()
-        tail = self.tail_ref.get()
+        head = self.head_ref.get().effective_attach_head
+        tail = self.tail_ref.get().effective_attach_tail
         return get_attach_params(
             ease_type=self.ease_type,
             head_lane=head.lane,

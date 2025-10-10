@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import assert_never, cast
 
 from sonolus.script.archetype import EntityRef, PreviewArchetype, StandardImport, entity_data, imported
+from sonolus.script.interval import unlerp_clamped
 from sonolus.script.timing import beat_to_time
 
 from sekai.lib.connector import ConnectorKind
@@ -93,6 +94,7 @@ class PreviewBaseNote(PreviewArchetype):
             attach_tail = self.attach_tail_ref.get()
             attach_head.init_data()
             attach_tail.init_data()
+            self.connector_ease = attach_head.connector_ease
             lane, size = get_attach_params(
                 ease_type=attach_head.connector_ease,
                 head_lane=attach_head.lane,
@@ -120,6 +122,24 @@ class PreviewBaseNote(PreviewArchetype):
         if not self.is_scored:
             return
         draw_note(self.kind, self.lane, self.size, self.direction, self.target_time)
+
+    @property
+    def head_ease_frac(self) -> float:
+        if self.is_attached:
+            return unlerp_clamped(
+                self.attach_head_ref.get().target_time, self.attach_tail_ref.get().target_time, self.target_time
+            )
+        else:
+            return 0.0
+
+    @property
+    def tail_ease_frac(self) -> float:
+        if self.is_attached:
+            return unlerp_clamped(
+                self.attach_head_ref.get().target_time, self.attach_tail_ref.get().target_time, self.target_time
+            )
+        else:
+            return 1.0
 
 
 def draw_note(kind: NoteKind, lane: float, size: float, direction: FlickDirection, target_time: float):

@@ -95,6 +95,7 @@ class WatchBaseNote(WatchArchetype):
             attach_tail = self.attach_tail_ref.get()
             attach_head.init_data()
             attach_tail.init_data()
+            self.connector_ease = attach_head.connector_ease
             lane, size = get_attach_params(
                 ease_type=attach_head.connector_ease,
                 head_lane=attach_head.lane,
@@ -175,6 +176,42 @@ class WatchBaseNote(WatchArchetype):
             return remap_clamped(head_frac, tail_frac, head_progress, tail_progress, frac)
         else:
             return progress_to(self.target_scaled_time, group_scaled_time(self.timescale_group))
+
+    @property
+    def head_ease_frac(self) -> float:
+        if self.is_attached:
+            return unlerp_clamped(
+                self.attach_head_ref.get().target_time, self.attach_tail_ref.get().target_time, self.target_time
+            )
+        else:
+            return 0.0
+
+    @property
+    def tail_ease_frac(self) -> float:
+        if self.is_attached:
+            return unlerp_clamped(
+                self.attach_head_ref.get().target_time, self.attach_tail_ref.get().target_time, self.target_time
+            )
+        else:
+            return 1.0
+
+    @property
+    def effective_attach_head(self) -> WatchBaseNote:
+        ref = +EntityRef[WatchBaseNote]
+        if self.is_attached:
+            ref @= self.attach_head_ref
+        else:
+            ref @= self.ref()
+        return ref.get()
+
+    @property
+    def effective_attach_tail(self) -> WatchBaseNote:
+        ref = +EntityRef[WatchBaseNote]
+        if self.is_attached:
+            ref @= self.attach_tail_ref
+        else:
+            ref @= self.ref()
+        return ref.get()
 
 
 WATCH_NOTE_ARCHETYPES = derive_note_archetypes(WatchBaseNote)

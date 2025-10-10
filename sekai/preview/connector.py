@@ -2,7 +2,7 @@ from math import ceil
 from typing import assert_never
 
 from sonolus.script.archetype import EntityRef, PreviewArchetype, callback, entity_data, imported
-from sonolus.script.interval import clamp, lerp, remap_clamped
+from sonolus.script.interval import clamp, lerp, remap_clamped, unlerp_clamped
 from sonolus.script.sprite import Sprite
 
 from sekai.lib import archetype_names
@@ -43,15 +43,19 @@ class PreviewConnector(PreviewArchetype):
         self.ease_type = head.connector_ease
 
     def render(self):
+        head = self.head
+        tail = self.tail
         draw_connector(
             kind=self.kind,
             ease_type=self.ease_type,
-            head_lane=self.head.lane,
-            head_size=self.head.size,
-            head_target_time=self.head.target_time,
-            tail_lane=self.tail.lane,
-            tail_size=self.tail.size,
-            tail_target_time=self.tail.target_time,
+            head_lane=head.lane,
+            head_size=head.size,
+            head_target_time=head.target_time,
+            head_ease_frac=head.head_ease_frac,
+            tail_lane=tail.lane,
+            tail_size=tail.size,
+            tail_target_time=tail.target_time,
+            tail_ease_frac=tail.tail_ease_frac,
             segment_head_target_time=self.segment_head.target_time,
             segment_head_lane=self.segment_head.lane,
             segment_head_alpha=self.segment_head.segment_alpha,
@@ -82,9 +86,11 @@ def draw_connector(
     head_lane: float,
     head_size: float,
     head_target_time: float,
+    head_ease_frac: float,
     tail_lane: float,
     tail_size: float,
     tail_target_time: float,
+    tail_ease_frac: float,
     segment_head_target_time: float,
     segment_head_lane: float,
     segment_head_alpha: float,
@@ -165,6 +171,8 @@ def draw_connector(
 
     z = get_connector_z(kind, segment_head_target_time, segment_head_lane)
 
+    eased_head_ease_frac = ease(ease_type, head_ease_frac)
+    eased_tail_ease_frac = ease(ease_type, tail_ease_frac)
     last_lane = head_lane
     last_size = head_size
     last_alpha = head_alpha
@@ -173,8 +181,10 @@ def draw_connector(
 
     for i in range(1, segment_count + 1):
         next_frac = i / segment_count
-        next_lane = lerp(head_lane, tail_lane, ease(ease_type, next_frac))
-        next_size = max(1e-3, lerp(head_size, tail_size, ease(ease_type, next_frac)))
+        next_ease_frac = lerp(head_ease_frac, tail_ease_frac, next_frac)
+        next_interp_frac = unlerp_clamped(eased_head_ease_frac, eased_tail_ease_frac, ease(ease_type, next_ease_frac))
+        next_lane = lerp(head_lane, tail_lane, next_interp_frac)
+        next_size = max(1e-3, lerp(head_size, tail_size, next_interp_frac))
         next_alpha = lerp(head_alpha, tail_alpha, next_frac)
         next_target_time = lerp(head_target_time, tail_target_time, next_frac)
         next_col = time_to_preview_col(next_target_time)
