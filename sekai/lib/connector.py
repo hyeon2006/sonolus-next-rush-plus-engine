@@ -252,6 +252,10 @@ def draw_connector(
     ):
         return
 
+    if ease_type == EaseType.NONE:
+        tail_lane = head_lane
+        tail_size = head_size
+
     normal_sprite = Sprite(-1)
     active_sprite = Sprite(-1)
     match kind:
