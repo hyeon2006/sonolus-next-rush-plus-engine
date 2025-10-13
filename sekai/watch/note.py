@@ -133,7 +133,7 @@ class WatchBaseNote(WatchArchetype):
         return self.start_time
 
     def despawn_time(self) -> float:
-        if is_replay():
+        if is_replay() and self.is_scored:
             return self.end_time
         else:
             return self.target_time
