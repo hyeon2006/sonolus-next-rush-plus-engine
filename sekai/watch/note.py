@@ -150,7 +150,7 @@ class WatchBaseNote(WatchArchetype):
     def terminate(self):
         if is_skip():
             return
-        if time() < self.target_time:
+        if time() < self.despawn_time():
             return
         if (not is_replay() or self.played_hit_effects) and self.is_scored:
             play_note_hit_effects(self.kind, self.lane, self.size, self.direction, self.judgment)
