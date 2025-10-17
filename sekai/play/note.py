@@ -47,6 +47,7 @@ from sekai.lib.note import (
 from sekai.lib.options import Options
 from sekai.lib.timescale import group_hide_notes, group_scaled_time, group_time_to_scaled_time
 from sekai.play import input_manager
+from sekai.play.custom_elements import spawn_custom
 
 DEFAULT_BEST_TOUCH_TIME = -1e8
 
@@ -88,6 +89,9 @@ class BaseNote(PlayArchetype):
     best_touch_matches_direction: bool = entity_memory()
 
     should_play_hit_effects: bool = entity_memory()
+
+    # Check wrong way
+    wrong_way: bool = entity_memory()
 
     end_time: float = exported()
     played_hit_effects: bool = exported()
@@ -259,6 +263,8 @@ class BaseNote(PlayArchetype):
             play_note_hit_effects(self.kind, self.lane, self.size, self.direction, self.result.judgment)
         self.end_time = offset_adjusted_time()
         self.played_hit_effects = self.should_play_hit_effects
+        if self.is_scored:
+            spawn_custom(self.result.judgment)
 
     def handle_tap_input(self):
         if time() > self.input_interval.end:
@@ -538,6 +544,7 @@ class BaseNote(PlayArchetype):
             self.result.bucket_value = error * WINDOW_SCALE
         self.despawn = True
         self.should_play_hit_effects = judgment != Judgment.MISS
+        self.wrong_way = True
 
     def complete(self):
         self.result.judgment = Judgment.PERFECT
@@ -554,6 +561,7 @@ class BaseNote(PlayArchetype):
             self.result.bucket_value = 0
         self.despawn = True
         self.should_play_hit_effects = True
+        self.wrong_way = True
 
     def complete_damage(self):
         self.result.judgment = Judgment.PERFECT

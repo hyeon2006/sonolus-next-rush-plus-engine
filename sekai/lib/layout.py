@@ -43,6 +43,27 @@ class FlickDirection(IntEnum):
     DOWN_RIGHT = 5
 
 
+class AccuracyType(IntEnum):
+    Fast = 1
+    Late = 2
+    Flick = 3
+
+
+class JudgmentType(IntEnum):
+    Perfect = 1
+    Great = 2
+    Good = 3
+    Bad = 4
+    Auto = -1
+    Miss = 0
+
+
+class ComboType(IntEnum):
+    NORMAL = 0
+    AP = 1
+    GLOW = 2
+
+
 @level_data
 class Layout:
     t: float
@@ -494,6 +515,19 @@ def layout_sim_line(
         tl=ml - ort * NOTE_H * Layout.h_scale * left_travel,
         tr=mr - ort * NOTE_H * Layout.h_scale * right_travel,
     )
+
+
+def layout_combo_label(
+    center: Vec2,
+    w: float,
+    h: float,
+) -> Quad:
+    return transform_quad(Quad(
+        bl = Vec2(center.x - w, center.y + h),
+        br = Vec2(center.x + w, center.y + h),
+        tl = Vec2(center.x - w, center.y - h),
+        tr = Vec2(center.x + w, center.y - h),
+    ))
 
 
 def layout_hitbox(

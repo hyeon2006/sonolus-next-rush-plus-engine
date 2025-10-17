@@ -13,6 +13,7 @@ from sekai.play.sim_line import SimLine
 from sekai.play.slot_effect import SLOT_EFFECT_ARCHETYPES
 from sekai.play.stage import Stage
 from sekai.play.timescale import TimescaleChange, TimescaleGroup
+from sekai.play.custom_elements import CUSTOM_ARCHETYPES
 
 play_mode = PlayMode(
     archetypes=[
@@ -26,6 +27,7 @@ play_mode = PlayMode(
         *CONNECTOR_ARCHETYPES,
         *SLOT_EFFECT_ARCHETYPES,
         SimLine,
+        *CUSTOM_ARCHETYPES,
     ],
     skin=Skin,
     effects=Effects,

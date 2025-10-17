@@ -20,6 +20,7 @@ LAYER_NOTE_TICK = 23
 LAYER_NOTE_ARROW = 24
 LAYER_SLOT_GLOW_EFFECT = 25
 
+LAYER_JUDGMENT = 1000
 
 def get_z(layer: int, time: float = 0.0, lane: float = 0.0, etc: int | float = 0.0) -> float:
     return (1 / 128) * etc + (1 / 128) * abs(lane) - time + 512 * layer

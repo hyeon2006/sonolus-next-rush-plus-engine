@@ -1,4 +1,4 @@
-from sonolus.script.options import options, slider_option, toggle_option
+from sonolus.script.options import options, slider_option, toggle_option, select_option
 from sonolus.script.text import StandardText
 
 
@@ -77,7 +77,7 @@ class Options:
     guide_alpha: float = slider_option(
         name="Guide Alpha",
         scope="Sekai",
-        default=0.5,
+        default=0.6,
         min=0,
         max=1,
         step=0.05,
@@ -174,4 +174,72 @@ class Options:
         standard=True,
         advanced=True,
         default=False,
+    )
+    version: int = select_option(
+        name=StandardText.VERSION,
+        description="The particle generation method, etc. will work with the selected version",
+        scope="Rush",
+        default=0,
+        values=["v3", "v1"],
+    )
+    custom_combo: bool = toggle_option(
+        name="Using Custom Combo",
+        scope="Rush",
+        default=True,
+    )
+    combo_distance: float = slider_option(
+        name="Custom Combo Number Distance",
+        scope="Rush",
+        advanced=True,
+        default=0.24,
+        min=-0.5,
+        max=0.5,
+        step=0.01,
+    )
+    ap_effect: bool = toggle_option(
+        name="AP Effect",
+        scope="Rush",
+        default=True,
+    )
+    custom_judgment: bool = toggle_option(
+        name="Using Custom Judgment",
+        scope="Rush",
+        default=True,
+    )
+    custom_accuracy: bool = toggle_option(
+        name="Late/Fast/Flick",
+        scope="Rush",
+        default=True,
+    )
+    auto_judgment: bool = toggle_option(
+        name="Using Auto Judgment",
+        description="When using Custom Judgment, judgment is always output as auto in Watch mode",
+        scope="Rush",
+        default=True,
+    )
+    custom_damage: bool = toggle_option(
+        name="Using Custom Damage Effect",
+        scope="Rush",
+        default=True,
+    )
+    custom_tag: bool = toggle_option(
+        name="Using Custom Tag",
+        description="Play special tags like Auto Live while Watch mode",
+        scope="Rush",
+        default=True,
+    )
+    hide_custom: bool = toggle_option(
+        name="Hide Custom Elements",
+        description="Hide custom elements such as custom combo",
+        scope="Rush",
+        default=False,
+    )
+    lane_alpha: float = slider_option(
+        name=StandardText.LANE_ALPHA,
+        scope="Sekai",
+        default=1,
+        min=0,
+        max=1,
+        step=0.1,
+        unit=StandardText.PERCENTAGE_UNIT,
     )

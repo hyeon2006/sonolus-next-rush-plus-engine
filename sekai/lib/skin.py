@@ -4,8 +4,11 @@ from sonolus.script.interval import clamp
 from sonolus.script.record import Record
 from sonolus.script.sprite import Sprite, SpriteGroup, StandardSprite, skin, sprite, sprite_group
 
-from sekai.lib.layout import FlickDirection
+from sekai.lib.layout import FlickDirection, JudgmentType, AccuracyType, ComboType
 
+from sonolus.script.bucket import Judgment
+from sonolus.script.interval import Interval
+from sekai.lib.options import Options
 
 @skin
 class Skin:
@@ -134,6 +137,24 @@ class Skin:
     timescale_change_line: StandardSprite.GRID_YELLOW
     special_line: StandardSprite.GRID_RED
 
+    # Custom Elements
+    perfect: Sprite = sprite("Perfect")
+    great: Sprite = sprite("Great")
+    good: Sprite = sprite("Good")
+    bad: Sprite = sprite("Bad")
+    miss: Sprite = sprite("Miss")
+    auto: Sprite = sprite("Auto")
+    ap_number: SpriteGroup = sprite_group(f"AP Combo Number {i}" for i in range(0, 10))
+    combo_number: SpriteGroup = sprite_group(f"Combo Number {i}" for i in range(0, 10))
+    combo_number_glow: SpriteGroup = sprite_group(f"Combo Number Glow {i}" for i in range(0, 10))
+    combo_label: Sprite = sprite("Combo Label")
+    ap_combo_label: Sprite = sprite("AP Combo Label")
+    combo_label_glow: Sprite = sprite("Combo Label Glow")
+    fast_warning: Sprite = sprite("Fast Warning")
+    late_warning: Sprite = sprite("Late Warning")
+    flick_warning: Sprite = sprite("Flick Warning")
+    damage: Sprite = sprite("Damage Flash")
+    auto_live: Sprite = sprite("Auto Live")
 
 class BodySprites(Record):
     left: Sprite
@@ -203,6 +224,127 @@ class GuideSprites(Record):
     @property
     def custom_available(self):
         return self.normal.is_available
+
+
+class ComboNumberSprite(Record):
+    normal: SpriteGroup
+    ap: SpriteGroup
+    glow: SpriteGroup
+    
+    def get_sprite(self, combo: int, type: ComboType):
+        result = +Sprite
+        match type:
+            case ComboType.NORMAL:
+                result @= self.normal[combo]
+            case ComboType.AP:
+                result @= self.ap[combo]
+            case ComboType.GLOW:
+                result @= self.glow[combo]
+            case _:
+                assert_never(type)
+        return result
+    
+    @property
+    def custom_available(self):
+        return self.normal[0].is_available
+
+
+class ComboLabelSprite(Record):
+    normal: Sprite
+    ap: Sprite
+    glow: Sprite
+    
+    def get_sprite(self, type: ComboType):
+        result = +Sprite
+        match type:
+            case ComboType.NORMAL:
+                result @= self.normal
+            case ComboType.AP:
+                result @= self.ap
+            case ComboType.GLOW:
+                result @= self.glow
+            case _:
+                assert_never(type)
+        return result
+    
+    @property
+    def custom_available(self):
+        return self.normal.is_available
+
+
+class JudgmentSprite(Record):
+    perfect: Sprite
+    great: Sprite
+    good: Sprite
+    bad: Sprite
+    miss: Sprite
+    auto: Sprite
+    
+    def get_bad(self, judgment: Judgment, accuracy: float):
+        if Options.auto_judgment:
+            return JudgmentType.Auto
+        elif judgment == Judgment.GOOD and (accuracy >= 0.1083 or accuracy <= -0.1083):
+            return JudgmentType.Bad
+        else:
+            return judgment
+    
+    def get_sprite(self, type: JudgmentType):
+        result = +Sprite
+        match type:
+            case JudgmentType.Perfect:
+                result @= self.perfect
+            case JudgmentType.Great:
+                result @= self.great
+            case JudgmentType.Good:
+                result @= self.good
+            case JudgmentType.Bad:
+                result @= self.bad
+            case JudgmentType.Miss:
+                result @= self.miss
+            case JudgmentType.Auto:
+                result @= self.auto
+            case _:
+                assert_never(type)
+        return result
+    
+    @property
+    def custom_available(self):
+        return self.perfect.is_available
+
+
+class AccuracySprite(Record):
+    fast: Sprite
+    late: Sprite
+    flick: Sprite
+    
+    def get_accuracy(self, judgment: Judgment, windows: Interval, accuracy: float, wrong_way: bool):
+        if judgment != Judgment.PERFECT and judgment != Judgment.MISS:
+            if wrong_way:
+                return AccuracyType.Flick
+            elif windows.start > accuracy:
+                return AccuracyType.Fast
+            elif windows.end < accuracy:
+                return AccuracyType.Late
+        else:
+            return 0
+    
+    def get_sprite(self, type: AccuracyType):
+        result = +Sprite
+        resultType = self.get_accuracy(type)
+        match resultType:
+            case AccuracyType.Fast:
+                result @= self.fast
+            case AccuracyType.Late:
+                result @= self.late
+            case AccuracyType.Flick:
+                result @= self.flick
+            case _:
+                assert_never(type)
+        return result
+    
+    @property
+    def custom_available(self):
+        return self.fast.is_available
 
 
 normal_note_body_sprites = BodySprites(
@@ -336,4 +478,27 @@ cyan_guide_sprites = GuideSprites(
 black_guide_sprites = GuideSprites(
     normal=Skin.guide_black,
     fallback=Skin.guide_black_fallback,
+)
+combo_number = ComboNumberSprite(
+    normal=Skin.combo_number,
+    ap=Skin.ap_number,
+    glow=Skin.combo_number_glow,
+)
+combo_label = ComboLabelSprite(
+    normal=Skin.combo_label,
+    ap=Skin.ap_combo_label,
+    glow=Skin.combo_label_glow
+)
+judgment_text = JudgmentSprite(
+    perfect=Skin.perfect,
+    great=Skin.great,
+    good=Skin.good,
+    bad=Skin.bad,
+    miss=Skin.miss,
+    auto=Skin.auto
+)
+accuracy_text = AccuracySprite(
+    fast=Skin.fast_warning,
+    late=Skin.late_warning,
+    flick=Skin.flick_warning,
 )
