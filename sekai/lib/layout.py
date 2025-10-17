@@ -47,6 +47,7 @@ class FlickDirection(IntEnum):
 
 
 class AccuracyType(IntEnum):
+    NONE = 0
     Fast = 1
     Late = 2
     Flick = 3

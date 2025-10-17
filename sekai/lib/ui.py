@@ -13,7 +13,7 @@ from sonolus.script.vec import Vec2
 
 from sekai.lib.layout import Layout
 from sekai.lib.options import Options
-from sekai.lib.skin import combo_label, combo_number
+from sekai.lib.skin import combo_label, combo_number, judgment_text
 
 ui_config = UiConfig(
     scope="Sekai",
@@ -69,6 +69,7 @@ def init_ui():
     show_ui = not Options.hide_ui
     custom_combo_label = not Options.custom_combo or not combo_label.custom_available
     custom_combo_number = not Options.custom_combo or not combo_number.custom_available
+    custom_judgment = not Options.custom_judgment or not judgment_text.custom_available
 
     ui.menu.update(
         anchor=box.tr,
@@ -131,9 +132,9 @@ def init_ui():
     )
     ui.judgment.update(
         anchor=Vec2(0, Layout.field_h * -0.115),
-        pivot=Vec2(0.5, 0.5),
-        dimensions=Vec2(0, Layout.field_h * 0.0475) * ui.judgment_config.scale,
-        alpha=ui.judgment_config.alpha * show_ui,
+        pivot=Vec2(0.5, 0.55),
+        dimensions=Vec2(0, Layout.field_h * 0.04) * ui.judgment_config.scale,
+        alpha=ui.judgment_config.alpha * show_ui * custom_judgment,
         horizontal_align=HorizontalAlign.CENTER,
         background=False,
     )
