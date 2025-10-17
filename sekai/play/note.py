@@ -264,7 +264,7 @@ class BaseNote(PlayArchetype):
         self.end_time = offset_adjusted_time()
         self.played_hit_effects = self.should_play_hit_effects
         if self.is_scored:
-            spawn_custom(self.result.judgment)
+            spawn_custom(judgment=self.result.judgment, accuracy=self.result.accuracy, windows=self.judgment_window, wrong_way=self.wrong_way)
 
     def handle_tap_input(self):
         if time() > self.input_interval.end:

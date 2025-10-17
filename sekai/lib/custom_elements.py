@@ -1,6 +1,7 @@
 from sekai.lib.layout import (
     layout_combo_label,
     ComboType,
+    JudgmentType,
     TARGET_ASPECT_RATIO,
     Layout,
     transform_quad,
@@ -9,7 +10,7 @@ from sekai.lib.layout import (
 from sonolus.script.runtime import time
 from math import cos, pi, floor, log
 from sekai.lib.layer import LAYER_JUDGMENT, get_z
-from sekai.lib.skin import combo_label, combo_number
+from sekai.lib.skin import combo_label, combo_number, judgment_text, accuracy_text
 from sonolus.script.runtime import runtime_ui
 from sonolus.script.vec import Vec2
 from sonolus.script.runtime import aspect_ratio, screen
@@ -17,6 +18,8 @@ from sonolus.script.interval import unlerp_clamped, unlerp
 from sekai.lib.options import Options
 from sonolus.script.record import Record
 from sonolus.script.debug import debug_log
+from sonolus.script.interval import Interval
+from sonolus.script.bucket import Judgment, JudgmentWindow
 
 
 def transform_fixed_size(h, w):
@@ -239,3 +242,42 @@ class ComboNumberLayout(Record):
                 combo_number.get_sprite(combo=digit, type=ComboType.NORMAL).draw(
                     quad=digit_layout, z=z, a=self.alpha.a
                 )
+
+
+def draw_judgment_text(draw_time: float, judgment_type: JudgmentType, accuracy: float):
+    ui = runtime_ui()
+
+    screen_center = Vec2(x=0, y=0.792)
+
+    base_h = 0.09 * ui.combo_config.scale
+    base_w = base_h * 27.3
+    h, w = transform_fixed_size(base_h, base_w)
+    a = ui.judgment_config.alpha * unlerp_clamped(draw_time, draw_time + 0.064, time())
+    s = unlerp_clamped(draw_time, draw_time + 0.064, time())
+    layout = layout_combo_label(screen_center, w=w * s / 2, h=h * s / 2)
+    z = get_z(layer=LAYER_JUDGMENT, time=-draw_time)
+    judgment_text.get_sprite(type=judgment_type, accuracy=accuracy, watch=False).draw(
+        quad=layout, z=z, a=a
+    )
+
+
+def draw_judgment_accuracy(
+    draw_time: float,
+    judgment: Judgment,
+    accuracy: float,
+    windows: JudgmentWindow,
+    wrong_way: bool,
+):
+    ui = runtime_ui()
+
+    screen_center = Vec2(x=0, y=0.723)
+
+    base_h = 0.054 * ui.judgment_config.scale
+    base_w = base_h * 23.6
+    h, w = transform_fixed_size(base_h, base_w)
+    a = ui.judgment_config.alpha
+    layout = layout_combo_label(screen_center, w=w / 2, h=h / 2)
+    z = get_z(layer=LAYER_JUDGMENT, time=-draw_time)
+    accuracy_text.get_sprite(
+        judgment=judgment, windows=windows.perfect, accuracy=accuracy, wrong_way=wrong_way
+    ).draw(quad=layout, z=z, a=a)

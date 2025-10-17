@@ -280,17 +280,17 @@ class JudgmentSprite(Record):
     miss: Sprite
     auto: Sprite
     
-    def get_bad(self, judgment: Judgment, accuracy: float):
-        if Options.auto_judgment:
+    def get_bad(self, judgment: Judgment, accuracy: float, watch: bool):
+        if Options.auto_judgment and watch:
             return JudgmentType.Auto
         elif judgment == Judgment.GOOD and (accuracy >= 0.1083 or accuracy <= -0.1083):
             return JudgmentType.Bad
         else:
             return judgment
     
-    def get_sprite(self, type: JudgmentType):
+    def get_sprite(self, type: JudgmentType, accuracy: float, watch: bool):
         result = +Sprite
-        match type:
+        match self.get_bad(type, accuracy, watch):
             case JudgmentType.Perfect:
                 result @= self.perfect
             case JudgmentType.Great:
@@ -323,15 +323,14 @@ class AccuracySprite(Record):
                 return AccuracyType.Flick
             elif windows.start > accuracy:
                 return AccuracyType.Fast
-            elif windows.end < accuracy:
+            else:
                 return AccuracyType.Late
         else:
-            return 0
+            return AccuracyType.NONE
     
-    def get_sprite(self, type: AccuracyType):
+    def get_sprite(self, judgment: Judgment, windows: Interval, accuracy: float, wrong_way: bool):
         result = +Sprite
-        resultType = self.get_accuracy(type)
-        match resultType:
+        match self.get_accuracy(judgment, windows, accuracy, wrong_way):
             case AccuracyType.Fast:
                 result @= self.fast
             case AccuracyType.Late:
