@@ -8,8 +8,11 @@ from sonolus.script.interval import clamp
 from sonolus.script.record import Record
 from sonolus.script.sprite import Sprite, SpriteGroup, StandardSprite, skin, sprite, sprite_group
 
-from sekai.lib.layout import FlickDirection
+from sekai.lib.layout import FlickDirection, JudgmentType, AccuracyType, ComboType
 
+from sonolus.script.bucket import Judgment
+from sonolus.script.interval import Interval
+from sekai.lib.options import Options
 
 @skin
 class BaseSkin:
@@ -259,6 +262,24 @@ class BaseSkin:
     timescale_change_line: StandardSprite.GRID_YELLOW
     special_line: StandardSprite.GRID_RED
 
+    # Custom Elements
+    perfect: Sprite = sprite("Perfect")
+    great: Sprite = sprite("Great")
+    good: Sprite = sprite("Good")
+    bad: Sprite = sprite("Bad")
+    miss: Sprite = sprite("Miss")
+    auto: Sprite = sprite("Auto")
+    ap_number: SpriteGroup = sprite_group(f"AP Combo Number {i}" for i in range(0, 10))
+    combo_number: SpriteGroup = sprite_group(f"Combo Number {i}" for i in range(0, 10))
+    combo_number_glow: SpriteGroup = sprite_group(f"Combo Number Glow {i}" for i in range(0, 10))
+    combo_label: Sprite = sprite("Combo Label")
+    ap_combo_label: Sprite = sprite("AP Combo Label")
+    combo_label_glow: Sprite = sprite("Combo Label Glow")
+    fast_warning: Sprite = sprite("Fast Warning")
+    late_warning: Sprite = sprite("Late Warning")
+    flick_warning: Sprite = sprite("Flick Warning")
+    damage: Sprite = sprite("Damage Flash")
+    auto_live: Sprite = sprite("Auto Live")
 
 EMPTY_SPRITE = Sprite(-1)
 EMPTY_SPRITE_GROUP = SpriteGroup(-1, 1)
@@ -481,10 +502,150 @@ class ActiveConnectionSpriteSet(Record):
         )
 
 
-EMPTY_ACTIVE_CONNECTION_SPRITE_SET = ActiveConnectionSpriteSet(
-    render_type=ActiveConnectorRenderType.FALLBACK,
-    normal=EMPTY_SPRITE,
-    active=EMPTY_SPRITE,
+class ComboNumberSprite(Record):
+    normal: SpriteGroup
+    ap: SpriteGroup
+    glow: SpriteGroup
+    
+    def get_sprite(self, combo: int, type: ComboType):
+        result = +Sprite
+        match type:
+            case ComboType.NORMAL:
+                result @= self.normal[combo]
+            case ComboType.AP:
+                result @= self.ap[combo]
+            case ComboType.GLOW:
+                result @= self.glow[combo]
+            case _:
+                assert_never(type)
+        return result
+    
+    @property
+    def custom_available(self):
+        return self.normal[0].is_available
+
+
+class ComboLabelSprite(Record):
+    normal: Sprite
+    ap: Sprite
+    glow: Sprite
+    
+    def get_sprite(self, type: ComboType):
+        result = +Sprite
+        match type:
+            case ComboType.NORMAL:
+                result @= self.normal
+            case ComboType.AP:
+                result @= self.ap
+            case ComboType.GLOW:
+                result @= self.glow
+            case _:
+                assert_never(type)
+        return result
+    
+    @property
+    def custom_available(self):
+        return self.normal.is_available
+
+
+class JudgmentSprite(Record):
+    perfect: Sprite
+    great: Sprite
+    good: Sprite
+    bad: Sprite
+    miss: Sprite
+    auto: Sprite
+    
+    def get_bad(self, judgment: Judgment, accuracy: float):
+        if Options.auto_judgment:
+            return JudgmentType.Auto
+        elif judgment == Judgment.GOOD and (accuracy >= 0.1083 or accuracy <= -0.1083):
+            return JudgmentType.Bad
+        else:
+            return judgment
+    
+    def get_sprite(self, type: JudgmentType):
+        result = +Sprite
+        match type:
+            case JudgmentType.Perfect:
+                result @= self.perfect
+            case JudgmentType.Great:
+                result @= self.great
+            case JudgmentType.Good:
+                result @= self.good
+            case JudgmentType.Bad:
+                result @= self.bad
+            case JudgmentType.Miss:
+                result @= self.miss
+            case JudgmentType.Auto:
+                result @= self.auto
+            case _:
+                assert_never(type)
+        return result
+    
+    @property
+    def custom_available(self):
+        return self.perfect.is_available
+
+
+class AccuracySprite(Record):
+    fast: Sprite
+    late: Sprite
+    flick: Sprite
+    
+    def get_accuracy(self, judgment: Judgment, windows: Interval, accuracy: float, wrong_way: bool):
+        if judgment != Judgment.PERFECT and judgment != Judgment.MISS:
+            if wrong_way:
+                return AccuracyType.Flick
+            elif windows.start > accuracy:
+                return AccuracyType.Fast
+            elif windows.end < accuracy:
+                return AccuracyType.Late
+        else:
+            return 0
+    
+    def get_sprite(self, type: AccuracyType):
+        result = +Sprite
+        resultType = self.get_accuracy(type)
+        match resultType:
+            case AccuracyType.Fast:
+                result @= self.fast
+            case AccuracyType.Late:
+                result @= self.late
+            case AccuracyType.Flick:
+                result @= self.flick
+            case _:
+                assert_never(type)
+        return result
+    
+    @property
+    def custom_available(self):
+        return self.fast.is_available
+
+
+normal_note_body_sprites = BodySprites(
+    left=Skin.normal_note_left,
+    middle=Skin.normal_note_middle,
+    right=Skin.normal_note_right,
+    fallback=Skin.normal_note_fallback,
+)
+slide_note_body_sprites = BodySprites(
+    left=Skin.slide_note_left,
+    middle=Skin.slide_note_middle,
+    right=Skin.slide_note_right,
+    fallback=Skin.slide_note_fallback,
+)
+flick_note_body_sprites = BodySprites(
+    left=Skin.flick_note_left,
+    middle=Skin.flick_note_middle,
+    right=Skin.flick_note_right,
+    fallback=Skin.flick_note_fallback,
+)
+critical_note_body_sprites = BodySprites(
+    left=Skin.critical_note_left,
+    middle=Skin.critical_note_middle,
+    right=Skin.critical_note_right,
+    fallback=Skin.critical_note_fallback,
 )
 
 
@@ -697,446 +858,58 @@ critical_active_slide_connector_sprites = ActiveConnectionSpriteSet.of_normal(
     active=BaseSkin.critical_active_slide_connection_active,
 )
 
-
-@level_data
-class ActiveSkin:
-    cover: Sprite
-
-    lane: Sprite
-    judgment_line: Sprite
-    stage_left_border: Sprite
-    stage_right_border: Sprite
-
-    sekai_stage: Sprite
-
-    sim_line: Sprite
-
-    normal_note: NoteSpriteSet
-    slide_note: NoteSpriteSet
-    flick_note: NoteSpriteSet
-    down_flick_note: NoteSpriteSet
-    critical_note: NoteSpriteSet
-    critical_slide_note: NoteSpriteSet
-    critical_flick_note: NoteSpriteSet
-    critical_down_flick_note: NoteSpriteSet
-    trace_note: NoteSpriteSet
-    trace_flick_note: NoteSpriteSet
-    trace_down_flick_note: NoteSpriteSet
-    critical_trace_note: NoteSpriteSet
-    critical_trace_flick_note: NoteSpriteSet
-    critical_trace_down_flick_note: NoteSpriteSet
-    normal_slide_tick_note: NoteSpriteSet
-    critical_slide_tick_note: NoteSpriteSet
-    damage_note: NoteSpriteSet
-
-    active_slide_connector: ActiveConnectorSpriteSet
-    critical_active_slide_connector: ActiveConnectorSpriteSet
-
-    guide_green: Sprite
-    guide_yellow: Sprite
-    guide_red: Sprite
-    guide_purple: Sprite
-    guide_cyan: Sprite
-    guide_blue: Sprite
-    guide_neutral: Sprite
-    guide_black: Sprite
-
-    beat_line: Sprite
-    bpm_change_line: Sprite
-    timescale_change_line: Sprite
-    special_line: Sprite
-
-
-def init_skin():
-    ActiveSkin.cover = BaseSkin.cover
-
-    ActiveSkin.lane = BaseSkin.lane
-    ActiveSkin.judgment_line = BaseSkin.judgment_line
-    ActiveSkin.stage_left_border = BaseSkin.stage_left_border
-    ActiveSkin.stage_right_border = BaseSkin.stage_right_border
-
-    ActiveSkin.sekai_stage = BaseSkin.sekai_stage
-
-    ActiveSkin.sim_line = BaseSkin.sim_line
-
-    ActiveSkin.normal_note = NoteSpriteSet(
-        body=first_available_body_sprite_set(
-            normal_note_body_sprites,
-            note_cyan_body_sprites,
-            note_cyan_fallback_body_sprites,
-        ),
-        arrow=EMPTY_ARROW_SPRITE_SET,
-        tick=EMPTY_SPRITE,
-        slot=first_available_sprite(
-            BaseSkin.slot_normal,
-            BaseSkin.slot_cyan,
-        ),
-        slot_glow=first_available_sprite(
-            BaseSkin.slot_glow_normal,
-            BaseSkin.slot_glow_cyan,
-        ),
-    )
-    ActiveSkin.slide_note = NoteSpriteSet(
-        body=first_available_body_sprite_set(
-            slide_note_body_sprites,
-            note_green_body_sprites,
-            note_green_fallback_body_sprites,
-        ),
-        arrow=EMPTY_ARROW_SPRITE_SET,
-        tick=EMPTY_SPRITE,
-        slot=first_available_sprite(
-            BaseSkin.slot_slide,
-            BaseSkin.slot_green,
-        ),
-        slot_glow=first_available_sprite(
-            BaseSkin.slot_glow_slide,
-            BaseSkin.slot_glow_green,
-        ),
-    )
-    ActiveSkin.flick_note = NoteSpriteSet(
-        body=first_available_body_sprite_set(
-            flick_note_body_sprites,
-            note_red_body_sprites,
-            note_red_fallback_body_sprites,
-        ),
-        arrow=first_available_arrow_sprite_set(
-            flick_arrow_sprites,
-            flick_arrow_red_sprites,
-            flick_arrow_red_fallback_sprites,
-        ),
-        tick=EMPTY_SPRITE,
-        slot=first_available_sprite(
-            BaseSkin.slot_flick,
-            BaseSkin.slot_red,
-        ),
-        slot_glow=first_available_sprite(
-            BaseSkin.slot_glow_flick,
-            BaseSkin.slot_glow_red,
-        ),
-    )
-    ActiveSkin.down_flick_note = NoteSpriteSet(
-        body=first_available_body_sprite_set(
-            down_flick_note_body_sprites,
-            flick_note_body_sprites,
-            note_red_body_sprites,
-            note_red_fallback_body_sprites,
-        ),
-        arrow=first_available_arrow_sprite_set(
-            flick_arrow_sprites,
-            flick_arrow_red_sprites,
-            flick_arrow_red_fallback_sprites,
-        ),
-        tick=EMPTY_SPRITE,
-        slot=first_available_sprite(
-            BaseSkin.slot_down_flick,
-            BaseSkin.slot_flick,
-            BaseSkin.slot_red,
-        ),
-        slot_glow=first_available_sprite(
-            BaseSkin.slot_glow_down_flick,
-            BaseSkin.slot_glow_flick,
-            BaseSkin.slot_glow_red,
-        ),
-    )
-    ActiveSkin.critical_note = NoteSpriteSet(
-        body=first_available_body_sprite_set(
-            critical_note_body_sprites,
-            note_yellow_body_sprites,
-            note_yellow_fallback_body_sprites,
-        ),
-        arrow=EMPTY_ARROW_SPRITE_SET,
-        tick=EMPTY_SPRITE,
-        slot=first_available_sprite(
-            BaseSkin.slot_critical,
-            BaseSkin.slot_yellow,
-        ),
-        slot_glow=first_available_sprite(
-            BaseSkin.slot_glow_critical,
-            BaseSkin.slot_glow_yellow,
-        ),
-    )
-    ActiveSkin.critical_slide_note = NoteSpriteSet(
-        body=first_available_body_sprite_set(
-            critical_slide_note_body_sprites,
-            critical_note_body_sprites,
-            note_yellow_body_sprites,
-            note_yellow_fallback_body_sprites,
-        ),
-        arrow=EMPTY_ARROW_SPRITE_SET,
-        tick=EMPTY_SPRITE,
-        slot=first_available_sprite(
-            BaseSkin.slot_critical_slide,
-            BaseSkin.slot_yellow_slider,
-            BaseSkin.slot_critical,
-            BaseSkin.slot_yellow,
-        ),
-        slot_glow=first_available_sprite(
-            BaseSkin.slot_glow_critical_slide,
-            BaseSkin.slot_glow_yellow_slider_tap,
-            BaseSkin.slot_glow_critical,
-            BaseSkin.slot_glow_yellow,
-        ),
-    )
-    ActiveSkin.critical_flick_note = NoteSpriteSet(
-        body=first_available_body_sprite_set(
-            critical_flick_note_body_sprites,
-            critical_note_body_sprites,
-            note_yellow_body_sprites,
-            note_yellow_fallback_body_sprites,
-        ),
-        arrow=first_available_arrow_sprite_set(
-            critical_flick_arrow_sprites,
-            flick_arrow_yellow_sprites,
-            flick_arrow_yellow_fallback_sprites,
-        ),
-        tick=EMPTY_SPRITE,
-        slot=first_available_sprite(
-            BaseSkin.slot_critical_flick,
-            BaseSkin.slot_yellow_flick,
-            BaseSkin.slot_critical,
-            BaseSkin.slot_yellow,
-        ),
-        slot_glow=first_available_sprite(
-            BaseSkin.slot_glow_critical_flick,
-            BaseSkin.slot_glow_yellow_flick,
-            BaseSkin.slot_glow_critical,
-            BaseSkin.slot_glow_yellow,
-        ),
-    )
-    ActiveSkin.critical_down_flick_note = NoteSpriteSet(
-        body=first_available_body_sprite_set(
-            critical_down_flick_note_body_sprites,
-            critical_flick_note_body_sprites,
-            critical_note_body_sprites,
-            note_yellow_body_sprites,
-            note_yellow_fallback_body_sprites,
-        ),
-        arrow=first_available_arrow_sprite_set(
-            critical_flick_arrow_sprites,
-            flick_arrow_yellow_sprites,
-            flick_arrow_yellow_fallback_sprites,
-        ),
-        tick=EMPTY_SPRITE,
-        slot=first_available_sprite(
-            BaseSkin.slot_critical_down_flick,
-            BaseSkin.slot_critical_flick,
-            BaseSkin.slot_yellow_flick,
-            BaseSkin.slot_critical,
-            BaseSkin.slot_yellow,
-        ),
-        slot_glow=first_available_sprite(
-            BaseSkin.slot_glow_critical_down_flick,
-            BaseSkin.slot_glow_critical_flick,
-            BaseSkin.slot_glow_yellow_flick,
-            BaseSkin.slot_glow_critical,
-            BaseSkin.slot_glow_yellow,
-        ),
-    )
-    ActiveSkin.trace_note = NoteSpriteSet(
-        body=first_available_body_sprite_set(
-            normal_trace_note_body_sprites,
-            trace_note_green_body_sprites,
-            trace_note_green_fallback_body_sprites,
-        ),
-        arrow=EMPTY_ARROW_SPRITE_SET,
-        tick=first_available_sprite(
-            BaseSkin.normal_trace_note_tick,
-            BaseSkin.trace_note_green_tick,
-            BaseSkin.trace_note_green_tick_fallback,
-        ),
-        slot=EMPTY_SPRITE,
-        slot_glow=EMPTY_SPRITE,
-    )
-    ActiveSkin.trace_flick_note = NoteSpriteSet(
-        body=first_available_body_sprite_set(
-            trace_flick_note_body_sprites,
-            trace_note_red_body_sprites,
-            trace_note_red_fallback_body_sprites,
-        ),
-        arrow=first_available_arrow_sprite_set(
-            flick_arrow_sprites,
-            flick_arrow_red_sprites,
-            flick_arrow_red_fallback_sprites,
-        ),
-        tick=first_available_sprite(
-            BaseSkin.trace_flick_note_tick,
-            BaseSkin.trace_note_red_tick,
-            BaseSkin.trace_note_red_tick_fallback,
-        ),
-        slot=EMPTY_SPRITE,
-        slot_glow=EMPTY_SPRITE,
-    )
-    ActiveSkin.trace_down_flick_note = NoteSpriteSet(
-        body=first_available_body_sprite_set(
-            trace_down_flick_note_body_sprites,
-            trace_flick_note_body_sprites,
-            trace_note_red_body_sprites,
-            trace_note_red_fallback_body_sprites,
-        ),
-        arrow=first_available_arrow_sprite_set(
-            flick_arrow_sprites,
-            flick_arrow_red_sprites,
-            flick_arrow_red_fallback_sprites,
-        ),
-        tick=first_available_sprite(
-            BaseSkin.trace_down_flick_note_tick,
-            BaseSkin.trace_flick_note_tick,
-            BaseSkin.trace_note_red_tick,
-            BaseSkin.trace_note_red_tick_fallback,
-        ),
-        slot=EMPTY_SPRITE,
-        slot_glow=EMPTY_SPRITE,
-    )
-    ActiveSkin.critical_trace_note = NoteSpriteSet(
-        body=first_available_body_sprite_set(
-            critical_trace_note_body_sprites,
-            trace_note_yellow_body_sprites,
-            trace_note_yellow_fallback_body_sprites,
-        ),
-        arrow=EMPTY_ARROW_SPRITE_SET,
-        tick=first_available_sprite(
-            BaseSkin.critical_trace_note_tick,
-            BaseSkin.trace_note_yellow_tick,
-            BaseSkin.trace_note_yellow_tick_fallback,
-        ),
-        slot=EMPTY_SPRITE,
-        slot_glow=EMPTY_SPRITE,
-    )
-    ActiveSkin.critical_trace_flick_note = NoteSpriteSet(
-        body=first_available_body_sprite_set(
-            critical_trace_flick_note_body_sprites,
-            critical_trace_note_body_sprites,
-            trace_note_yellow_body_sprites,
-            trace_note_yellow_fallback_body_sprites,
-        ),
-        arrow=first_available_arrow_sprite_set(
-            critical_flick_arrow_sprites,
-            flick_arrow_yellow_sprites,
-            flick_arrow_yellow_fallback_sprites,
-        ),
-        tick=first_available_sprite(
-            BaseSkin.critical_trace_flick_note_tick,
-            BaseSkin.critical_trace_note_tick,
-            BaseSkin.trace_note_yellow_tick,
-            BaseSkin.trace_note_yellow_tick_fallback,
-        ),
-        slot=EMPTY_SPRITE,
-        slot_glow=EMPTY_SPRITE,
-    )
-    ActiveSkin.critical_trace_down_flick_note = NoteSpriteSet(
-        body=first_available_body_sprite_set(
-            critical_trace_down_flick_note_body_sprites,
-            critical_trace_flick_note_body_sprites,
-            critical_trace_note_body_sprites,
-            trace_note_yellow_body_sprites,
-            trace_note_yellow_fallback_body_sprites,
-        ),
-        arrow=first_available_arrow_sprite_set(
-            critical_flick_arrow_sprites,
-            flick_arrow_yellow_sprites,
-            flick_arrow_yellow_fallback_sprites,
-        ),
-        tick=first_available_sprite(
-            BaseSkin.critical_trace_down_flick_note_tick,
-            BaseSkin.critical_trace_flick_note_tick,
-            BaseSkin.critical_trace_note_tick,
-            BaseSkin.trace_note_yellow_tick,
-            BaseSkin.trace_note_yellow_tick_fallback,
-        ),
-        slot=EMPTY_SPRITE,
-        slot_glow=EMPTY_SPRITE,
-    )
-    ActiveSkin.normal_slide_tick_note = NoteSpriteSet(
-        body=EMPTY_BODY_SPRITE_SET,
-        arrow=EMPTY_ARROW_SPRITE_SET,
-        tick=first_available_sprite(
-            BaseSkin.normal_slide_tick_note, BaseSkin.slide_tick_note_green, BaseSkin.slide_tick_note_green_fallback
-        ),
-        slot=EMPTY_SPRITE,
-        slot_glow=EMPTY_SPRITE,
-    )
-    ActiveSkin.critical_slide_tick_note = NoteSpriteSet(
-        body=EMPTY_BODY_SPRITE_SET,
-        arrow=EMPTY_ARROW_SPRITE_SET,
-        tick=first_available_sprite(
-            BaseSkin.critical_slide_tick_note, BaseSkin.slide_tick_note_yellow, BaseSkin.slide_tick_note_yellow_fallback
-        ),
-        slot=EMPTY_SPRITE,
-        slot_glow=EMPTY_SPRITE,
-    )
-    ActiveSkin.damage_note = NoteSpriteSet(
-        body=first_available_body_sprite_set(
-            damage_note_body_sprites,
-            trace_note_purple_body_sprites,
-            trace_note_purple_fallback_body_sprites,
-        ),
-        arrow=EMPTY_ARROW_SPRITE_SET,
-        tick=EMPTY_SPRITE,
-        slot=EMPTY_SPRITE,
-        slot_glow=EMPTY_SPRITE,
-    )
-
-    ActiveSkin.active_slide_connector = ActiveConnectorSpriteSet(
-        connection=first_available_active_connection_sprite_set(
-            normal_active_slide_connector_sprites,
-            active_slide_connector_green_sprites,
-            active_slide_connector_green_fallback_sprites,
-        ),
-        slot_glow=first_available_sprite(
-            BaseSkin.normal_slide_connector_slot_glow,
-            BaseSkin.slot_glow_slide,
-            BaseSkin.slot_glow_green,
-        ),
-    )
-    ActiveSkin.critical_active_slide_connector = ActiveConnectorSpriteSet(
-        connection=first_available_active_connection_sprite_set(
-            critical_active_slide_connector_sprites,
-            active_slide_connector_yellow_sprites,
-            active_slide_connector_yellow_fallback_sprites,
-        ),
-        slot_glow=first_available_sprite(
-            BaseSkin.critical_slide_connector_slot_glow,
-            BaseSkin.slot_glow_critical_slide,
-            BaseSkin.slot_glow_yellow_slider_tap,
-            BaseSkin.slot_glow_critical,
-            BaseSkin.slot_glow_yellow,
-        ),
-    )
-
-    ActiveSkin.guide_green = first_available_sprite(
-        BaseSkin.guide_green,
-        BaseSkin.guide_green_fallback,
-    )
-    ActiveSkin.guide_yellow = first_available_sprite(
-        BaseSkin.guide_yellow,
-        BaseSkin.guide_yellow_fallback,
-    )
-    ActiveSkin.guide_red = first_available_sprite(
-        BaseSkin.guide_red,
-        BaseSkin.guide_red_fallback,
-    )
-    ActiveSkin.guide_purple = first_available_sprite(
-        BaseSkin.guide_purple,
-        BaseSkin.guide_purple_fallback,
-    )
-    ActiveSkin.guide_cyan = first_available_sprite(
-        BaseSkin.guide_cyan,
-        BaseSkin.guide_cyan_fallback,
-    )
-    ActiveSkin.guide_blue = first_available_sprite(
-        BaseSkin.guide_blue,
-        BaseSkin.guide_blue_fallback,
-    )
-    ActiveSkin.guide_neutral = first_available_sprite(
-        BaseSkin.guide_neutral,
-        BaseSkin.guide_neutral_fallback,
-    )
-    ActiveSkin.guide_black = first_available_sprite(
-        BaseSkin.guide_black,
-        BaseSkin.guide_black_fallback,
-    )
-
-    ActiveSkin.beat_line = BaseSkin.beat_line
-    ActiveSkin.bpm_change_line = BaseSkin.bpm_change_line
-    ActiveSkin.timescale_change_line = BaseSkin.timescale_change_line
-    ActiveSkin.special_line = BaseSkin.special_line
+neutral_guide_sprites = GuideSprites(
+    normal=Skin.guide_neutral,
+    fallback=Skin.guide_neutral_fallback,
+)
+red_guide_sprites = GuideSprites(
+    normal=Skin.guide_red,
+    fallback=Skin.guide_red_fallback,
+)
+green_guide_sprites = GuideSprites(
+    normal=Skin.guide_green,
+    fallback=Skin.guide_green_fallback,
+)
+blue_guide_sprites = GuideSprites(
+    normal=Skin.guide_blue,
+    fallback=Skin.guide_blue_fallback,
+)
+yellow_guide_sprites = GuideSprites(
+    normal=Skin.guide_yellow,
+    fallback=Skin.guide_yellow_fallback,
+)
+purple_guide_sprites = GuideSprites(
+    normal=Skin.guide_purple,
+    fallback=Skin.guide_purple_fallback,
+)
+cyan_guide_sprites = GuideSprites(
+    normal=Skin.guide_cyan,
+    fallback=Skin.guide_cyan_fallback,
+)
+black_guide_sprites = GuideSprites(
+    normal=Skin.guide_black,
+    fallback=Skin.guide_black_fallback,
+)
+combo_number = ComboNumberSprite(
+    normal=Skin.combo_number,
+    ap=Skin.ap_number,
+    glow=Skin.combo_number_glow,
+)
+combo_label = ComboLabelSprite(
+    normal=Skin.combo_label,
+    ap=Skin.ap_combo_label,
+    glow=Skin.combo_label_glow
+)
+judgment_text = JudgmentSprite(
+    perfect=Skin.perfect,
+    great=Skin.great,
+    good=Skin.good,
+    bad=Skin.bad,
+    miss=Skin.miss,
+    auto=Skin.auto
+)
+accuracy_text = AccuracySprite(
+    fast=Skin.fast_warning,
+    late=Skin.late_warning,
+    flick=Skin.flick_warning,
+)
