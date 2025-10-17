@@ -87,7 +87,7 @@ FAKE_ANCHOR_NOTE = "FakeAnchorNote"
 FAKE_TRANSIENT_HIDDEN_TICK_NOTE = "FakeTransientHiddenTickNote"
 #custom elements
 JUDGMENT_TEXT = "JudgmentText"
-JUDGMENT_ACCIRACY = "JudgmentAccuracy"
+JUDGMENT_ACCURACY = "JudgmentAccuracy"
 COMBO_NUMBER = "ComboNumber"
 COMBO_LABEL = "ComboLabel"
 DAMAGE = "Damage"
