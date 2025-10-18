@@ -49,7 +49,7 @@ def spawn_custom(
                 windows=windows,
                 wrong_way=wrong_way,
             )
-        if Options.custom_damage and damage_flash.custom_available and Judgment.MISS:
+        if Options.custom_damage and damage_flash.custom_available and judgment == Judgment.MISS:
             DamageFlash.spawn(spawn_time=time())
 
 

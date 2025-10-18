@@ -402,26 +402,26 @@ def frames_to_window(
     )
 
 
-TAP_NORMAL_WINDOW = frames_to_window(2.5, 5, 6.5, 7.5)
-TAP_CRITICAL_WINDOW = frames_to_window(3.3, 4.5, 6.5, 7.5)
+TAP_NORMAL_WINDOW = frames_to_window(2.5, 5, 6.5)
+TAP_CRITICAL_WINDOW = frames_to_window(3.3, 4.5, 6.5)
 
-FLICK_NORMAL_WINDOW = frames_to_window(2.5, (6.5, 7.5), (7, 8), (7.5, 8.5))
-FLICK_CRITICAL_WINDOW = frames_to_window(3.5, (6.5, 7.5), (7, 8), (7.5, 8.5))
+FLICK_NORMAL_WINDOW = frames_to_window(2.5, (6.5, 7.5), (7, 8))
+FLICK_CRITICAL_WINDOW = frames_to_window(3.5, (6.5, 7.5), (7, 8.5))
 
-TRACE_NORMAL_WINDOW = frames_to_window(5, None, None, None)
-TRACE_CRITICAL_WINDOW = frames_to_window(5, None, None, None)
+TRACE_NORMAL_WINDOW = frames_to_window(5.0, 5.0, 5.0)
+TRACE_CRITICAL_WINDOW = frames_to_window(5.0, 5.0, 5.0)
 
 TRACE_FLICK_NORMAL_WINDOW = frames_to_window((6.5, 7.5), None, None, None)
 TRACE_FLICK_CRITICAL_WINDOW = frames_to_window((6.5, 7.5), None, None, None)
 
-SLIDE_END_NORMAL_WINDOW = frames_to_window((3.5, 4), (6.5, 8), (7.5, 8.5), None)
-SLIDE_END_CRITICAL_WINDOW = frames_to_window((3.5, 4), (6.5, 8), (7.5, 8.5), None)
+SLIDE_END_NORMAL_WINDOW = frames_to_window((3.5, 4), (6.5, 8), (7.5, 8.5))
+SLIDE_END_CRITICAL_WINDOW = frames_to_window((3.5, 4), (6.5, 8), (7.5, 8.5))
 
-SLIDE_END_TRACE_NORMAL_WINDOW = frames_to_window((6.5, 8), None, None, None)
-SLIDE_END_TRACE_CRITICAL_WINDOW = frames_to_window((6.5, 8), None, None, None)
+SLIDE_END_TRACE_NORMAL_WINDOW = frames_to_window((6.5, 8.0), (6.5, 8.8), (6.5, 8.0))
+SLIDE_END_TRACE_CRITICAL_WINDOW = frames_to_window((6.5, 8.0), (6.5, 8.8), (6.5, 8.0))
 
-SLIDE_END_FLICK_NORMAL_WINDOW = frames_to_window((3.5, 4), (6.5, 8), (7.5, 8.5), None)
-SLIDE_END_FLICK_CRITICAL_WINDOW = frames_to_window((3.5, 4), (6.5, 8), (7.5, 8.5), None)
+SLIDE_END_FLICK_NORMAL_WINDOW = frames_to_window((3.5, 4), (6.5, 8), (7.5, 8.5))
+SLIDE_END_FLICK_CRITICAL_WINDOW = frames_to_window((3.5, 4), (6.5, 8), (7.5, 8.5))
 
 SLIDE_TICK_JUDGMENT_WINDOW = frames_to_window((7.5, 0), None, None, None)
 
@@ -429,8 +429,16 @@ EMPTY_JUDGMENT_WINDOW = frames_to_window(0, None, None, None)
 
 SLIDE_END_LOCKOUT_DURATION = 0.25
 
-TAP_NORMAL_WINDOW_BAD = Interval(7.5 / 60, 7.5/ 60)
-TAP_CRITICAL_WINDOW_BAD = Interval(7.5 / 60, 7.5/ 60)
+TAP_NORMAL_WINDOW_BAD = Interval(-7.5 / 60, 7.5 / 60)
+TAP_CRITICAL_WINDOW_BAD = Interval(-7.5 / 60, 7.5 / 60)
 
-FLICK_NORMAL_WINDOW_BAD = Interval(7.5 / 60, 8.5/ 60)
-FLICK_CRITICAL_WINDOW_BAD = Interval(7.5 / 60, 8.5/ 60)
+FLICK_NORMAL_WINDOW_BAD = Interval(-7.5 / 60, 8.5 / 60)
+FLICK_CRITICAL_WINDOW_BAD = Interval(-7.5 / 60, 8.5 / 60)
+
+def get_judgment_interval(bad_window: Interval, good_window: Interval) -> Interval:
+    result = +Interval
+    if bad_window != Interval(0, 0):
+        result @= bad_window
+    else:
+        result @= good_window
+    return result

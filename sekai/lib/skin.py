@@ -561,7 +561,7 @@ class JudgmentSprite(Record):
     def get_bad(self, judgment: Judgment, windows_bad: Interval, accuracy: float, check_pass: bool):
         if Options.auto_judgment and is_watch() and not is_replay():
             return JudgmentType.AUTO
-        elif windows_bad != Interval(0, 0) and windows_bad.start <= accuracy <= windows_bad.end and not check_pass:
+        elif judgment == Judgment.MISS and windows_bad != Interval(0, 0) and windows_bad.start <= accuracy <= windows_bad.end and not check_pass:
             return JudgmentType.BAD
         else:
             return judgment
