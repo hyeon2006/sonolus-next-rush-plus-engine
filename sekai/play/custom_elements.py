@@ -4,13 +4,14 @@ from sonolus.script.globals import level_memory
 from sekai.lib import archetype_names
 from sonolus.script.bucket import Judgment, JudgmentWindow
 from sonolus.script.debug import debug_log, error
-from sekai.lib.skin import combo_label, combo_number, judgment_text, accuracy_text
+from sekai.lib.skin import combo_label, combo_number, judgment_text, accuracy_text, damage_flash
 
 from sekai.lib.custom_elements import (
     draw_combo_label,
     draw_combo_number,
     draw_judgment_text,
     draw_judgment_accuracy,
+    draw_damage_flash,
 )
 from sekai.lib.options import Options
 from sonolus.script.runtime import time
@@ -18,7 +19,7 @@ from sonolus.script.interval import Interval
 
 
 def spawn_custom(
-    judgment: Judgment, accuracy: float, windows: JudgmentWindow, windows_bad: Interval, wrong_way: bool
+    judgment: Judgment, accuracy: float, windows: JudgmentWindow, windows_bad: Interval, wrong_way: bool, check_pass: bool
 ):
     if Options.hide_custom == False:
         if Options.custom_combo and combo_label.custom_available:
@@ -30,7 +31,8 @@ def spawn_custom(
                 spawn_time=time(),
                 judgment=judgment,
                 windows_bad=windows_bad,
-                accuracy=accuracy
+                accuracy=accuracy,
+                check_pass=check_pass,
             )
         if (
             Options.custom_judgment
@@ -47,6 +49,8 @@ def spawn_custom(
                 windows=windows,
                 wrong_way=wrong_way,
             )
+        if Options.custom_damage and damage_flash.custom_available and Judgment.MISS:
+            DamageFlash.spawn(spawn_time=time())
 
 
 @level_memory
@@ -133,6 +137,7 @@ class JudgmentText(PlayArchetype):
     judgment: Judgment = entity_memory()
     accuracy: Judgment = entity_memory()
     windows_bad: Interval = entity_memory()
+    check_pass: bool = entity_memory()
     check: bool = entity_memory()
     combo: int = entity_memory()
     name = archetype_names.JUDGMENT_TEXT
@@ -148,7 +153,8 @@ class JudgmentText(PlayArchetype):
             draw_time=self.spawn_time,
             judgment=self.judgment,
             windows_bad=self.windows_bad,
-            accuracy=self.accuracy
+            accuracy=self.accuracy,
+            check_pass=self.check_pass
         )
 
     def update_sequential(self):
@@ -197,9 +203,40 @@ class JudgmentAccuracy(PlayArchetype):
         self.combo = judgmentAccuracy.comboCheck
 
 
+@level_memory
+class damageFlash:
+    comboCheck: int
+
+
+class DamageFlash(PlayArchetype):
+    spawn_time: float = entity_memory()
+    check: bool = entity_memory()
+    combo: int = entity_memory()
+    name = archetype_names.DAMAGE_FLASH
+
+    def update_parallel(self):
+        if self.combo != damageFlash.comboCheck:
+            self.despawn = True
+            return
+        if time() >= self.spawn_time + 0.35:
+            self.despawn = True
+            return
+        draw_damage_flash(
+            draw_time=self.spawn_time,
+        )
+
+    def update_sequential(self):
+        if self.check == True:
+            return
+        self.check = True
+        damageFlash.comboCheck += 1
+        self.combo = damageFlash.comboCheck
+
+
 CUSTOM_ARCHETYPES = (
     ComboLabel,
     ComboNumber,
     JudgmentText,
     JudgmentAccuracy,
+    DamageFlash,
 )

@@ -99,6 +99,7 @@ class BaseNote(PlayArchetype):
 
     # Check wrong way
     wrong_way: bool = entity_memory()
+    check_pass: bool = entity_memory()
 
     end_time: float = exported()
     played_hit_effects: bool = exported()
@@ -308,7 +309,7 @@ class BaseNote(PlayArchetype):
         self.end_time = offset_adjusted_time()
         self.played_hit_effects = self.should_play_hit_effects
         if self.is_scored:
-            spawn_custom(judgment=self.result.judgment, accuracy=self.result.accuracy, windows=self.judgment_window, windows_bad=self.judgment_window_bad, wrong_way=self.wrong_way)
+            spawn_custom(judgment=self.result.judgment, accuracy=self.result.accuracy, windows=self.judgment_window, windows_bad=self.judgment_window_bad, check_pass=self.check_pass, wrong_way=self.wrong_way)
 
     def handle_tap_input(self):
         if time() > self.input_interval.end:
@@ -439,6 +440,7 @@ class BaseNote(PlayArchetype):
 
     def handle_late_miss(self):
         kind = self.kind
+        self.check_pass = True
         match kind:
             case NoteKind.NORM_TICK | NoteKind.CRIT_TICK | NoteKind.HIDE_TICK:
                 self.fail_late(0.125)

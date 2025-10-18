@@ -8,8 +8,14 @@ from sekai.lib.layout import (
 )
 from sonolus.script.runtime import time
 from math import cos, pi, floor, log
-from sekai.lib.layer import LAYER_JUDGMENT, get_z
-from sekai.lib.skin import combo_label, combo_number, judgment_text, accuracy_text
+from sekai.lib.layer import LAYER_JUDGMENT, get_z, LAYER_DAMAGE
+from sekai.lib.skin import (
+    combo_label,
+    combo_number,
+    judgment_text,
+    accuracy_text,
+    damage_flash,
+)
 from sonolus.script.runtime import runtime_ui
 from sonolus.script.vec import Vec2
 from sonolus.script.runtime import aspect_ratio, screen
@@ -243,7 +249,9 @@ class ComboNumberLayout(Record):
                 )
 
 
-def draw_judgment_text(draw_time: float, judgment: Judgment, windows_bad: Interval, accuracy: float):
+def draw_judgment_text(
+    draw_time: float, judgment: Judgment, windows_bad: Interval, accuracy: float, check_pass: bool
+):
     ui = runtime_ui()
 
     screen_center = Vec2(x=0, y=0.792)
@@ -255,9 +263,9 @@ def draw_judgment_text(draw_time: float, judgment: Judgment, windows_bad: Interv
     s = unlerp_clamped(draw_time, draw_time + 0.064, time())
     layout = layout_combo_label(screen_center, w=w * s / 2, h=h * s / 2)
     z = get_z(layer=LAYER_JUDGMENT, time=-draw_time)
-    judgment_text.get_sprite(type=judgment, windows_bad=windows_bad, accuracy=accuracy).draw(
-        quad=layout, z=z, a=a
-    )
+    judgment_text.get_sprite(
+        type=judgment, windows_bad=windows_bad, accuracy=accuracy, check_pass=check_pass
+    ).draw(quad=layout, z=z, a=a)
 
 
 def draw_judgment_accuracy(
@@ -278,5 +286,39 @@ def draw_judgment_accuracy(
     layout = layout_combo_label(screen_center, w=w / 2, h=h / 2)
     z = get_z(layer=LAYER_JUDGMENT, time=-draw_time)
     accuracy_text.get_sprite(
-        judgment=judgment, windows=windows.perfect, accuracy=accuracy, wrong_way=wrong_way
+        judgment=judgment,
+        windows=windows.perfect,
+        accuracy=accuracy,
+        wrong_way=wrong_way,
     ).draw(quad=layout, z=z, a=a)
+
+
+def draw_damage_flash(
+    draw_time: float,
+):
+    t = unlerp_clamped(draw_time, draw_time + 0.35, time())
+    a = 0.768 * t**0.1 * (1 - t) ** 1.35
+    z = get_z(layer=LAYER_DAMAGE, time=-draw_time)
+
+    scaled_screen_l = screen().l / Layout.w_scale
+    scaled_screen_t = screen().t / Layout.h_scale
+    scaled_screen_b = screen().b / Layout.h_scale
+    scaled_screen_w_to_h = Layout.w_scale / Layout.h_scale
+    b = scaled_screen_b + scaled_screen_w_to_h
+
+    for i in range(2):
+        for j in range(2):
+            l_val = scaled_screen_l if j == 0 else -scaled_screen_l
+            if i == 0:
+                t_val = scaled_screen_t - scaled_screen_w_to_h
+            else:
+                t_val = scaled_screen_b - scaled_screen_t - scaled_screen_w_to_h
+            layout = transform_quad(
+                Quad(
+                    bl=Vec2(l_val, b),
+                    br=Vec2(0, b),
+                    tl=Vec2(l_val, t_val),
+                    tr=Vec2(0, t_val),
+                    )
+                )
+            damage_flash.get_sprite().draw(quad=layout, z=z, a=a)
