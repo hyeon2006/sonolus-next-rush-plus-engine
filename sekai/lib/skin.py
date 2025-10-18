@@ -155,7 +155,7 @@ class Skin:
     fast_warning: Sprite = sprite("Fast Warning")
     late_warning: Sprite = sprite("Late Warning")
     flick_warning: Sprite = sprite("Flick Warning")
-    damage: Sprite = sprite("Damage Flash")
+    damage_flash: Sprite = sprite("Damage Flash")
     auto_live: Sprite = sprite("Auto Live")
 
 class BodySprites(Record):
@@ -282,17 +282,17 @@ class JudgmentSprite(Record):
     miss: Sprite
     auto: Sprite
     
-    def get_bad(self, judgment: Judgment, windows_bad: Interval, accuracy: float):
+    def get_bad(self, judgment: Judgment, windows_bad: Interval, accuracy: float, check_pass: bool):
         if Options.auto_judgment and is_watch() and not is_replay():
             return JudgmentType.AUTO
-        elif windows_bad != Interval(0, 0) and windows_bad.start < accuracy <= windows_bad.end:
+        elif windows_bad != Interval(0, 0) and windows_bad.start <= accuracy <= windows_bad.end and not check_pass:
             return JudgmentType.BAD
         else:
             return judgment
     
-    def get_sprite(self, type: Judgment, windows_bad: Interval, accuracy: float):
+    def get_sprite(self, type: Judgment, windows_bad: Interval, accuracy: float, check_pass: bool):
         result = +Sprite
-        match self.get_bad(type, windows_bad, accuracy):
+        match self.get_bad(type, windows_bad, accuracy, check_pass):
             case JudgmentType.PERFECT:
                 result @= self.perfect
             case JudgmentType.GREAT:
@@ -347,6 +347,16 @@ class AccuracySprite(Record):
     def custom_available(self):
         return self.fast.is_available
 
+
+class DamageFlashSprite(Record):
+    normal: Sprite
+
+    def get_sprite(self):
+        return self.normal
+    
+    @property
+    def custom_available(self):
+        return self.normal.is_available
 
 normal_note_body_sprites = BodySprites(
     left=Skin.normal_note_left,
@@ -502,4 +512,7 @@ accuracy_text = AccuracySprite(
     fast=Skin.fast_warning,
     late=Skin.late_warning,
     flick=Skin.flick_warning,
+)
+damage_flash = DamageFlashSprite(
+    normal=Skin.damage_flash
 )
