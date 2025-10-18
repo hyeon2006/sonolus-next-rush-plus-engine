@@ -24,7 +24,7 @@ from sonolus.script.runtime import Touch, delta_time, input_offset, offset_adjus
 from sonolus.script.timing import beat_to_time
 
 from sekai.lib import archetype_names
-from sekai.lib.buckets import WINDOW_SCALE
+from sekai.lib.buckets import WINDOW_SCALE, get_judgment_interval
 from sekai.lib.connector import ActiveConnectorInfo, ConnectorKind
 from sekai.lib.ease import EaseType
 from sekai.lib.layout import FlickDirection, Layout, layout_hitbox, progress_to
@@ -113,9 +113,9 @@ class BaseNote(PlayArchetype):
 
         self.target_time = beat_to_time(self.beat)
         self.judgment_window = get_note_window(self.kind)
-        self.judgment_window_bad = get_note_window_bad(self.kind)
-        self.input_interval = self.judgment_window.good + self.target_time + input_offset()
-        self.unadjusted_input_interval = self.judgment_window.good + self.target_time
+        self.judgment_window_bad = get_judgment_interval(bad_window=get_note_window_bad(self.kind), good_window=self.judgment_window.good)
+        self.input_interval = self.judgment_window_bad + self.target_time + input_offset()
+        self.unadjusted_input_interval = self.judgment_window_bad + self.target_time
 
         if not self.is_attached:
             self.target_scaled_time = group_time_to_scaled_time(self.timescale_group, self.target_time)
@@ -533,7 +533,7 @@ class BaseNote(PlayArchetype):
         if self.result.bucket.id != -1:
             self.result.bucket_value = error * WINDOW_SCALE
         self.despawn = True
-        self.should_play_hit_effects = judgment != Judgment.MISS
+        self.should_play_hit_effects = True
 
     def judge_wrong_way(self, actual_time: float):
         judgment = self.judgment_window.judge(actual_time, self.target_time)
@@ -548,7 +548,7 @@ class BaseNote(PlayArchetype):
         if self.result.bucket.id != -1:
             self.result.bucket_value = error * WINDOW_SCALE
         self.despawn = True
-        self.should_play_hit_effects = judgment != Judgment.MISS
+        self.should_play_hit_effects = True
         self.wrong_way = True
 
     def complete(self):
@@ -561,7 +561,7 @@ class BaseNote(PlayArchetype):
 
     def complete_wrong_way(self):
         self.result.judgment = Judgment.GREAT
-        self.result.accuracy = self.judgment_window.good.end
+        self.result.accuracy = self.judgment_window_bad.end
         if self.result.bucket.id != -1:
             self.result.bucket_value = 0
         self.despawn = True
@@ -577,7 +577,7 @@ class BaseNote(PlayArchetype):
 
     def fail_late(self, accuracy: float | None = None):
         if accuracy is None:
-            accuracy = self.judgment_window.good.end
+            accuracy = self.judgment_window_bad.end
         self.result.judgment = Judgment.MISS
         self.result.accuracy = accuracy
         if self.result.bucket.id != -1:

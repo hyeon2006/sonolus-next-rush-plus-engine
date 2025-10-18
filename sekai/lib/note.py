@@ -601,11 +601,7 @@ def get_note_effect(kind: NoteKind, judgment: Judgment, accuracy: float):
                 case Judgment.GOOD:
                     result @= Effects.normal_good
                 case Judgment.MISS:
-                    windows_bad = get_note_window_bad(kind)
-                    if get_note_window_bad(kind) != Interval(0, 0) and windows_bad.start < accuracy <= windows_bad.end:
-                        result @= Effects.normal_good
-                    else:
-                        result @= EMPTY_EFFECT
+                    result @= Effects.normal_good
                 case _:
                     assert_never(judgment)
         case (
@@ -624,11 +620,7 @@ def get_note_effect(kind: NoteKind, judgment: Judgment, accuracy: float):
                 case Judgment.GOOD:
                     result @= Effects.flick_good
                 case Judgment.MISS:
-                    windows_bad = get_note_window_bad(kind)
-                    if get_note_window_bad(kind) != Interval(0, 0) and windows_bad.start < accuracy <= windows_bad.end:
-                        result @= Effects.flick_good
-                    else:
-                        result @= EMPTY_EFFECT
+                    result @= Effects.flick_good
                 case _:
                     assert_never(judgment)
         case NoteKind.NORM_TRACE | NoteKind.NORM_HEAD_TRACE | NoteKind.NORM_TAIL_TRACE:
