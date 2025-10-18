@@ -435,6 +435,7 @@ TAP_CRITICAL_WINDOW_BAD = Interval(-7.5 / 60, 7.5 / 60)
 FLICK_NORMAL_WINDOW_BAD = Interval(-7.5 / 60, 8.5 / 60)
 FLICK_CRITICAL_WINDOW_BAD = Interval(-7.5 / 60, 8.5 / 60)
 
+
 def get_judgment_interval(bad_window: Interval, good_window: Interval) -> Interval:
     result = +Interval
     if bad_window != Interval(0, 0):

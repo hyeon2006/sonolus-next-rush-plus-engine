@@ -532,12 +532,14 @@ def layout_combo_label(
     w: float,
     h: float,
 ) -> Quad:
-    return transform_quad(Quad(
-        bl = Vec2(center.x - w, center.y + h),
-        br = Vec2(center.x + w, center.y + h),
-        tl = Vec2(center.x - w, center.y - h),
-        tr = Vec2(center.x + w, center.y - h),
-    ))
+    return transform_quad(
+        Quad(
+            bl=Vec2(center.x - w, center.y + h),
+            br=Vec2(center.x + w, center.y + h),
+            tl=Vec2(center.x - w, center.y - h),
+            tr=Vec2(center.x + w, center.y - h),
+        )
+    )
 
 
 def layout_hitbox(

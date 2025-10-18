@@ -28,12 +28,6 @@ LAYER_SLOT_GLOW_EFFECT = 25
 LAYER_DAMAGE = 500
 LAYER_JUDGMENT = 1000
 
-def get_z(layer: int, time: float = 0.0, lane: float = 0.0, etc: int = 0, *, invert_time: bool = False) -> float:
-    return make_comparable_float(
-        quantize_to_step(layer, start=-1, stop=26, step=1),
-        quantize_to_step(
-            time - runtime.time() if invert_time else runtime.time() - time, start=-30, stop=30, step=1 / 256
-        ),
-        quantize_to_step(abs(lane), start=0, stop=20, step=1 / 32),
-        quantize_to_step(etc, start=0, stop=8, step=1),
-    )
+
+def get_z(layer: int, time: float = 0.0, lane: float = 0.0, etc: int | float = 0.0) -> float:
+    return (1 / 128) * etc + (1 / 128) * abs(lane) - time + 512 * layer

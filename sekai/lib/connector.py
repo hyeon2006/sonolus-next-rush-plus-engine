@@ -484,6 +484,7 @@ def draw_connector(
         last_alpha = next_alpha
         last_target_time = next_target_time
 
+
 def get_cross_fate_opacities(a, t, period):
     time_in_cycle = t % period
     angle = (time_in_cycle * pi) / period
@@ -493,10 +494,11 @@ def get_cross_fate_opacities(a, t, period):
     final_exponent = no_correction_exp * (1 - intensity) + full_correction_exp * intensity
     base_opacity_a = cos(angle) ** 2
     base_opacity_b = sin(angle) ** 2
-    opacity1 = a * base_opacity_a ** final_exponent
-    opacity2 = a * base_opacity_b ** final_exponent
-    
+    opacity1 = a * base_opacity_a**final_exponent
+    opacity2 = a * base_opacity_b**final_exponent
+
     return opacity1, opacity2
+
 
 class ActiveConnectorInfo(Record):
     visual_lane: float
