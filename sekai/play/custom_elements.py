@@ -40,7 +40,7 @@ def spawn_custom(
             and judgment_text.custom_available
             and accuracy_text.custom_available
             and judgment != Judgment.PERFECT
-            and judgment != Judgment.MISS
+            and not check_pass
         ):
             JudgmentAccuracy.spawn(
                 spawn_time=time(),
