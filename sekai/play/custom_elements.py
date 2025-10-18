@@ -19,7 +19,12 @@ from sonolus.script.interval import Interval
 
 
 def spawn_custom(
-    judgment: Judgment, accuracy: float, windows: JudgmentWindow, windows_bad: Interval, wrong_way: bool, check_pass: bool
+    judgment: Judgment,
+    accuracy: float,
+    windows: JudgmentWindow,
+    windows_bad: Interval,
+    wrong_way: bool,
+    check_pass: bool,
 ):
     if Options.hide_custom == False:
         if Options.custom_combo and combo_label.custom_available:
@@ -109,9 +114,7 @@ class ComboNumber(PlayArchetype):
         if self.combo == 0:
             self.despawn = True
             return
-        draw_combo_number(
-            draw_time=self.spawn_time, ap=comboNumber.ap, combo=self.combo
-        )
+        draw_combo_number(draw_time=self.spawn_time, ap=comboNumber.ap, combo=self.combo)
 
     def update_sequential(self):
         if self.check == True:
@@ -154,7 +157,7 @@ class JudgmentText(PlayArchetype):
             judgment=self.judgment,
             windows_bad=self.windows_bad,
             accuracy=self.accuracy,
-            check_pass=self.check_pass
+            check_pass=self.check_pass,
         )
 
     def update_sequential(self):

@@ -62,13 +62,9 @@ def draw_combo_label(draw_time: float, ap: bool):
     z = get_z(layer=LAYER_JUDGMENT, time=-draw_time)
     glow_z = get_z(layer=LAYER_JUDGMENT, time=-draw_time, etc=-1)
     if ap:
-        combo_label.get_sprite(ComboType.NORMAL).draw(
-            quad=layout, z=z, a=ui.combo_config.alpha
-        )
+        combo_label.get_sprite(ComboType.NORMAL).draw(quad=layout, z=z, a=ui.combo_config.alpha)
     else:
-        combo_label.get_sprite(ComboType.AP).draw(
-            quad=layout, z=z, a=ui.combo_config.alpha
-        )
+        combo_label.get_sprite(ComboType.AP).draw(quad=layout, z=z, a=ui.combo_config.alpha)
         combo_label.get_sprite(ComboType.GLOW).draw(quad=layout, z=glow_z, a=a)
 
 
@@ -193,65 +189,40 @@ class ComboNumberLayout(Record):
         s2_inv = 1 - self.layout2.scale
 
         for i in range(self.core.digit_count):
-            digit = (
-                floor(self.core.combo_number / 10 ** (self.core.digit_count - 1 - i))
-                % 10
-            )
+            digit = floor(self.core.combo_number / 10 ** (self.core.digit_count - 1 - i)) % 10
 
             digit_center_x = (
-                self.layout1.start_x
-                + (i * (self.layout1.width + self.layout1.gap))
-                + self.layout1.width / 2
+                self.layout1.start_x + (i * (self.layout1.width + self.layout1.gap)) + self.layout1.width / 2
             )
             digit_center_x2 = (
-                self.layout2.start_x
-                + (i * (self.layout2.width + self.layout2.gap))
-                + self.layout2.width / 2
+                self.layout2.start_x + (i * (self.layout2.width + self.layout2.gap)) + self.layout2.width / 2
             )
 
             digit_layout = self.layout_combo_number(
-                l=self.layout1.scale * (digit_center_x - self.layout1.width / 2)
-                + s_inv * self.common.center_x,
-                r=self.layout1.scale * (digit_center_x + self.layout1.width / 2)
-                + s_inv * self.common.center_x,
-                t=self.layout1.scale * (self.common.center_y - self.layout1.height / 2)
-                + s_inv * self.common.center_y,
-                b=self.layout1.scale * (self.common.center_y + self.layout1.height / 2)
-                + s_inv * self.common.center_y,
+                l=self.layout1.scale * (digit_center_x - self.layout1.width / 2) + s_inv * self.common.center_x,
+                r=self.layout1.scale * (digit_center_x + self.layout1.width / 2) + s_inv * self.common.center_x,
+                t=self.layout1.scale * (self.common.center_y - self.layout1.height / 2) + s_inv * self.common.center_y,
+                b=self.layout1.scale * (self.common.center_y + self.layout1.height / 2) + s_inv * self.common.center_y,
             )
             digit_layout2 = self.layout_combo_number(
-                l=self.layout2.scale * (digit_center_x2 - self.layout2.width / 2)
-                + s2_inv * self.common.center_x,
-                r=self.layout2.scale * (digit_center_x2 + self.layout2.width / 2)
-                + s2_inv * self.common.center_x,
-                t=self.layout2.scale * (self.common.center_y - self.layout2.height / 2)
-                + s2_inv * self.common.center_y,
-                b=self.layout2.scale * (self.common.center_y + self.layout2.height / 2)
-                + s2_inv * self.common.center_y,
+                l=self.layout2.scale * (digit_center_x2 - self.layout2.width / 2) + s2_inv * self.common.center_x,
+                r=self.layout2.scale * (digit_center_x2 + self.layout2.width / 2) + s2_inv * self.common.center_x,
+                t=self.layout2.scale * (self.common.center_y - self.layout2.height / 2) + s2_inv * self.common.center_y,
+                b=self.layout2.scale * (self.common.center_y + self.layout2.height / 2) + s2_inv * self.common.center_y,
             )
 
             if not self.core.ap:
-                combo_number.get_sprite(combo=digit, type=ComboType.GLOW).draw(
-                    quad=digit_layout, z=z3, a=self.alpha.a3
-                )
-                combo_number.get_sprite(combo=digit, type=ComboType.AP).draw(
-                    quad=digit_layout2, z=z2, a=self.alpha.a2
-                )
-                combo_number.get_sprite(combo=digit, type=ComboType.AP).draw(
-                    quad=digit_layout, z=z, a=self.alpha.a
-                )
+                combo_number.get_sprite(combo=digit, type=ComboType.GLOW).draw(quad=digit_layout, z=z3, a=self.alpha.a3)
+                combo_number.get_sprite(combo=digit, type=ComboType.AP).draw(quad=digit_layout2, z=z2, a=self.alpha.a2)
+                combo_number.get_sprite(combo=digit, type=ComboType.AP).draw(quad=digit_layout, z=z, a=self.alpha.a)
             else:
                 combo_number.get_sprite(combo=digit, type=ComboType.NORMAL).draw(
                     quad=digit_layout2, z=z2, a=self.alpha.a2
                 )
-                combo_number.get_sprite(combo=digit, type=ComboType.NORMAL).draw(
-                    quad=digit_layout, z=z, a=self.alpha.a
-                )
+                combo_number.get_sprite(combo=digit, type=ComboType.NORMAL).draw(quad=digit_layout, z=z, a=self.alpha.a)
 
 
-def draw_judgment_text(
-    draw_time: float, judgment: Judgment, windows_bad: Interval, accuracy: float, check_pass: bool
-):
+def draw_judgment_text(draw_time: float, judgment: Judgment, windows_bad: Interval, accuracy: float, check_pass: bool):
     ui = runtime_ui()
 
     screen_center = Vec2(x=0, y=0.792)
@@ -263,9 +234,9 @@ def draw_judgment_text(
     s = unlerp_clamped(draw_time, draw_time + 0.064, time())
     layout = layout_combo_label(screen_center, w=w * s / 2, h=h * s / 2)
     z = get_z(layer=LAYER_JUDGMENT, time=-draw_time)
-    judgment_text.get_sprite(
-        type=judgment, windows_bad=windows_bad, accuracy=accuracy, check_pass=check_pass
-    ).draw(quad=layout, z=z, a=a)
+    judgment_text.get_sprite(type=judgment, windows_bad=windows_bad, accuracy=accuracy, check_pass=check_pass).draw(
+        quad=layout, z=z, a=a
+    )
 
 
 def draw_judgment_accuracy(
@@ -319,6 +290,6 @@ def draw_damage_flash(
                     br=Vec2(0, b),
                     tl=Vec2(l_val, t_val),
                     tr=Vec2(0, t_val),
-                    )
                 )
+            )
             damage_flash.get_sprite().draw(quad=layout, z=z, a=a)

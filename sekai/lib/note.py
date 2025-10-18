@@ -776,7 +776,9 @@ def get_note_slot_glow_sprite(kind: NoteKind) -> Sprite:
     return result
 
 
-def play_note_hit_effects(kind: NoteKind, lane: float, size: float, direction: FlickDirection, judgment: Judgment, accuracy: float = 0):
+def play_note_hit_effects(
+    kind: NoteKind, lane: float, size: float, direction: FlickDirection, judgment: Judgment, accuracy: float = 0
+):
     if kind == NoteKind.DAMAGE and judgment == Judgment.PERFECT:
         return
     sfx = get_note_effect(kind, judgment, accuracy)

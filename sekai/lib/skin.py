@@ -12,6 +12,7 @@ from sekai.lib.options import Options
 from sonolus.script.runtime import is_watch, is_replay
 from sonolus.script.debug import debug_log
 
+
 @skin
 class Skin:
     cover: StandardSprite.STAGE_COVER
@@ -158,6 +159,7 @@ class Skin:
     damage_flash: Sprite = sprite("Damage Flash")
     auto_live: Sprite = sprite("Auto Live")
 
+
 class BodySprites(Record):
     left: Sprite
     middle: Sprite
@@ -232,7 +234,7 @@ class ComboNumberSprite(Record):
     normal: SpriteGroup
     ap: SpriteGroup
     glow: SpriteGroup
-    
+
     def get_sprite(self, combo: int, type: ComboType):
         result = +Sprite
         match type:
@@ -245,7 +247,7 @@ class ComboNumberSprite(Record):
             case _:
                 assert_never(type)
         return result
-    
+
     @property
     def custom_available(self):
         return self.normal[0].is_available
@@ -255,7 +257,7 @@ class ComboLabelSprite(Record):
     normal: Sprite
     ap: Sprite
     glow: Sprite
-    
+
     def get_sprite(self, type: ComboType):
         result = +Sprite
         match type:
@@ -268,7 +270,7 @@ class ComboLabelSprite(Record):
             case _:
                 assert_never(type)
         return result
-    
+
     @property
     def custom_available(self):
         return self.normal.is_available
@@ -281,15 +283,20 @@ class JudgmentSprite(Record):
     bad: Sprite
     miss: Sprite
     auto: Sprite
-    
+
     def get_bad(self, judgment: Judgment, windows_bad: Interval, accuracy: float, check_pass: bool):
         if Options.auto_judgment and is_watch() and not is_replay():
             return JudgmentType.AUTO
-        elif judgment == Judgment.MISS and windows_bad != Interval(0, 0) and windows_bad.start <= accuracy <= windows_bad.end and not check_pass:
+        elif (
+            judgment == Judgment.MISS
+            and windows_bad != Interval(0, 0)
+            and windows_bad.start <= accuracy <= windows_bad.end
+            and not check_pass
+        ):
             return JudgmentType.BAD
         else:
             return judgment
-    
+
     def get_sprite(self, type: Judgment, windows_bad: Interval, accuracy: float, check_pass: bool):
         result = +Sprite
         match self.get_bad(type, windows_bad, accuracy, check_pass):
@@ -308,7 +315,7 @@ class JudgmentSprite(Record):
             case _:
                 assert_never(type)
         return result
-    
+
     @property
     def custom_available(self):
         return self.perfect.is_available
@@ -318,7 +325,7 @@ class AccuracySprite(Record):
     fast: Sprite
     late: Sprite
     flick: Sprite
-    
+
     def get_accuracy(self, judgment: Judgment, windows: Interval, accuracy: float, wrong_way: bool):
         if judgment != Judgment.PERFECT:
             if wrong_way:
@@ -329,7 +336,7 @@ class AccuracySprite(Record):
                 return AccuracyType.Late
         else:
             return AccuracyType.NONE
-    
+
     def get_sprite(self, judgment: Judgment, windows: Interval, accuracy: float, wrong_way: bool):
         result = +Sprite
         match self.get_accuracy(judgment, windows, accuracy, wrong_way):
@@ -342,7 +349,7 @@ class AccuracySprite(Record):
             case _:
                 assert_never(type)
         return result
-    
+
     @property
     def custom_available(self):
         return self.fast.is_available
@@ -353,10 +360,11 @@ class DamageFlashSprite(Record):
 
     def get_sprite(self):
         return self.normal
-    
+
     @property
     def custom_available(self):
         return self.normal.is_available
+
 
 normal_note_body_sprites = BodySprites(
     left=Skin.normal_note_left,
@@ -495,24 +503,13 @@ combo_number = ComboNumberSprite(
     ap=Skin.ap_number,
     glow=Skin.combo_number_glow,
 )
-combo_label = ComboLabelSprite(
-    normal=Skin.combo_label,
-    ap=Skin.ap_combo_label,
-    glow=Skin.combo_label_glow
-)
+combo_label = ComboLabelSprite(normal=Skin.combo_label, ap=Skin.ap_combo_label, glow=Skin.combo_label_glow)
 judgment_text = JudgmentSprite(
-    perfect=Skin.perfect,
-    great=Skin.great,
-    good=Skin.good,
-    bad=Skin.bad,
-    miss=Skin.miss,
-    auto=Skin.auto
+    perfect=Skin.perfect, great=Skin.great, good=Skin.good, bad=Skin.bad, miss=Skin.miss, auto=Skin.auto
 )
 accuracy_text = AccuracySprite(
     fast=Skin.fast_warning,
     late=Skin.late_warning,
     flick=Skin.flick_warning,
 )
-damage_flash = DamageFlashSprite(
-    normal=Skin.damage_flash
-)
+damage_flash = DamageFlashSprite(normal=Skin.damage_flash)
