@@ -200,8 +200,6 @@ class BaseNote(PlayArchetype):
                 self.handle_tap_input()
             case NoteKind.NORM_FLICK | NoteKind.CRIT_FLICK | NoteKind.NORM_HEAD_FLICK | NoteKind.CRIT_HEAD_FLICK:
                 self.handle_flick_input()
-            case NoteKind.NORM_TAIL_FLICK | NoteKind.CRIT_TAIL_FLICK:
-                self.handle_tail_flick_input()
             case (
                 NoteKind.NORM_TRACE
                 | NoteKind.CRIT_TRACE
@@ -218,6 +216,8 @@ class BaseNote(PlayArchetype):
                 | NoteKind.CRIT_HEAD_TRACE_FLICK
                 | NoteKind.NORM_TAIL_TRACE_FLICK
                 | NoteKind.CRIT_TAIL_TRACE_FLICK
+                | NoteKind.NORM_TAIL_FLICK
+                | NoteKind.CRIT_TAIL_FLICK
             ):
                 self.handle_trace_flick_input()
             case (
