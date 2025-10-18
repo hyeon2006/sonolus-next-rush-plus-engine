@@ -320,7 +320,7 @@ class AccuracySprite(Record):
     flick: Sprite
     
     def get_accuracy(self, judgment: Judgment, windows: Interval, accuracy: float, wrong_way: bool):
-        if judgment != Judgment.PERFECT and judgment != Judgment.MISS:
+        if judgment != Judgment.PERFECT:
             if wrong_way:
                 return AccuracyType.Flick
             elif windows.start > accuracy:
