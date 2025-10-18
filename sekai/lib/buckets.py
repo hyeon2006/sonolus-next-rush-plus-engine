@@ -428,3 +428,9 @@ SLIDE_TICK_JUDGMENT_WINDOW = frames_to_window((7.5, 0), None, None, None)
 EMPTY_JUDGMENT_WINDOW = frames_to_window(0, None, None, None)
 
 SLIDE_END_LOCKOUT_DURATION = 0.25
+
+TAP_NORMAL_WINDOW_BAD = Interval(7.5 / 60, 7.5/ 60)
+TAP_CRITICAL_WINDOW_BAD = Interval(7.5 / 60, 7.5/ 60)
+
+FLICK_NORMAL_WINDOW_BAD = Interval(7.5 / 60, 8.5/ 60)
+FLICK_CRITICAL_WINDOW_BAD = Interval(7.5 / 60, 8.5/ 60)

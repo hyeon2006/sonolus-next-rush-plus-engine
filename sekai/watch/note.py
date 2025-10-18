@@ -161,7 +161,7 @@ class WatchBaseNote(WatchArchetype):
         if time() < self.despawn_time():
             return
         if (not is_replay() or self.played_hit_effects) and self.is_scored:
-            play_note_hit_effects(self.kind, self.effect_kind, self.lane, self.size, self.direction, self.judgment)
+            play_note_hit_effects(self.kind, self.lane, self.size, self.direction, self.judgment, self.accuracy)
 
     @property
     def progress(self) -> float:

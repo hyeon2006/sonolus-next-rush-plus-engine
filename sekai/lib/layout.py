@@ -54,12 +54,12 @@ class AccuracyType(IntEnum):
 
 
 class JudgmentType(IntEnum):
-    Perfect = 1
-    Great = 2
-    Good = 3
-    Bad = 4
-    Auto = -1
-    Miss = 0
+    PERFECT = 1
+    GREAT = 2
+    GOOD = 3
+    BAD = 4
+    AUTO = -1
+    MISS = 0
 
 
 class ComboType(IntEnum):

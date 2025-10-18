@@ -18,7 +18,7 @@ from sonolus.script.interval import Interval
 
 
 def spawn_custom(
-    judgment: Judgment, accuracy: float, windows: JudgmentWindow, wrong_way: bool
+    judgment: Judgment, accuracy: float, windows: JudgmentWindow, windows_bad: Interval, wrong_way: bool
 ):
     if Options.hide_custom == False:
         if Options.custom_combo and combo_label.custom_available:
@@ -29,7 +29,8 @@ def spawn_custom(
             JudgmentText.spawn(
                 spawn_time=time(),
                 judgment=judgment,
-                accuracy=accuracy,
+                windows_bad=windows_bad,
+                accuracy=accuracy
             )
         if (
             Options.custom_judgment
@@ -130,7 +131,8 @@ class judgmentText:
 class JudgmentText(PlayArchetype):
     spawn_time: float = entity_memory()
     judgment: Judgment = entity_memory()
-    accuracy: float = entity_memory()
+    accuracy: Judgment = entity_memory()
+    windows_bad: Interval = entity_memory()
     check: bool = entity_memory()
     combo: int = entity_memory()
     name = archetype_names.JUDGMENT_TEXT
@@ -144,8 +146,9 @@ class JudgmentText(PlayArchetype):
             return
         draw_judgment_text(
             draw_time=self.spawn_time,
-            judgment_type=self.judgment,
-            accuracy=self.accuracy,
+            judgment=self.judgment,
+            windows_bad=self.windows_bad,
+            accuracy=self.accuracy
         )
 
     def update_sequential(self):

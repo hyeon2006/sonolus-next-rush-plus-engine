@@ -38,6 +38,7 @@ from sekai.lib.note import (
     get_note_effect_kind,
     get_note_haptic_feedback,
     get_note_window,
+    get_note_window_bad,
     get_visual_spawn_time,
     has_release_input,
     has_tap_input,
@@ -79,6 +80,7 @@ class BaseNote(PlayArchetype):
     start_time: float = entity_data()
     target_scaled_time: CompositeTime = entity_data()
     judgment_window: JudgmentWindow = entity_data()
+    judgment_window_bad: Interval= entity_data()
     input_interval: Interval = entity_data()
     unadjusted_input_interval: Interval = entity_data()
 
@@ -116,6 +118,7 @@ class BaseNote(PlayArchetype):
 
         self.target_time = beat_to_time(self.beat)
         self.judgment_window = get_note_window(self.kind)
+        self.judgment_window_bad = get_note_window_bad(self.kind)
         self.input_interval = self.judgment_window.good + self.target_time + input_offset()
         self.unadjusted_input_interval = self.judgment_window.good + self.target_time
 
@@ -301,14 +304,11 @@ class BaseNote(PlayArchetype):
     def terminate(self):
         if self.should_play_hit_effects:
             # We do this here for parallelism, and to reduce compilation time.
-            play_note_hit_effects(
-                self.kind, self.effect_kind, self.lane, self.size, self.direction, self.result.judgment
-            )
-            self.result.haptic = get_note_haptic_feedback(self.kind, self.result.judgment)
+            play_note_hit_effects(self.kind, self.lane, self.size, self.direction, self.result.judgment, self.result.accuracy)
         self.end_time = offset_adjusted_time()
         self.played_hit_effects = self.should_play_hit_effects
         if self.is_scored:
-            spawn_custom(judgment=self.result.judgment, accuracy=self.result.accuracy, windows=self.judgment_window, wrong_way=self.wrong_way)
+            spawn_custom(judgment=self.result.judgment, accuracy=self.result.accuracy, windows=self.judgment_window, windows_bad=self.judgment_window_bad, wrong_way=self.wrong_way)
 
     def handle_tap_input(self):
         if time() > self.input_interval.end:

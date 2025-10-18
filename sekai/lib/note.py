@@ -9,6 +9,7 @@ from sonolus.script.effect import Effect
 from sonolus.script.interval import lerp, remap_clamped
 from sonolus.script.runtime import is_tutorial, is_watch, level_life, level_score, time
 from sonolus.script.sprite import Sprite
+from sonolus.script.interval import Interval
 
 from sekai.lib import archetype_names
 from sekai.lib.buckets import (
@@ -28,6 +29,10 @@ from sekai.lib.buckets import (
     TRACE_FLICK_CRITICAL_WINDOW,
     TRACE_FLICK_NORMAL_WINDOW,
     TRACE_NORMAL_WINDOW,
+    TAP_NORMAL_WINDOW_BAD,
+    TAP_CRITICAL_WINDOW_BAD,
+    FLICK_NORMAL_WINDOW_BAD,
+    FLICK_CRITICAL_WINDOW_BAD,
     Buckets,
 )
 from sekai.lib.connector import ActiveConnectorKind, ConnectorKind
@@ -619,77 +624,7 @@ def get_note_particles(kind: NoteKind, direction: FlickDirection) -> NoteParticl
     return result
 
 
-class NoteEffectKind(IntEnum):
-    DEFAULT = 0
-    NONE = 1
-    NORM_BASIC = 2
-    NORM_FLICK = 3
-    NORM_TRACE = 4
-    NORM_TICK = 5
-    CRIT_BASIC = 6
-    CRIT_FLICK = 7
-    CRIT_TRACE = 8
-    CRIT_TICK = 9
-    DAMAGE = 10
-
-
-def get_note_effect_kind(kind: NoteKind, override: NoteEffectKind = NoteEffectKind.DEFAULT) -> NoteEffectKind:
-    match override:
-        case NoteEffectKind.DEFAULT:
-            match kind:
-                case (
-                    NoteKind.NORM_TAP
-                    | NoteKind.NORM_RELEASE
-                    | NoteKind.NORM_HEAD_TAP
-                    | NoteKind.NORM_HEAD_RELEASE
-                    | NoteKind.NORM_TAIL_TAP
-                    | NoteKind.NORM_TAIL_RELEASE
-                    | NoteKind.CRIT_RELEASE
-                    | NoteKind.CRIT_HEAD_TAP
-                    | NoteKind.CRIT_HEAD_RELEASE
-                    | NoteKind.CRIT_TAIL_TAP
-                    | NoteKind.CRIT_TAIL_RELEASE
-                ):
-                    return NoteEffectKind.NORM_BASIC
-                case (
-                    NoteKind.NORM_FLICK
-                    | NoteKind.NORM_TRACE_FLICK
-                    | NoteKind.NORM_HEAD_FLICK
-                    | NoteKind.NORM_HEAD_TRACE_FLICK
-                    | NoteKind.NORM_TAIL_FLICK
-                    | NoteKind.NORM_TAIL_TRACE_FLICK
-                ):
-                    return NoteEffectKind.NORM_FLICK
-                case NoteKind.NORM_TRACE | NoteKind.NORM_HEAD_TRACE | NoteKind.NORM_TAIL_TRACE:
-                    return NoteEffectKind.NORM_TRACE
-                case NoteKind.NORM_TICK:
-                    return NoteEffectKind.NORM_TICK
-                case NoteKind.CRIT_TAP:
-                    return NoteEffectKind.CRIT_BASIC
-                case (
-                    NoteKind.CRIT_FLICK
-                    | NoteKind.CRIT_TRACE_FLICK
-                    | NoteKind.CRIT_HEAD_FLICK
-                    | NoteKind.CRIT_HEAD_TRACE_FLICK
-                    | NoteKind.CRIT_TAIL_FLICK
-                    | NoteKind.CRIT_TAIL_TRACE_FLICK
-                ):
-                    return NoteEffectKind.CRIT_FLICK
-                case NoteKind.CRIT_TRACE | NoteKind.CRIT_HEAD_TRACE | NoteKind.CRIT_TAIL_TRACE:
-                    return NoteEffectKind.CRIT_TRACE
-                case NoteKind.CRIT_TICK:
-                    return NoteEffectKind.CRIT_TICK
-                case NoteKind.HIDE_TICK | NoteKind.ANCHOR:
-                    return NoteEffectKind.NONE
-                case NoteKind.DAMAGE:
-                    return NoteEffectKind.DAMAGE
-                case _:
-                    assert_never(kind)
-        case _:
-            return override
-
-
-def get_note_effect(kind: NoteEffectKind, judgment: Judgment):
+def get_note_effect(kind: NoteKind, judgment: Judgment, accuracy: float):
     result = Effect(-1)
     assert kind != NoteEffectKind.DEFAULT, "Unexpected NoteEffectKind.DEFAULT argument to get_note_effect"
     match kind:
@@ -702,7 +637,11 @@ def get_note_effect(kind: NoteEffectKind, judgment: Judgment):
                 case Judgment.GOOD:
                     result @= Effects.normal_good
                 case Judgment.MISS:
-                    result @= EMPTY_EFFECT
+                    windows_bad = get_note_window_bad(kind)
+                    if get_note_window_bad(kind) != Interval(0, 0) and windows_bad.start < accuracy <= windows_bad.end:
+                        result @= Effects.normal_good
+                    else:
+                        result @= EMPTY_EFFECT
                 case _:
                     assert_never(judgment)
         case NoteEffectKind.NORM_FLICK:
@@ -714,7 +653,11 @@ def get_note_effect(kind: NoteEffectKind, judgment: Judgment):
                 case Judgment.GOOD:
                     result @= Effects.flick_good
                 case Judgment.MISS:
-                    result @= EMPTY_EFFECT
+                    windows_bad = get_note_window_bad(kind)
+                    if get_note_window_bad(kind) != Interval(0, 0) and windows_bad.start < accuracy <= windows_bad.end:
+                        result @= Effects.flick_good
+                    else:
+                        result @= EMPTY_EFFECT
                 case _:
                     assert_never(judgment)
         case NoteEffectKind.NORM_TRACE:
@@ -759,13 +702,115 @@ def get_note_effect(kind: NoteEffectKind, judgment: Judgment):
     return result
 
 
-def play_note_hit_effects(
-    kind: NoteKind, effect_kind: NoteEffectKind, lane: float, size: float, direction: FlickDirection, judgment: Judgment
-):
+def get_note_slot_sprite(kind: NoteKind) -> Sprite:
+    result = Sprite(-1)
+    match kind:
+        case NoteKind.NORM_TAP:
+            result @= Skin.normal_slot
+        case NoteKind.NORM_FLICK | NoteKind.NORM_HEAD_FLICK | NoteKind.NORM_TAIL_FLICK:
+            result @= Skin.flick_slot
+        case (
+            NoteKind.NORM_RELEASE
+            | NoteKind.NORM_HEAD_TAP
+            | NoteKind.NORM_HEAD_RELEASE
+            | NoteKind.NORM_TAIL_TAP
+            | NoteKind.NORM_TAIL_RELEASE
+        ):
+            result @= Skin.slide_slot
+        case NoteKind.CRIT_TAP:
+            result @= Skin.critical_slot
+        case NoteKind.CRIT_FLICK | NoteKind.CRIT_HEAD_FLICK | NoteKind.CRIT_TAIL_FLICK:
+            result @= Skin.critical_flick_slot
+        case (
+            NoteKind.CRIT_RELEASE
+            | NoteKind.CRIT_HEAD_TAP
+            | NoteKind.CRIT_HEAD_RELEASE
+            | NoteKind.CRIT_TAIL_TAP
+            | NoteKind.CRIT_TAIL_RELEASE
+        ):
+            result @= Skin.critical_slide_slot
+        case (
+            NoteKind.NORM_TRACE
+            | NoteKind.CRIT_TRACE
+            | NoteKind.NORM_TRACE_FLICK
+            | NoteKind.CRIT_TRACE_FLICK
+            | NoteKind.NORM_HEAD_TRACE
+            | NoteKind.CRIT_HEAD_TRACE
+            | NoteKind.NORM_HEAD_TRACE_FLICK
+            | NoteKind.CRIT_HEAD_TRACE_FLICK
+            | NoteKind.NORM_TAIL_TRACE
+            | NoteKind.CRIT_TAIL_TRACE
+            | NoteKind.NORM_TAIL_TRACE_FLICK
+            | NoteKind.CRIT_TAIL_TRACE_FLICK
+            | NoteKind.NORM_TICK
+            | NoteKind.CRIT_TICK
+            | NoteKind.HIDE_TICK
+            | NoteKind.DAMAGE
+            | NoteKind.ANCHOR
+        ):
+            result @= Sprite(-1)
+        case _:
+            assert_never(kind)
+    return result
+
+
+def get_note_slot_glow_sprite(kind: NoteKind) -> Sprite:
+    result = Sprite(-1)
+    match kind:
+        case NoteKind.NORM_TAP:
+            result @= Skin.normal_slot_glow
+        case NoteKind.NORM_FLICK | NoteKind.NORM_HEAD_FLICK | NoteKind.NORM_TAIL_FLICK:
+            result @= Skin.flick_slot_glow
+        case (
+            NoteKind.NORM_RELEASE
+            | NoteKind.NORM_HEAD_TAP
+            | NoteKind.NORM_HEAD_RELEASE
+            | NoteKind.NORM_TAIL_TAP
+            | NoteKind.NORM_TAIL_RELEASE
+        ):
+            result @= Skin.slide_slot_glow
+        case NoteKind.CRIT_TAP:
+            result @= Skin.critical_slot_glow
+        case NoteKind.CRIT_FLICK | NoteKind.CRIT_HEAD_FLICK | NoteKind.CRIT_TAIL_FLICK:
+            result @= Skin.critical_flick_slot_glow
+        case (
+            NoteKind.CRIT_RELEASE
+            | NoteKind.CRIT_HEAD_TAP
+            | NoteKind.CRIT_HEAD_RELEASE
+            | NoteKind.CRIT_TAIL_TAP
+            | NoteKind.CRIT_TAIL_RELEASE
+        ):
+            result @= Skin.critical_slide_slot_glow
+        case (
+            NoteKind.NORM_TRACE
+            | NoteKind.CRIT_TRACE
+            | NoteKind.NORM_TRACE_FLICK
+            | NoteKind.CRIT_TRACE_FLICK
+            | NoteKind.NORM_HEAD_TRACE
+            | NoteKind.CRIT_HEAD_TRACE
+            | NoteKind.NORM_HEAD_TRACE_FLICK
+            | NoteKind.CRIT_HEAD_TRACE_FLICK
+            | NoteKind.NORM_TAIL_TRACE
+            | NoteKind.CRIT_TAIL_TRACE
+            | NoteKind.NORM_TAIL_TRACE_FLICK
+            | NoteKind.CRIT_TAIL_TRACE_FLICK
+            | NoteKind.NORM_TICK
+            | NoteKind.CRIT_TICK
+            | NoteKind.HIDE_TICK
+            | NoteKind.DAMAGE
+            | NoteKind.ANCHOR
+        ):
+            result @= Sprite(-1)
+        case _:
+            assert_never(kind)
+    return result
+
+
+def play_note_hit_effects(kind: NoteKind, lane: float, size: float, direction: FlickDirection, judgment: Judgment, accuracy: float = 0):
     if kind == NoteKind.DAMAGE and judgment == Judgment.PERFECT:
         return
-    sfx = get_note_effect(effect_kind, judgment)
-    particles = get_note_particles(kind, direction)
+    sfx = get_note_effect(kind, judgment, accuracy)
+    particles = get_note_particles(kind)
     if Options.sfx_enabled and not Options.auto_sfx and not is_watch() and sfx.is_available:
         sfx.play(SFX_DISTANCE)
     if Options.note_effect_enabled:
@@ -804,37 +849,20 @@ def play_note_hit_effects(
         schedule_note_slot_effects(kind, lane, size, time(), direction)
 
 
-def get_note_haptic_feedback(kind: NoteKind, judgment: Judgment) -> HapticType:
-    if not Options.haptics_enabled or judgment not in {Judgment.PERFECT, Judgment.GREAT}:
-        return HapticType.NONE
-    match kind:
-        case (
-            NoteKind.NORM_TAP
-            | NoteKind.NORM_HEAD_TAP
-            | NoteKind.NORM_TAIL_TAP
-            | NoteKind.CRIT_TAP
-            | NoteKind.CRIT_HEAD_TAP
-            | NoteKind.CRIT_TAIL_TAP
-        ):
-            return HapticType.HEAVY
-        case _:
-            return HapticType.NONE
-
-
-def schedule_note_auto_sfx(kind: NoteEffectKind, target_time: float):
+def schedule_note_auto_sfx(kind: NoteKind, target_time: float, accuracy: float = 0):
     if not Options.sfx_enabled:
         return
     if not Options.auto_sfx:
         return
-    sfx = get_note_effect(kind, Judgment.PERFECT)
+    sfx = get_note_effect(kind, Judgment.PERFECT, accuracy)
     if sfx.is_available:
         sfx.schedule(target_time, SFX_DISTANCE)
 
 
-def schedule_note_sfx(kind: NoteEffectKind, judgment: Judgment, target_time: float):
+def schedule_note_sfx(kind: NoteKind, judgment: Judgment, target_time: float, accuracy: float = 0):
     if not Options.sfx_enabled:
         return
-    sfx = get_note_effect(kind, judgment)
+    sfx = get_note_effect(kind, judgment, accuracy)
     if sfx.is_available:
         sfx.schedule(target_time, SFX_DISTANCE)
 
@@ -921,6 +949,53 @@ def get_note_window(kind: NoteKind) -> JudgmentWindow:
             result @= SLIDE_TICK_JUDGMENT_WINDOW
         case NoteKind.ANCHOR | NoteKind.DAMAGE:
             result @= EMPTY_JUDGMENT_WINDOW
+        case _:
+            assert_never(kind)
+    return result
+
+
+def get_note_window_bad(kind: NoteKind) -> Interval:
+    result = +Interval
+    match kind:
+        case NoteKind.NORM_TAP | NoteKind.NORM_HEAD_TAP | NoteKind.NORM_TAIL_TAP:
+            result @= TAP_NORMAL_WINDOW_BAD
+        case NoteKind.CRIT_TAP | NoteKind.CRIT_HEAD_TAP | NoteKind.CRIT_TAIL_TAP:
+            result @= TAP_CRITICAL_WINDOW_BAD
+        case NoteKind.NORM_FLICK | NoteKind.NORM_HEAD_FLICK:
+            result @= FLICK_NORMAL_WINDOW_BAD
+        case NoteKind.CRIT_FLICK | NoteKind.CRIT_HEAD_FLICK:
+            result @= FLICK_NORMAL_WINDOW_BAD
+        case NoteKind.DAMAGE:
+            result @= Interval(-999, 999)
+        case (
+            NoteKind.NORM_TAIL_FLICK
+            | NoteKind.CRIT_TAIL_FLICK
+            | NoteKind.NORM_TRACE
+            | NoteKind.NORM_HEAD_TRACE
+            | NoteKind.CRIT_TRACE
+            | NoteKind.CRIT_HEAD_TRACE
+            | NoteKind.NORM_TRACE_FLICK
+            | NoteKind.NORM_HEAD_TRACE_FLICK
+            | NoteKind.NORM_TAIL_TRACE_FLICK
+            | NoteKind.CRIT_TRACE_FLICK
+            | NoteKind.CRIT_HEAD_TRACE_FLICK
+            | NoteKind.CRIT_TAIL_TRACE_FLICK
+            | NoteKind.NORM_RELEASE
+            | NoteKind.NORM_HEAD_RELEASE
+            | NoteKind.NORM_TAIL_RELEASE
+            | NoteKind.CRIT_RELEASE
+            | NoteKind.CRIT_HEAD_RELEASE
+            | NoteKind.CRIT_TAIL_RELEASE
+            | NoteKind.NORM_TAIL_TRACE
+            | NoteKind.CRIT_TAIL_TRACE
+            | NoteKind.NORM_TAIL_TRACE_FLICK
+            | NoteKind.CRIT_TAIL_TRACE_FLICK
+            | NoteKind.NORM_TICK
+            | NoteKind.CRIT_TICK
+            | NoteKind.HIDE_TICK
+            | NoteKind.ANCHOR
+        ):
+            result @= Interval(0, 0)
         case _:
             assert_never(kind)
     return result

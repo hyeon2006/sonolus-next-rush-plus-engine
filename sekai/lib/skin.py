@@ -13,6 +13,8 @@ from sekai.lib.layout import FlickDirection, JudgmentType, AccuracyType, ComboTy
 from sonolus.script.bucket import Judgment
 from sonolus.script.interval import Interval
 from sekai.lib.options import Options
+from sonolus.script.runtime import is_watch, is_replay
+from sonolus.script.debug import debug_log
 
 @skin
 class BaseSkin:
@@ -556,28 +558,28 @@ class JudgmentSprite(Record):
     miss: Sprite
     auto: Sprite
     
-    def get_bad(self, judgment: Judgment, accuracy: float, watch: bool):
-        if Options.auto_judgment and watch:
-            return JudgmentType.Auto
-        elif judgment == Judgment.GOOD and (accuracy >= 0.1083 or accuracy <= -0.1083):
-            return JudgmentType.Bad
+    def get_bad(self, judgment: Judgment, windows_bad: Interval, accuracy: float):
+        if Options.auto_judgment and is_watch() and not is_replay():
+            return JudgmentType.AUTO
+        elif windows_bad != Interval(0, 0) and windows_bad.start < accuracy <= windows_bad.end:
+            return JudgmentType.BAD
         else:
             return judgment
     
-    def get_sprite(self, type: JudgmentType, accuracy: float, watch: bool):
+    def get_sprite(self, type: Judgment, windows_bad: Interval, accuracy: float):
         result = +Sprite
-        match self.get_bad(type, accuracy, watch):
-            case JudgmentType.Perfect:
+        match self.get_bad(type, windows_bad, accuracy):
+            case JudgmentType.PERFECT:
                 result @= self.perfect
-            case JudgmentType.Great:
+            case JudgmentType.GREAT:
                 result @= self.great
-            case JudgmentType.Good:
+            case JudgmentType.GOOD:
                 result @= self.good
-            case JudgmentType.Bad:
+            case JudgmentType.BAD:
                 result @= self.bad
-            case JudgmentType.Miss:
+            case JudgmentType.MISS:
                 result @= self.miss
-            case JudgmentType.Auto:
+            case JudgmentType.AUTO:
                 result @= self.auto
             case _:
                 assert_never(type)

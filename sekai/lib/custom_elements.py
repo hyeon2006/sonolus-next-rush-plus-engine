@@ -1,7 +1,6 @@
 from sekai.lib.layout import (
     layout_combo_label,
     ComboType,
-    JudgmentType,
     TARGET_ASPECT_RATIO,
     Layout,
     transform_quad,
@@ -244,7 +243,7 @@ class ComboNumberLayout(Record):
                 )
 
 
-def draw_judgment_text(draw_time: float, judgment_type: JudgmentType, accuracy: float):
+def draw_judgment_text(draw_time: float, judgment: Judgment, windows_bad: Interval, accuracy: float):
     ui = runtime_ui()
 
     screen_center = Vec2(x=0, y=0.792)
@@ -256,7 +255,7 @@ def draw_judgment_text(draw_time: float, judgment_type: JudgmentType, accuracy: 
     s = unlerp_clamped(draw_time, draw_time + 0.064, time())
     layout = layout_combo_label(screen_center, w=w * s / 2, h=h * s / 2)
     z = get_z(layer=LAYER_JUDGMENT, time=-draw_time)
-    judgment_text.get_sprite(type=judgment_type, accuracy=accuracy, watch=False).draw(
+    judgment_text.get_sprite(type=judgment, windows_bad=windows_bad, accuracy=accuracy).draw(
         quad=layout, z=z, a=a
     )
 
