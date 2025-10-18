@@ -225,6 +225,8 @@ class BaseNote(PlayArchetype):
                 | NoteKind.CRIT_TAIL_FLICK
                 | NoteKind.NORM_TAIL_TRACE_FLICK
                 | NoteKind.CRIT_TAIL_TRACE_FLICK
+                | NoteKind.NORM_TAIL_FLICK
+                | NoteKind.CRIT_TAIL_FLICK
             ):
                 self.handle_trace_flick_input()
             case (
