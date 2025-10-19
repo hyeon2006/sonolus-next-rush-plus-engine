@@ -50,6 +50,7 @@ class WatchBaseNote(WatchArchetype):
     segment_alpha: float = imported(name="segmentAlpha")
     attach_head_ref: EntityRef[WatchBaseNote] = imported(name="attachHead")
     attach_tail_ref: EntityRef[WatchBaseNote] = imported(name="attachTail")
+    next_ref: EntityRef[WatchBaseNote] = imported(name="next")
 
     kind: NoteKind = entity_data()
     data_init_done: bool = entity_data()
@@ -57,8 +58,11 @@ class WatchBaseNote(WatchArchetype):
     visual_start_time: float = entity_data()
     start_time: float = entity_data()
     target_scaled_time: float = entity_data()
+    combo: int = entity_data()
+    ap: bool = entity_data()
 
     active_connector_info: ActiveConnectorInfo = shared_memory()
+    sorted_list_head: EntityRef[WatchBaseNote] = shared_memory()
 
     end_time: float = imported()
     played_hit_effects: bool = imported()
