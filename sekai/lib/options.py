@@ -77,7 +77,7 @@ class Options:
     guide_alpha: float = slider_option(
         name="Guide Alpha",
         scope="Sekai",
-        default=0.5,
+        default=0.6,
         min=0,
         max=1,
         step=0.05,
