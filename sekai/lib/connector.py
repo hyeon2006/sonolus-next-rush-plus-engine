@@ -435,8 +435,6 @@ class ActiveConnectorInfo(Record):
     visual_size: float
     input_lane: float
     input_size: float
-    prev_input_lane: float
-    prev_input_size: float
     is_active: bool
     active_start_time: float
     connector_kind: ConnectorKind
@@ -445,12 +443,6 @@ class ActiveConnectorInfo(Record):
         return layout_hitbox(
             self.input_lane - self.input_size - leniency,
             self.input_lane + self.input_size + leniency,
-        )
-
-    def get_prev_hitbox(self, leniency: float) -> Rect:
-        return layout_hitbox(
-            self.prev_input_lane - self.prev_input_size - leniency,
-            self.prev_input_lane + self.prev_input_size + leniency,
         )
 
 
