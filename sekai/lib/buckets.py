@@ -339,12 +339,21 @@ def init_buckets():
 
 def frames_to_window(
     perfect: float | tuple[float, float],
-    great: float | tuple[float, float],
-    good: float | tuple[float, float],
+    great: float | tuple[float, float] | None,
+    good: float | tuple[float, float] | None,
+    bad: float | tuple[float, float] | None,  # Unused
 ) -> JudgmentWindow:
+    if great is None:
+        great = perfect
+    if good is None:
+        good = great
+    if bad is None:
+        bad = good
     perfect = perfect if isinstance(perfect, tuple) else (perfect, perfect)
     great = great if isinstance(great, tuple) else (great, great)
     good = good if isinstance(good, tuple) else (good, good)
+    # noinspection PyUnusedLocal
+    bad = bad if isinstance(bad, tuple) else (bad, bad)
     return JudgmentWindow(
         perfect=Interval(-perfect[0] / 60, perfect[1] / 60),
         great=Interval(-great[0] / 60, great[1] / 60),
@@ -352,27 +361,27 @@ def frames_to_window(
     )
 
 
-TAP_NORMAL_WINDOW = frames_to_window(2.5, 5, 7.5)
-TAP_CRITICAL_WINDOW = frames_to_window(3.3, 4.5, 7.5)
+TAP_NORMAL_WINDOW = frames_to_window(2.5, 5, 6.5, 7.5)
+TAP_CRITICAL_WINDOW = frames_to_window(3.3, 4.5, 6.5, 7.5)
 
-FLICK_NORMAL_WINDOW = frames_to_window(2.5, (6.5, 7.5), (7.5, 8.5))
-FLICK_CRITICAL_WINDOW = frames_to_window(3.5, (6.5, 7.5), (7.5, 8.5))
+FLICK_NORMAL_WINDOW = frames_to_window(2.5, (6.5, 7.5), (7, 8), (7.5, 8.5))
+FLICK_CRITICAL_WINDOW = frames_to_window(3.5, (6.5, 7.5), (7, 8), (7.5, 8.5))
 
-TRACE_NORMAL_WINDOW = frames_to_window(3.5, 3.5, 3.5)
-TRACE_CRITICAL_WINDOW = frames_to_window(3.5, 3.5, 3.5)
+TRACE_NORMAL_WINDOW = frames_to_window(5, None, None, None)
+TRACE_CRITICAL_WINDOW = frames_to_window(5, None, None, None)
 
-TRACE_FLICK_NORMAL_WINDOW = frames_to_window((6.5, 7.5), (6.5, 7.5), (6.5, 7.5))
-TRACE_FLICK_CRITICAL_WINDOW = frames_to_window((6.5, 7.5), (6.5, 7.5), (6.5, 7.5))
+TRACE_FLICK_NORMAL_WINDOW = frames_to_window((6.5, 7.5), None, None, None)
+TRACE_FLICK_CRITICAL_WINDOW = frames_to_window((6.5, 7.5), None, None, None)
 
-SLIDE_END_NORMAL_WINDOW = frames_to_window((3.5, 4), (3.5, 8), (3.5, 8.5))
-SLIDE_END_CRITICAL_WINDOW = frames_to_window((3.5, 4), (3.5, 8), (3.5, 8.5))
+SLIDE_END_NORMAL_WINDOW = frames_to_window((3.5, 4), (6.5, 8), (7.5, 8.5), None)
+SLIDE_END_CRITICAL_WINDOW = frames_to_window((3.5, 4), (6.5, 8), (7.5, 8.5), None)
 
-SLIDE_END_TRACE_NORMAL_WINDOW = frames_to_window((6, 8.5), (6, 8.5), (6, 8.5))
-SLIDE_END_TRACE_CRITICAL_WINDOW = frames_to_window((6, 8.5), (6, 8.5), (6, 8.5))
+SLIDE_END_TRACE_NORMAL_WINDOW = frames_to_window((6.5, 8), None, None, None)
+SLIDE_END_TRACE_CRITICAL_WINDOW = frames_to_window((6.5, 8), None, None, None)
 
-SLIDE_END_FLICK_NORMAL_WINDOW = frames_to_window((3.5, 4), (3.5, 8), (3.5, 8.5))
-SLIDE_END_FLICK_CRITICAL_WINDOW = frames_to_window((3.5, 4), (3.5, 8), (3.5, 8.5))
+SLIDE_END_FLICK_NORMAL_WINDOW = frames_to_window((3.5, 4), (6.5, 8), (7.5, 8.5), None)
+SLIDE_END_FLICK_CRITICAL_WINDOW = frames_to_window((3.5, 4), (6.5, 8), (7.5, 8.5), None)
 
-EMPTY_JUDGMENT_WINDOW = frames_to_window(0, 0, 0)
+EMPTY_JUDGMENT_WINDOW = frames_to_window(0, None, None, None)
 
 SLIDE_END_LOCKOUT_DURATION = 0.25
