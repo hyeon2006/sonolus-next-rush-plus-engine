@@ -125,8 +125,6 @@ class Connector(PlayArchetype):
         if self.active_head_ref.index > 0:
             if time() in self.input_active_interval:
                 input_lane, input_size = self.get_attached_params(offset_adjusted_time())
-                self.active_connector_info.prev_input_lane = self.active_connector_info.input_lane
-                self.active_connector_info.prev_input_size = self.active_connector_info.input_size
                 self.active_connector_info.input_lane = input_lane
                 self.active_connector_info.input_size = input_size
                 hitbox = self.active_connector_info.get_hitbox(CONNECTOR_LENIENCY)

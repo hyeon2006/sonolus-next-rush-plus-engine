@@ -49,10 +49,10 @@ def draw_fallback_stage():
 def draw_stage_cover():
     if Options.stage_cover > 0:
         layout = layout_stage_cover()
-        Skin.cover.draw(layout, z=get_z(LAYER_COVER), a=0.8)
+        Skin.cover.draw(layout, z=get_z(LAYER_COVER), a=1)
     if Options.hidden > 0:
         layout = layout_hidden_cover()
-        Skin.cover.draw(layout, z=get_z(LAYER_COVER), a=0.8)
+        Skin.cover.draw(layout, z=get_z(LAYER_COVER), a=1)
 
 
 def play_lane_hit_effects(lane: float):

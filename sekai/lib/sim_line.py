@@ -36,6 +36,8 @@ def draw_sim_line(
         adj_right_lane = right_lane
     adj_left_travel = approach(adj_left_progress)
     adj_right_travel = approach(adj_right_progress)
+    if abs(adj_left_lane - adj_right_lane) < 1e-6 and abs(adj_left_travel - adj_right_travel) < 1e-6:
+        return
     layout = layout_sim_line(
         adj_left_lane,
         adj_left_travel,

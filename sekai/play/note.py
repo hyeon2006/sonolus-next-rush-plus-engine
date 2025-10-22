@@ -155,8 +155,6 @@ class BaseNote(PlayArchetype):
         if is_head(self.kind):
             self.active_connector_info.input_lane = self.lane
             self.active_connector_info.input_size = self.size
-            self.active_connector_info.prev_input_lane = self.lane
-            self.active_connector_info.prev_input_size = self.size
 
         schedule_note_auto_sfx(self.kind, self.target_time)
 
@@ -216,6 +214,8 @@ class BaseNote(PlayArchetype):
                 | NoteKind.CRIT_TRACE_FLICK
                 | NoteKind.NORM_HEAD_TRACE_FLICK
                 | NoteKind.CRIT_HEAD_TRACE_FLICK
+                | NoteKind.NORM_TAIL_FLICK
+                | NoteKind.CRIT_TAIL_FLICK
                 | NoteKind.NORM_TAIL_TRACE_FLICK
                 | NoteKind.CRIT_TAIL_TRACE_FLICK
                 | NoteKind.NORM_TAIL_FLICK
@@ -323,48 +323,6 @@ class BaseNote(PlayArchetype):
             input_manager.disallow_empty(touch)
             self.judge_wrong_way(touch.time)
             return
-
-    def handle_tail_flick_input(self):
-        if time() > self.input_interval.end:
-            return
-        if offset_adjusted_time() < self.target_time:
-            active_connector_info = self.active_head_ref.get().active_connector_info
-            hitbox = active_connector_info.get_hitbox(input_manager.get_leniency(self.kind))
-            prev_hitbox = active_connector_info.get_prev_hitbox(input_manager.get_leniency(self.kind))
-            for touch in touches():
-                if not touch.ended and hitbox.contains_point(touch.position):
-                    return
-            for touch in touches():
-                if not self.check_touch_touch_is_eligible_for_early_tail_flick(hitbox, prev_hitbox, touch):
-                    continue
-                if not self.check_direction_matches(touch.angle):
-                    continue
-                input_manager.disallow_empty(touch)
-                self.judge(touch.time)
-                return
-            for touch in touches():
-                if not self.check_touch_touch_is_eligible_for_early_tail_flick(hitbox, prev_hitbox, touch):
-                    continue
-                input_manager.disallow_empty(touch)
-                self.judge_wrong_way(touch.time)
-                return
-        else:
-            hitbox = self.get_full_hitbox()
-            for touch in touches():
-                # Trace flick eligibility since no tap is needed for tail flicks.
-                if not self.check_touch_is_eligible_for_trace_flick(hitbox, touch):
-                    continue
-                if not self.check_direction_matches(touch.angle):
-                    continue
-                input_manager.disallow_empty(touch)
-                self.judge(touch.time)
-                return
-            for touch in touches():
-                if not self.check_touch_is_eligible_for_trace_flick(hitbox, touch):
-                    continue
-                input_manager.disallow_empty(touch)
-                self.judge_wrong_way(touch.time)
-                return
 
     def handle_trace_input(self):
         if time() > self.input_interval.end:
@@ -497,14 +455,6 @@ class BaseNote(PlayArchetype):
             touch.start_time >= self.captured_touch_time
             and touch.speed >= Layout.flick_speed_threshold
             and (hitbox.contains_point(touch.position) or hitbox.contains_point(touch.prev_position))
-        )
-
-    def check_touch_touch_is_eligible_for_early_tail_flick(self, hitbox: Rect, prev_hitbox: Rect, touch: Touch) -> bool:
-        return (
-            touch.time >= self.unadjusted_input_interval.start
-            and touch.speed >= Layout.flick_speed_threshold
-            and (not hitbox.contains_point(touch.position) or touch.ended)
-            and (hitbox.contains_point(touch.prev_position) or prev_hitbox.contains_point(touch.prev_position))
         )
 
     def check_touch_is_eligible_for_trace(self, hitbox: Rect, touch: Touch) -> bool:
