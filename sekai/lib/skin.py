@@ -20,6 +20,8 @@ class Skin:
     stage_right_border: StandardSprite.STAGE_RIGHT_BORDER
 
     sekai_stage: Sprite = sprite("Sekai Stage")
+    sekai_stage_lane: Sprite = sprite("Sekai Stage Lane")
+    sekai_stage_cover: Sprite = sprite("Sekai Stage Cover")
 
     sim_line: StandardSprite.SIMULTANEOUS_CONNECTION_NEUTRAL
 
