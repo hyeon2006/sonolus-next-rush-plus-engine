@@ -153,12 +153,12 @@ class WatchBaseNote(WatchArchetype):
 
     def spawn_custom(self):
         if not Options.hide_custom:
-            if Options.custom_combo and combo_label.custom_available and not Options.auto_judgment:
+            if Options.custom_combo and combo_label.custom_available and (not Options.auto_judgment or is_replay()):
                 get_archetype_by_name("ComboLabel").spawn(
                     next_ref=self.next_ref,
                     index=self.index,
                 )
-            if Options.custom_combo and combo_number.custom_available and not Options.auto_judgment:
+            if Options.custom_combo and combo_number.custom_available and not (Options.auto_judgment or is_replay()):
                 get_archetype_by_name("ComboNumber").spawn(
                     next_ref=self.next_ref,
                     index=self.index,
