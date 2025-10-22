@@ -78,7 +78,7 @@ def draw_stage_cover():
 
 
 def draw_auto_play():
-    if Options.custom_tag and is_watch() and not is_replay():
+    if Options.custom_tag and is_watch() and not is_replay() and Options.auto_judgment:
         layout = layout_custom_tag()
         a = (cos(time() * pi) + 1) / 2
         Skin.auto_live.draw(layout, z=get_z(LAYER_JUDGMENT), a=a)
