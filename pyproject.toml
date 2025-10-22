@@ -1,11 +1,11 @@
 [project]
-name = "next-sekai"
+name = "next-rush"
 version = "0.1.0"
 description = "Next SEKAI Sonolus engine"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "sonolus-py~=0.10.6",
+    "sonolus-py~=0.11.0",
 ]
 
 [tool.ruff]
