@@ -171,7 +171,7 @@ class Connector(PlayArchetype):
                 Streams.connector_visual_states[self.index][offset_adjusted_time()] = visual_state
             if group_hide_notes(segment_head.timescale_group):
                 return
-            if self.active_tail_ref.index > 0 and self.active_tail.is_despawned:
+            if segment_tail.is_despawned:
                 return
             draw_connector(
                 kind=self.kind,
