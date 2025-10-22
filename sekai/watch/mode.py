@@ -6,6 +6,7 @@ from sekai.lib.particle import BaseParticles
 from sekai.lib.skin import BaseSkin
 from sekai.watch.bpm_change import WatchBpmChange
 from sekai.watch.connector import WATCH_CONNECTOR_ARCHETYPES
+from sekai.watch.custom_elements import CUSTOM_ARCHETYPES
 from sekai.watch.initialization import WatchInitialization
 from sekai.watch.note import WATCH_NOTE_ARCHETYPES
 from sekai.watch.sim_line import WatchSimLine
@@ -26,6 +27,7 @@ watch_mode = WatchMode(
         *WATCH_CONNECTOR_ARCHETYPES,
         *WATCH_SLOT_EFFECT_ARCHETYPES,
         WatchSimLine,
+        *CUSTOM_ARCHETYPES,
     ],
     skin=BaseSkin,
     effects=Effects,

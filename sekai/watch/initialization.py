@@ -6,11 +6,9 @@ from sonolus.script.runtime import is_replay
 from sekai.lib import archetype_names
 from sekai.lib.buckets import init_buckets
 from sekai.lib.layout import init_layout
-from sekai.lib.level_config import init_level_config
-from sekai.lib.note import init_life, init_score
-from sekai.lib.options import ConcreteScoreMode, ScoreMode
-from sekai.lib.particle import init_particles
-from sekai.lib.skin import init_skin
+from sekai.lib.note import init_note_life, init_score
+from sekai.lib.options import Options
+from sekai.lib.skin import combo_label, combo_number, damage_flash, judgment_text
 from sekai.lib.stage import schedule_lane_sfx
 from sekai.lib.streams import Streams
 from sekai.lib.ui import init_ui
@@ -33,6 +31,7 @@ class WatchInitialization(WatchArchetype):
         init_particles()
         init_buckets()
         init_score()
+
         for note_archetype in WATCH_NOTE_ARCHETYPES:
             init_note_life(note_archetype)
 
@@ -43,7 +42,15 @@ class WatchInitialization(WatchArchetype):
                 schedule_lane_sfx(lane, input_time)
                 WatchScheduledLaneEffect.spawn(lane=lane, target_time=input_time)
 
-        sorted_linked_list()
+        if (
+            not Options.hide_custom
+            or (Options.custom_combo and combo_label.custom_available)
+            or (Options.custom_combo and combo_number.custom_available)
+            or (Options.custom_judgment and judgment_text.custom_available)
+            or (Options.custom_accuracy and Options.custom_accuracy and is_replay())
+            or (Options.custom_damage and damage_flash.custom_available and is_replay())
+        ):
+            sorted_linked_list()
 
 
 def sorted_linked_list():
@@ -67,6 +74,7 @@ def initial_list(entity_count):
     for i in range(entity_count):
         entity_index = entity_count - 1 - i
         if WatchBaseNote.at(entity_index).is_scored:
+            WatchBaseNote.at(entity_index).init_data()
             list_length += 1
             WatchBaseNote.at(entity_index).next_ref.index = list_head
             list_head = entity_index
@@ -86,8 +94,10 @@ def setting_combo(head: int) -> None:
     ptr = head
     combo = 0
     ap = False
-    while ptr != 0:
-        if (is_replay() and WatchBaseNote.at(ptr).ap) or ap:
+    accuracy = head
+    damage_flash = head
+    while ptr > 0:
+        if is_replay() and (WatchBaseNote.at(ptr).ap or ap):
             ap = True
             WatchBaseNote.at(ptr).ap = True
 
@@ -97,4 +107,12 @@ def setting_combo(head: int) -> None:
         else:
             combo += 1
         WatchBaseNote.at(ptr).combo = combo
+
+        if is_replay() and judgment != Judgment.PERFECT and WatchBaseNote.at(ptr).played_hit_effects:
+            WatchBaseNote.at(accuracy).next_ref_accuracy.index = ptr
+            accuracy = ptr
+
+        if is_replay() and judgment == Judgment.MISS:
+            WatchBaseNote.at(damage_flash).next_ref_damage_flash.index = ptr
+            damage_flash = ptr
         ptr = WatchBaseNote.at(ptr).next_ref.index
