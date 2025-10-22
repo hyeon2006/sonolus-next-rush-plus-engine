@@ -130,7 +130,13 @@ class Connector(PlayArchetype):
                 hitbox = self.active_connector_info.get_hitbox(CONNECTOR_LENIENCY)
                 for touch in touches():
                     if not touch.ended and hitbox.contains_point(touch.position):
-                        input_manager.disallow_empty(touch)
+                        if self.segment_head.segment_kind in (
+                            ConnectorKind.ACTIVE_NORMAL,
+                            ConnectorKind.ACTIVE_CRITICAL,
+                            ConnectorKind.ACTIVE_FAKE_NORMAL,
+                            ConnectorKind.ACTIVE_FAKE_CRITICAL,
+                        ):
+                            input_manager.disallow_empty(touch)
                         if not self.active_connector_info.is_active:
                             self.active_connector_info.active_start_time = time()
                         self.active_connector_info.is_active = True
