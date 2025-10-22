@@ -1045,10 +1045,10 @@ def get_note_bucket(kind: NoteKind) -> Bucket:
 
 def get_leniency(kind: NoteKind) -> float:
     match kind:
-        case NoteKind.NORM_TAP | NoteKind.CRIT_TAP:
-            return 0.75
         case (
-            NoteKind.NORM_FLICK
+            NoteKind.NORM_TAP
+            | NoteKind.CRIT_TAP
+            | NoteKind.NORM_FLICK
             | NoteKind.CRIT_FLICK
             | NoteKind.NORM_TRACE
             | NoteKind.CRIT_TRACE
