@@ -79,7 +79,7 @@ def sort_entities(index: int):
     head = WatchBaseNote.at(index)
     return sort_linked_entities(
         head.ref(),
-        get_value=lambda head: head.target_time,
+        get_value=lambda head: head.hit_time,
         get_next_ref=lambda head: head.next_ref,
     )
 
@@ -91,13 +91,13 @@ def setting_combo(head: int) -> None:
     accuracy = head
     damage_flash = head
     while ptr > 0:
-        if is_replay() and (WatchBaseNote.at(ptr).ap or ap):
-            ap = True
+        if is_replay() and ap:
             WatchBaseNote.at(ptr).ap = True
 
         judgment = WatchBaseNote.at(ptr).judgment
-        if is_replay() and (judgment == Judgment.GOOD or Judgment.MISS):
+        if is_replay() and judgment in (Judgment.GOOD, Judgment.MISS):
             combo = 0
+            ap = True
         else:
             combo += 1
         WatchBaseNote.at(ptr).combo = combo
