@@ -3,12 +3,11 @@ from math import cos, floor, log, pi
 from sonolus.script.bucket import Judgment, JudgmentWindow
 from sonolus.script.interval import Interval, unlerp, unlerp_clamped
 from sonolus.script.record import Record
-from sonolus.script.runtime import aspect_ratio, runtime_ui, screen, time
+from sonolus.script.runtime import runtime_ui, screen, time
 from sonolus.script.vec import Vec2
 
 from sekai.lib.layer import LAYER_DAMAGE, LAYER_JUDGMENT, get_z
 from sekai.lib.layout import (
-    TARGET_ASPECT_RATIO,
     ComboType,
     Layout,
     Quad,
@@ -26,20 +25,8 @@ from sekai.lib.skin import (
 
 
 def transform_fixed_size(h, w):
-    if aspect_ratio() > TARGET_ASPECT_RATIO:
-        field_w = screen().h * TARGET_ASPECT_RATIO
-        field_h = screen().h
-    else:
-        field_w = screen().w
-        field_h = screen().w / TARGET_ASPECT_RATIO
-    ref_t = field_h * (0.5 + 1.15875 * (47 / 1176))
-    ref_b = field_h * (0.5 - 1.15875 * (803 / 1176))
-    ref_w = field_w * ((1.15875 * (1420 / 1176)) / TARGET_ASPECT_RATIO / 12)
-    layout_w = ref_w
-    layout_h = ref_b - ref_t
-
-    target_width = w * layout_w
-    target_height = h * layout_h
+    target_width = w * Layout.fixed_w_scale
+    target_height = h * Layout.fixed_h_scale
 
     width = target_width / Layout.w_scale
     height = target_height / Layout.h_scale
