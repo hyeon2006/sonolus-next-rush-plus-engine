@@ -1,21 +1,19 @@
 from sonolus.script.archetype import PlayArchetype, entity_memory
+from sonolus.script.bucket import Judgment, JudgmentWindow
 from sonolus.script.globals import level_memory
+from sonolus.script.interval import Interval
+from sonolus.script.runtime import time
 
 from sekai.lib import archetype_names
-from sonolus.script.bucket import Judgment, JudgmentWindow
-from sonolus.script.debug import debug_log, error
-from sekai.lib.skin import combo_label, combo_number, judgment_text, accuracy_text, damage_flash
-
 from sekai.lib.custom_elements import (
     draw_combo_label,
     draw_combo_number,
-    draw_judgment_text,
-    draw_judgment_accuracy,
     draw_damage_flash,
+    draw_judgment_accuracy,
+    draw_judgment_text,
 )
 from sekai.lib.options import Options
-from sonolus.script.runtime import time
-from sonolus.script.interval import Interval
+from sekai.lib.skin import accuracy_text, combo_label, combo_number, damage_flash, judgment_text
 
 
 def spawn_custom(
@@ -26,7 +24,7 @@ def spawn_custom(
     wrong_way: bool,
     check_pass: bool,
 ):
-    if Options.hide_custom == False:
+    if not Options.hide_custom:
         if Options.custom_combo and combo_label.custom_available:
             ComboLabel.spawn(spawn_time=time(), judgment=judgment)
         if Options.custom_combo and combo_number.custom_available:
@@ -45,7 +43,7 @@ def spawn_custom(
             and judgment_text.custom_available
             and accuracy_text.custom_available
             and judgment != Judgment.PERFECT
-            and not check_pass
+            and check_pass
         ):
             JudgmentAccuracy.spawn(
                 spawn_time=time(),
@@ -59,9 +57,9 @@ def spawn_custom(
 
 
 @level_memory
-class comboLabel:
+class ComboLabelMemory:
     ap: bool
-    comboCheck: int
+    combo_check: int
 
 
 class ComboLabel(PlayArchetype):
@@ -72,32 +70,32 @@ class ComboLabel(PlayArchetype):
     name = archetype_names.COMBO_LABEL
 
     def update_parallel(self):
-        if self.combo != comboLabel.comboCheck:
+        if self.combo != ComboLabelMemory.combo_check:
             self.despawn = True
             return
         if self.combo == 0:
             self.despawn = True
             return
-        draw_combo_label(draw_time=self.spawn_time, ap=comboLabel.ap)
+        draw_combo_label(draw_time=self.spawn_time, ap=ComboLabelMemory.ap)
 
     def update_sequential(self):
-        if self.check == True:
+        if self.check:
             return
         self.check = True
-        if self.judgment == Judgment.MISS or self.judgment == Judgment.GOOD:
-            comboLabel.comboCheck = 0
-            self.combo = comboLabel.comboCheck
+        if self.judgment in (Judgment.MISS, Judgment.GOOD):
+            ComboLabelMemory.combo_check = 0
+            self.combo = ComboLabelMemory.combo_check
         else:
-            comboLabel.comboCheck += 1
-            self.combo = comboLabel.comboCheck
+            ComboLabelMemory.combo_check += 1
+            self.combo = ComboLabelMemory.combo_check
         if self.judgment != Judgment.PERFECT:
-            comboLabel.ap = True
+            ComboLabelMemory.ap = True
 
 
 @level_memory
-class comboNumber:
+class ComboNumberMemory:
     ap: bool
-    comboCheck: int
+    combo_check: int
 
 
 class ComboNumber(PlayArchetype):
@@ -108,31 +106,31 @@ class ComboNumber(PlayArchetype):
     name = archetype_names.COMBO_NUMBER
 
     def update_parallel(self):
-        if self.combo != comboNumber.comboCheck:
+        if self.combo != ComboNumberMemory.combo_check:
             self.despawn = True
             return
         if self.combo == 0:
             self.despawn = True
             return
-        draw_combo_number(draw_time=self.spawn_time, ap=comboNumber.ap, combo=self.combo)
+        draw_combo_number(draw_time=self.spawn_time, ap=ComboNumberMemory.ap, combo=self.combo)
 
     def update_sequential(self):
-        if self.check == True:
+        if self.check:
             return
         self.check = True
-        if self.judgment == Judgment.MISS or self.judgment == Judgment.GOOD:
-            comboNumber.comboCheck = 0
-            self.combo = comboNumber.comboCheck
+        if self.judgment in (Judgment.MISS, Judgment.GOOD):
+            ComboNumberMemory.combo_check = 0
+            self.combo = ComboNumberMemory.combo_check
         else:
-            comboNumber.comboCheck += 1
-            self.combo = comboNumber.comboCheck
+            ComboNumberMemory.combo_check += 1
+            self.combo = ComboNumberMemory.combo_check
         if self.judgment != Judgment.PERFECT:
-            comboNumber.ap = True
+            ComboNumberMemory.ap = True
 
 
 @level_memory
-class judgmentText:
-    comboCheck: int
+class JudgmentTextMemory:
+    combo_check: int
 
 
 class JudgmentText(PlayArchetype):
@@ -146,7 +144,7 @@ class JudgmentText(PlayArchetype):
     name = archetype_names.JUDGMENT_TEXT
 
     def update_parallel(self):
-        if self.combo != judgmentText.comboCheck:
+        if self.combo != JudgmentTextMemory.combo_check:
             self.despawn = True
             return
         if time() >= self.spawn_time + 0.5:
@@ -161,16 +159,16 @@ class JudgmentText(PlayArchetype):
         )
 
     def update_sequential(self):
-        if self.check == True:
+        if self.check:
             return
         self.check = True
-        judgmentText.comboCheck += 1
-        self.combo = judgmentText.comboCheck
+        JudgmentTextMemory.combo_check += 1
+        self.combo = JudgmentTextMemory.combo_check
 
 
 @level_memory
-class judgmentAccuracy:
-    comboCheck: int
+class JudgmentAccuracyMemory:
+    combo_check: int
 
 
 class JudgmentAccuracy(PlayArchetype):
@@ -184,7 +182,7 @@ class JudgmentAccuracy(PlayArchetype):
     name = archetype_names.JUDGMENT_ACCURACY
 
     def update_parallel(self):
-        if self.combo != judgmentAccuracy.comboCheck:
+        if self.combo != JudgmentAccuracyMemory.combo_check:
             self.despawn = True
             return
         if time() >= self.spawn_time + 0.5:
@@ -199,16 +197,16 @@ class JudgmentAccuracy(PlayArchetype):
         )
 
     def update_sequential(self):
-        if self.check == True:
+        if self.check:
             return
         self.check = True
-        judgmentAccuracy.comboCheck += 1
-        self.combo = judgmentAccuracy.comboCheck
+        JudgmentAccuracyMemory.combo_check += 1
+        self.combo = JudgmentAccuracyMemory.combo_check
 
 
 @level_memory
-class damageFlash:
-    comboCheck: int
+class DamageFlashMemory:
+    combo_check: int
 
 
 class DamageFlash(PlayArchetype):
@@ -218,7 +216,7 @@ class DamageFlash(PlayArchetype):
     name = archetype_names.DAMAGE_FLASH
 
     def update_parallel(self):
-        if self.combo != damageFlash.comboCheck:
+        if self.combo != DamageFlashMemory.combo_check:
             self.despawn = True
             return
         if time() >= self.spawn_time + 0.35:
@@ -229,11 +227,11 @@ class DamageFlash(PlayArchetype):
         )
 
     def update_sequential(self):
-        if self.check == True:
+        if self.check:
             return
         self.check = True
-        damageFlash.comboCheck += 1
-        self.combo = damageFlash.comboCheck
+        DamageFlashMemory.combo_check += 1
+        self.combo = DamageFlashMemory.combo_check
 
 
 CUSTOM_ARCHETYPES = (
