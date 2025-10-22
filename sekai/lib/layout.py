@@ -75,6 +75,8 @@ class Layout:
     field_h: float
     w_scale: float
     h_scale: float
+    fixed_w_scale: float
+    fixed_h_scale: float
     scaled_note_h: float
     progress_start: float
     progress_cutoff: float
@@ -104,6 +106,18 @@ def init_layout():
     Layout.w_scale = w
     Layout.h_scale = b - t
     Layout.scaled_note_h = NOTE_H * Layout.h_scale
+
+    if aspect_ratio() > TARGET_ASPECT_RATIO:
+        field_w = screen().h * TARGET_ASPECT_RATIO
+        field_h = screen().h
+    else:
+        field_w = screen().w
+        field_h = screen().w / TARGET_ASPECT_RATIO
+    ref_t = field_h * (0.5 + 1.15875 * (47 / 1176))
+    ref_b = field_h * (0.5 - 1.15875 * (803 / 1176))
+    ref_w = field_w * ((1.15875 * (1420 / 1176)) / TARGET_ASPECT_RATIO / 12)
+    Layout.fixed_w_scale = ref_w
+    Layout.fixed_h_scale = ref_b - ref_t
 
     if Options.stage_cover:
         Layout.progress_start = inverse_approach(lerp(approach(0), 1.0, Options.stage_cover))
@@ -232,6 +246,24 @@ def layout_hidden_cover() -> Quad:
         r=6,
         t=t,
         b=b,
+    )
+
+
+def layout_custom_tag() -> Quad:
+    h = 0.04
+    w = h * 32.55
+
+    target_width = w * Layout.fixed_w_scale / Layout.w_scale
+    target_height = h * Layout.fixed_h_scale / Layout.h_scale
+    x = 1.45 * aspect_ratio() / 2.045 / Layout.w_scale
+    y = 1.159181
+    return transform_quad(
+        Quad(
+            bl=Vec2(x - target_width, y + target_height),
+            br=Vec2(x + target_width, y + target_height),
+            tl=Vec2(x - target_width, y - target_height),
+            tr=Vec2(x + target_width, y - target_height),
+        )
     )
 
 
