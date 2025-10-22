@@ -4,6 +4,7 @@ from sonolus.script.numtools import make_comparable_float, quantize_to_step
 LAYER_BACKGROUND_COVER = -1
 LAYER_STAGE = 0
 LAYER_COVER = 1
+LAYER_STAGE_LANE = 1.5
 LAYER_JUDGMENT_LINE = 2
 LAYER_SLOT_EFFECT = 3
 

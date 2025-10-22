@@ -1,6 +1,19 @@
+from math import cos, pi
+
+from sonolus.script.runtime import is_replay, is_watch, time
+
 from sekai.lib.effect import SFX_DISTANCE, Effects
-from sekai.lib.layer import LAYER_COVER, LAYER_JUDGMENT_LINE, LAYER_STAGE, get_z
+from sekai.lib.layer import (
+    LAYER_BACKGROUND_COVER,
+    LAYER_COVER,
+    LAYER_JUDGMENT,
+    LAYER_JUDGMENT_LINE,
+    LAYER_STAGE,
+    LAYER_STAGE_LANE,
+    get_z,
+)
 from sekai.lib.layout import (
+    layout_custom_tag,
     layout_fallback_judge_line,
     layout_hidden_cover,
     layout_lane,
@@ -16,12 +29,15 @@ from sekai.lib.skin import ActiveSkin
 def draw_stage_and_accessories():
     draw_stage()
     draw_stage_cover()
+    draw_auto_play()
 
 
 def draw_stage():
     if not Options.show_lane:
         return
-    if ActiveSkin.sekai_stage.is_available:
+    if Skin.sekai_stage_lane.is_available and Skin.sekai_stage_cover.is_available:
+        draw_sekai_dynamic_stage()
+    elif Skin.sekai_stage.is_available:
         draw_sekai_stage()
     else:
         draw_fallback_stage()
@@ -30,6 +46,12 @@ def draw_stage():
 def draw_sekai_stage():
     layout = layout_sekai_stage()
     ActiveSkin.sekai_stage.draw(layout, z=get_z(LAYER_STAGE))
+
+
+def draw_sekai_dynamic_stage():
+    layout = layout_sekai_stage()
+    Skin.sekai_stage_lane.draw(layout, z=get_z(LAYER_STAGE_LANE))
+    Skin.sekai_stage_cover.draw(layout, z=get_z(LAYER_BACKGROUND_COVER), a=Options.lane_alpha)
 
 
 def draw_fallback_stage():
@@ -53,6 +75,13 @@ def draw_stage_cover():
     if Options.hidden > 0:
         layout = layout_hidden_cover()
         ActiveSkin.cover.draw(layout, z=get_z(LAYER_COVER), a=1)
+
+
+def draw_auto_play():
+    if Options.custom_tag and is_watch() and not is_replay():
+        layout = layout_custom_tag()
+        a = (cos(time() * pi) + 1) / 2
+        Skin.auto_live.draw(layout, z=get_z(LAYER_JUDGMENT), a=a)
 
 
 def play_lane_hit_effects(lane: float):
