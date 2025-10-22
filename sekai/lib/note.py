@@ -5,7 +5,7 @@ from sonolus.script.archetype import ArchetypeLife, EntityRef, PlayArchetype, Wa
 from sonolus.script.bucket import Bucket, Judgment, JudgmentWindow
 from sonolus.script.easing import ease_in_cubic
 from sonolus.script.effect import Effect
-from sonolus.script.interval import lerp, remap_clamped
+from sonolus.script.interval import Interval, lerp, remap_clamped
 from sonolus.script.runtime import is_tutorial, is_watch, level_score, time
 from sonolus.script.sprite import Sprite
 
@@ -14,6 +14,7 @@ from sekai.lib.buckets import (
     EMPTY_JUDGMENT_WINDOW,
     FLICK_CRITICAL_WINDOW,
     FLICK_NORMAL_WINDOW,
+    FLICK_NORMAL_WINDOW_BAD,
     SLIDE_END_CRITICAL_WINDOW,
     SLIDE_END_FLICK_CRITICAL_WINDOW,
     SLIDE_END_FLICK_NORMAL_WINDOW,
@@ -21,7 +22,9 @@ from sekai.lib.buckets import (
     SLIDE_END_TRACE_CRITICAL_WINDOW,
     SLIDE_END_TRACE_NORMAL_WINDOW,
     TAP_CRITICAL_WINDOW,
+    TAP_CRITICAL_WINDOW_BAD,
     TAP_NORMAL_WINDOW,
+    TAP_NORMAL_WINDOW_BAD,
     TRACE_CRITICAL_WINDOW,
     TRACE_FLICK_CRITICAL_WINDOW,
     TRACE_FLICK_NORMAL_WINDOW,
@@ -572,7 +575,7 @@ def get_note_particles(kind: NoteKind) -> NoteParticleSet:
     return result
 
 
-def get_note_effect(kind: NoteKind, judgment: Judgment):
+def get_note_effect(kind: NoteKind, judgment: Judgment, accuracy: float):
     result = Effect(-1)
     match kind:
         case (
@@ -596,7 +599,7 @@ def get_note_effect(kind: NoteKind, judgment: Judgment):
                 case Judgment.GOOD:
                     result @= Effects.normal_good
                 case Judgment.MISS:
-                    result @= EMPTY_EFFECT
+                    result @= Effects.normal_good
                 case _:
                     assert_never(judgment)
         case (
@@ -615,7 +618,7 @@ def get_note_effect(kind: NoteKind, judgment: Judgment):
                 case Judgment.GOOD:
                     result @= Effects.flick_good
                 case Judgment.MISS:
-                    result @= EMPTY_EFFECT
+                    result @= Effects.flick_good
                 case _:
                     assert_never(judgment)
         case NoteKind.NORM_TRACE | NoteKind.NORM_HEAD_TRACE | NoteKind.NORM_TAIL_TRACE:
@@ -771,10 +774,12 @@ def get_note_slot_glow_sprite(kind: NoteKind) -> Sprite:
     return result
 
 
-def play_note_hit_effects(kind: NoteKind, lane: float, size: float, direction: FlickDirection, judgment: Judgment):
+def play_note_hit_effects(
+    kind: NoteKind, lane: float, size: float, direction: FlickDirection, judgment: Judgment, accuracy: float = 0
+):
     if kind == NoteKind.DAMAGE and judgment == Judgment.PERFECT:
         return
-    sfx = get_note_effect(kind, judgment)
+    sfx = get_note_effect(kind, judgment, accuracy)
     particles = get_note_particles(kind)
     if Options.sfx_enabled and not Options.auto_sfx and not is_watch() and sfx.is_available:
         sfx.play(SFX_DISTANCE)
@@ -822,20 +827,20 @@ def play_note_hit_effects(kind: NoteKind, lane: float, size: float, direction: F
         schedule_note_slot_effects(kind, lane, size, time())
 
 
-def schedule_note_auto_sfx(kind: NoteKind, target_time: float):
+def schedule_note_auto_sfx(kind: NoteKind, target_time: float, accuracy: float = 0):
     if not Options.sfx_enabled:
         return
     if not Options.auto_sfx:
         return
-    sfx = get_note_effect(kind, Judgment.PERFECT)
+    sfx = get_note_effect(kind, Judgment.PERFECT, accuracy)
     if sfx.is_available:
         sfx.schedule(target_time, SFX_DISTANCE)
 
 
-def schedule_note_sfx(kind: NoteKind, judgment: Judgment, target_time: float):
+def schedule_note_sfx(kind: NoteKind, judgment: Judgment, target_time: float, accuracy: float = 0):
     if not Options.sfx_enabled:
         return
-    sfx = get_note_effect(kind, judgment)
+    sfx = get_note_effect(kind, judgment, accuracy)
     if sfx.is_available:
         sfx.schedule(target_time, SFX_DISTANCE)
 
@@ -916,6 +921,53 @@ def get_note_window(kind: NoteKind) -> JudgmentWindow:
             result @= TRACE_FLICK_CRITICAL_WINDOW
         case NoteKind.NORM_TICK | NoteKind.CRIT_TICK | NoteKind.HIDE_TICK | NoteKind.ANCHOR | NoteKind.DAMAGE:
             result @= EMPTY_JUDGMENT_WINDOW
+        case _:
+            assert_never(kind)
+    return result
+
+
+def get_note_window_bad(kind: NoteKind) -> Interval:
+    result = +Interval
+    match kind:
+        case NoteKind.NORM_TAP | NoteKind.NORM_HEAD_TAP | NoteKind.NORM_TAIL_TAP:
+            result @= TAP_NORMAL_WINDOW_BAD
+        case NoteKind.CRIT_TAP | NoteKind.CRIT_HEAD_TAP | NoteKind.CRIT_TAIL_TAP:
+            result @= TAP_CRITICAL_WINDOW_BAD
+        case NoteKind.NORM_FLICK | NoteKind.NORM_HEAD_FLICK:
+            result @= FLICK_NORMAL_WINDOW_BAD
+        case NoteKind.CRIT_FLICK | NoteKind.CRIT_HEAD_FLICK:
+            result @= FLICK_NORMAL_WINDOW_BAD
+        case NoteKind.DAMAGE:
+            result @= Interval(-999, 999)
+        case (
+            NoteKind.NORM_TAIL_FLICK
+            | NoteKind.CRIT_TAIL_FLICK
+            | NoteKind.NORM_TRACE
+            | NoteKind.NORM_HEAD_TRACE
+            | NoteKind.CRIT_TRACE
+            | NoteKind.CRIT_HEAD_TRACE
+            | NoteKind.NORM_TRACE_FLICK
+            | NoteKind.NORM_HEAD_TRACE_FLICK
+            | NoteKind.NORM_TAIL_TRACE_FLICK
+            | NoteKind.CRIT_TRACE_FLICK
+            | NoteKind.CRIT_HEAD_TRACE_FLICK
+            | NoteKind.CRIT_TAIL_TRACE_FLICK
+            | NoteKind.NORM_RELEASE
+            | NoteKind.NORM_HEAD_RELEASE
+            | NoteKind.NORM_TAIL_RELEASE
+            | NoteKind.CRIT_RELEASE
+            | NoteKind.CRIT_HEAD_RELEASE
+            | NoteKind.CRIT_TAIL_RELEASE
+            | NoteKind.NORM_TAIL_TRACE
+            | NoteKind.CRIT_TAIL_TRACE
+            | NoteKind.NORM_TAIL_TRACE_FLICK
+            | NoteKind.CRIT_TAIL_TRACE_FLICK
+            | NoteKind.NORM_TICK
+            | NoteKind.CRIT_TICK
+            | NoteKind.HIDE_TICK
+            | NoteKind.ANCHOR
+        ):
+            result @= Interval(0, 0)
         case _:
             assert_never(kind)
     return result

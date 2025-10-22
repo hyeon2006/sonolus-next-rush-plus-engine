@@ -13,6 +13,7 @@ from sonolus.script.vec import Vec2
 
 from sekai.lib.layout import Layout
 from sekai.lib.options import Options
+from sekai.lib.skin import combo_label, combo_number, judgment_text
 
 ui_config = UiConfig(
     scope="Sekai",
@@ -66,6 +67,9 @@ def init_ui():
     gap = 0.05
     box = screen().shrink(Vec2(gap, gap))
     show_ui = not Options.hide_ui
+    custom_combo_label = not Options.custom_combo or not combo_label.custom_available
+    custom_combo_number = not Options.custom_combo or not combo_number.custom_available
+    custom_judgment = not Options.custom_judgment or not judgment_text.custom_available
 
     ui.menu.update(
         anchor=box.tr,
@@ -111,26 +115,26 @@ def init_ui():
         background=False,
     )
     ui.combo_value.update(
-        anchor=Vec2(Layout.field_w * 0.355, Layout.field_h * 0.0875),
-        pivot=Vec2(0.5, 0.5),
-        dimensions=Vec2(0, Layout.field_h * 0.14) * ui.combo_config.scale,
-        alpha=ui.combo_config.alpha * show_ui,
+        anchor=Vec2(Layout.field_w * 0.35, Layout.field_h * 0.0875),
+        pivot=Vec2(0.5, 0.7),
+        dimensions=Vec2(0, Layout.field_h * 0.14 * 0.9) * ui.combo_config.scale,
+        alpha=ui.combo_config.alpha * show_ui * custom_combo_number,
         horizontal_align=HorizontalAlign.CENTER,
         background=False,
     )
     ui.combo_text.update(
-        anchor=Vec2(Layout.field_w * 0.355, Layout.field_h * 0.0875),
-        pivot=Vec2(0.5, -2.25),
-        dimensions=Vec2(0, Layout.field_h * 0.14 * 0.25) * ui.combo_config.scale,
-        alpha=ui.combo_config.alpha * show_ui,
+        anchor=Vec2(Layout.field_w * 0.35, Layout.field_h * 0.0875),
+        pivot=Vec2(0.5, -2.1),
+        dimensions=Vec2(0, Layout.field_h * 0.14 * 0.175) * ui.combo_config.scale,
+        alpha=ui.combo_config.alpha * show_ui * custom_combo_label,
         horizontal_align=HorizontalAlign.CENTER,
         background=False,
     )
     ui.judgment.update(
         anchor=Vec2(0, Layout.field_h * -0.115),
-        pivot=Vec2(0.5, 0.5),
-        dimensions=Vec2(0, Layout.field_h * 0.0475) * ui.judgment_config.scale,
-        alpha=ui.judgment_config.alpha * show_ui,
+        pivot=Vec2(0.5, 0.55),
+        dimensions=Vec2(0, Layout.field_h * 0.04) * ui.judgment_config.scale,
+        alpha=ui.judgment_config.alpha * show_ui * custom_judgment,
         horizontal_align=HorizontalAlign.CENTER,
         background=False,
     )

@@ -1,9 +1,8 @@
 from enum import IntEnum
-from math import ceil, cos, pi
+from math import ceil, cos, pi, sin
 from typing import Literal, assert_never
 
 from sonolus.script.archetype import EntityRef
-from sonolus.script.easing import ease_out_cubic
 from sonolus.script.effect import Effect, LoopedEffectHandle
 from sonolus.script.interval import clamp, lerp, remap, remap_clamped, unlerp_clamped
 from sonolus.script.particle import Particle, ParticleHandle
@@ -415,11 +414,11 @@ def draw_connector(
 
         if visual_state == ConnectorVisualState.ACTIVE and active_sprite.is_available:
             if Options.connector_animation:
-                a_modifier = (cos(2 * pi * time()) + 1) / 2
-                normal_sprite.draw(layout, z=z + 1 / 128, a=base_a * ease_out_cubic(a_modifier))
-                active_sprite.draw(layout, z=z, a=base_a * ease_out_cubic(1 - a_modifier))
+                a1, a2 = get_cross_fate_opacities(base_a, time() - segment_head_target_time, 0.25)
+                normal_sprite.draw(layout, z=z + 1 / 128, a=a1)
+                active_sprite.draw(layout, z=z, a=a2)
             else:
-                active_sprite.draw(layout, z=z, a=base_a)
+                normal_sprite.draw(layout, z=z, a=base_a)
         else:
             normal_sprite.draw(layout, z=z, a=base_a * (1 if visual_state != ConnectorVisualState.INACTIVE else 0.5))
 
@@ -428,6 +427,21 @@ def draw_connector(
         last_size = next_size
         last_alpha = next_alpha
         last_target_time = next_target_time
+
+
+def get_cross_fate_opacities(a, t, period):
+    time_in_cycle = t % period
+    angle = (time_in_cycle * pi) / period
+    intensity = 0.7
+    no_correction_exp = 1.0
+    full_correction_exp = 1.0 / 2.2
+    final_exponent = no_correction_exp * (1 - intensity) + full_correction_exp * intensity
+    base_opacity_a = cos(angle) ** 2
+    base_opacity_b = sin(angle) ** 2
+    opacity1 = a * base_opacity_a**final_exponent
+    opacity2 = a * base_opacity_b**final_exponent
+
+    return opacity1, opacity2
 
 
 class ActiveConnectorInfo(Record):

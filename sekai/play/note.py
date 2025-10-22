@@ -24,7 +24,7 @@ from sonolus.script.runtime import Touch, delta_time, input_offset, offset_adjus
 from sonolus.script.timing import beat_to_time
 
 from sekai.lib import archetype_names
-from sekai.lib.buckets import WINDOW_SCALE
+from sekai.lib.buckets import WINDOW_SCALE, get_judgment_interval
 from sekai.lib.connector import ActiveConnectorInfo, ConnectorKind
 from sekai.lib.ease import EaseType
 from sekai.lib.layout import FlickDirection, Layout, layout_hitbox, progress_to
@@ -35,6 +35,7 @@ from sekai.lib.note import (
     get_leniency,
     get_note_bucket,
     get_note_window,
+    get_note_window_bad,
     get_visual_spawn_time,
     has_release_input,
     has_tap_input,
@@ -47,6 +48,7 @@ from sekai.lib.note import (
 from sekai.lib.options import Options
 from sekai.lib.timescale import group_hide_notes, group_scaled_time, group_time_to_scaled_time
 from sekai.play import input_manager
+from sekai.play.custom_elements import spawn_custom
 
 DEFAULT_BEST_TOUCH_TIME = -1e8
 
@@ -73,6 +75,7 @@ class BaseNote(PlayArchetype):
     start_time: float = entity_data()
     target_scaled_time: float = entity_data()
     judgment_window: JudgmentWindow = entity_data()
+    judgment_window_bad: Interval = entity_data()
     input_interval: Interval = entity_data()
     unadjusted_input_interval: Interval = entity_data()
 
@@ -88,6 +91,10 @@ class BaseNote(PlayArchetype):
     best_touch_matches_direction: bool = entity_memory()
 
     should_play_hit_effects: bool = entity_memory()
+
+    # Check wrong way
+    wrong_way: bool = entity_memory()
+    wrong_way_check: bool = exported()
 
     end_time: float = exported()
     played_hit_effects: bool = exported()
@@ -106,8 +113,11 @@ class BaseNote(PlayArchetype):
 
         self.target_time = beat_to_time(self.beat)
         self.judgment_window = get_note_window(self.kind)
-        self.input_interval = self.judgment_window.good + self.target_time + input_offset()
-        self.unadjusted_input_interval = self.judgment_window.good + self.target_time
+        self.judgment_window_bad = get_judgment_interval(
+            bad_window=get_note_window_bad(self.kind), good_window=self.judgment_window.good
+        )
+        self.input_interval = self.judgment_window_bad + self.target_time + input_offset()
+        self.unadjusted_input_interval = self.judgment_window_bad + self.target_time
 
         if not self.is_attached:
             self.target_scaled_time = group_time_to_scaled_time(self.timescale_group, self.target_time)
@@ -208,6 +218,8 @@ class BaseNote(PlayArchetype):
                 | NoteKind.CRIT_TAIL_FLICK
                 | NoteKind.NORM_TAIL_TRACE_FLICK
                 | NoteKind.CRIT_TAIL_TRACE_FLICK
+                | NoteKind.NORM_TAIL_FLICK
+                | NoteKind.CRIT_TAIL_FLICK
             ):
                 self.handle_trace_flick_input()
             case (
@@ -254,9 +266,21 @@ class BaseNote(PlayArchetype):
     def terminate(self):
         if self.should_play_hit_effects:
             # We do this here for parallelism, and to reduce compilation time.
-            play_note_hit_effects(self.kind, self.lane, self.size, self.direction, self.result.judgment)
+            play_note_hit_effects(
+                self.kind, self.lane, self.size, self.direction, self.result.judgment, self.result.accuracy
+            )
         self.end_time = offset_adjusted_time()
         self.played_hit_effects = self.should_play_hit_effects
+        if self.is_scored:
+            self.wrong_way_check = self.wrong_way
+            spawn_custom(
+                judgment=self.result.judgment,
+                accuracy=self.result.accuracy,
+                windows=self.judgment_window,
+                windows_bad=self.judgment_window_bad,
+                check_pass=self.should_play_hit_effects,
+                wrong_way=self.wrong_way,
+            )
 
     def handle_tap_input(self):
         if time() > self.input_interval.end:
@@ -470,7 +494,7 @@ class BaseNote(PlayArchetype):
         if self.result.bucket.id != -1:
             self.result.bucket_value = error * WINDOW_SCALE
         self.despawn = True
-        self.should_play_hit_effects = judgment != Judgment.MISS
+        self.should_play_hit_effects = True
 
     def judge_wrong_way(self, actual_time: float):
         judgment = self.judgment_window.judge(actual_time, self.target_time)
@@ -485,7 +509,8 @@ class BaseNote(PlayArchetype):
         if self.result.bucket.id != -1:
             self.result.bucket_value = error * WINDOW_SCALE
         self.despawn = True
-        self.should_play_hit_effects = judgment != Judgment.MISS
+        self.should_play_hit_effects = True
+        self.wrong_way = True
 
     def complete(self):
         self.result.judgment = Judgment.PERFECT
@@ -497,11 +522,12 @@ class BaseNote(PlayArchetype):
 
     def complete_wrong_way(self):
         self.result.judgment = Judgment.GREAT
-        self.result.accuracy = self.judgment_window.good.end
+        self.result.accuracy = self.judgment_window_bad.end
         if self.result.bucket.id != -1:
             self.result.bucket_value = 0
         self.despawn = True
         self.should_play_hit_effects = True
+        self.wrong_way = True
 
     def complete_damage(self):
         self.result.judgment = Judgment.PERFECT
@@ -512,7 +538,7 @@ class BaseNote(PlayArchetype):
 
     def fail_late(self, accuracy: float | None = None):
         if accuracy is None:
-            accuracy = self.judgment_window.good.end
+            accuracy = self.judgment_window_bad.end
         self.result.judgment = Judgment.MISS
         self.result.accuracy = accuracy
         if self.result.bucket.id != -1:
