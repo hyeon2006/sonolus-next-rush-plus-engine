@@ -1,20 +1,13 @@
 from __future__ import annotations
 
-from enum import IntEnum
-from typing import Self, assert_never
-
-from sonolus.script.globals import level_data
-from sonolus.script.interval import clamp
+from sonolus.script.bucket import Judgment
+from sonolus.script.interval import Interval, clamp
 from sonolus.script.record import Record
+from sonolus.script.runtime import is_replay, is_watch
 from sonolus.script.sprite import Sprite, SpriteGroup, StandardSprite, skin, sprite, sprite_group
 
-from sekai.lib.layout import FlickDirection, JudgmentType, AccuracyType, ComboType
-
-from sonolus.script.bucket import Judgment
-from sonolus.script.interval import Interval
+from sekai.lib.layout import AccuracyType, ComboType, FlickDirection, JudgmentType
 from sekai.lib.options import Options
-from sonolus.script.runtime import is_watch, is_replay
-from sonolus.script.debug import debug_log
 
 
 @skin
@@ -272,9 +265,9 @@ class BaseSkin:
     bad: Sprite = sprite("Bad")
     miss: Sprite = sprite("Miss")
     auto: Sprite = sprite("Auto")
-    ap_number: SpriteGroup = sprite_group(f"AP Combo Number {i}" for i in range(0, 10))
-    combo_number: SpriteGroup = sprite_group(f"Combo Number {i}" for i in range(0, 10))
-    combo_number_glow: SpriteGroup = sprite_group(f"Combo Number Glow {i}" for i in range(0, 10))
+    ap_number: SpriteGroup = sprite_group(f"AP Combo Number {i}" for i in range(10))
+    combo_number: SpriteGroup = sprite_group(f"Combo Number {i}" for i in range(10))
+    combo_number_glow: SpriteGroup = sprite_group(f"Combo Number Glow {i}" for i in range(10))
     combo_label: Sprite = sprite("Combo Label")
     ap_combo_label: Sprite = sprite("AP Combo Label")
     combo_label_glow: Sprite = sprite("Combo Label Glow")
@@ -481,9 +474,9 @@ class ComboNumberSprite(Record):
     ap: SpriteGroup
     glow: SpriteGroup
 
-    def get_sprite(self, combo: int, type: ComboType):
+    def get_sprite(self, combo: int, combo_type: ComboType):
         result = +Sprite
-        match type:
+        match combo_type:
             case ComboType.NORMAL:
                 result @= self.normal[combo]
             case ComboType.AP:
@@ -491,7 +484,7 @@ class ComboNumberSprite(Record):
             case ComboType.GLOW:
                 result @= self.glow[combo]
             case _:
-                assert_never(type)
+                assert_never(combo_type)
         return result
 
     @property
@@ -504,9 +497,9 @@ class ComboLabelSprite(Record):
     ap: Sprite
     glow: Sprite
 
-    def get_sprite(self, type: ComboType):
+    def get_sprite(self, combo_type: ComboType):
         result = +Sprite
-        match type:
+        match combo_type:
             case ComboType.NORMAL:
                 result @= self.normal
             case ComboType.AP:
@@ -514,7 +507,7 @@ class ComboLabelSprite(Record):
             case ComboType.GLOW:
                 result @= self.glow
             case _:
-                assert_never(type)
+                assert_never(combo_type)
         return result
 
     @property
@@ -537,15 +530,15 @@ class JudgmentSprite(Record):
             judgment == Judgment.MISS
             and windows_bad != Interval(0, 0)
             and windows_bad.start <= accuracy <= windows_bad.end
-            and not check_pass
+            and check_pass
         ):
             return JudgmentType.BAD
         else:
             return judgment
 
-    def get_sprite(self, type: Judgment, windows_bad: Interval, accuracy: float, check_pass: bool):
+    def get_sprite(self, judgment_type: Judgment, windows_bad: Interval, accuracy: float, check_pass: bool):
         result = +Sprite
-        match self.get_bad(type, windows_bad, accuracy, check_pass):
+        match self.get_bad(judgment_type, windows_bad, accuracy, check_pass):
             case JudgmentType.PERFECT:
                 result @= self.perfect
             case JudgmentType.GREAT:
@@ -559,7 +552,7 @@ class JudgmentSprite(Record):
             case JudgmentType.AUTO:
                 result @= self.auto
             case _:
-                assert_never(type)
+                assert_never(judgment_type)
         return result
 
     @property

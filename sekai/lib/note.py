@@ -6,16 +6,16 @@ from sonolus.script.archetype import EntityRef, HapticType, PlayArchetype, Watch
 from sonolus.script.bucket import Bucket, Judgment, JudgmentWindow
 from sonolus.script.easing import ease_in_cubic
 from sonolus.script.effect import Effect
-from sonolus.script.interval import lerp, remap_clamped
-from sonolus.script.runtime import is_tutorial, is_watch, level_life, level_score, time
+from sonolus.script.interval import Interval, lerp, remap_clamped
+from sonolus.script.runtime import is_tutorial, is_watch, level_score, time
 from sonolus.script.sprite import Sprite
-from sonolus.script.interval import Interval
 
 from sekai.lib import archetype_names
 from sekai.lib.buckets import (
     EMPTY_JUDGMENT_WINDOW,
     FLICK_CRITICAL_WINDOW,
     FLICK_NORMAL_WINDOW,
+    FLICK_NORMAL_WINDOW_BAD,
     SLIDE_END_CRITICAL_WINDOW,
     SLIDE_END_FLICK_CRITICAL_WINDOW,
     SLIDE_END_FLICK_NORMAL_WINDOW,
@@ -24,15 +24,13 @@ from sekai.lib.buckets import (
     SLIDE_END_TRACE_NORMAL_WINDOW,
     SLIDE_TICK_JUDGMENT_WINDOW,
     TAP_CRITICAL_WINDOW,
+    TAP_CRITICAL_WINDOW_BAD,
     TAP_NORMAL_WINDOW,
+    TAP_NORMAL_WINDOW_BAD,
     TRACE_CRITICAL_WINDOW,
     TRACE_FLICK_CRITICAL_WINDOW,
     TRACE_FLICK_NORMAL_WINDOW,
     TRACE_NORMAL_WINDOW,
-    TAP_NORMAL_WINDOW_BAD,
-    TAP_CRITICAL_WINDOW_BAD,
-    FLICK_NORMAL_WINDOW_BAD,
-    FLICK_CRITICAL_WINDOW_BAD,
     Buckets,
 )
 from sekai.lib.connector import ActiveConnectorKind, ConnectorKind

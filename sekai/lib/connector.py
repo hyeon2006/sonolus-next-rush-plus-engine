@@ -3,7 +3,6 @@ from math import ceil, cos, pi, sin
 from typing import Literal, assert_never
 
 from sonolus.script.archetype import EntityRef
-from sonolus.script.easing import ease_out_cubic
 from sonolus.script.effect import Effect, LoopedEffectHandle
 from sonolus.script.interval import clamp, lerp, remap, remap_clamped, unlerp_clamped
 from sonolus.script.particle import Particle, ParticleHandle
@@ -468,7 +467,7 @@ def draw_connector(
 
         if visual_state == ConnectorVisualState.ACTIVE and active_sprite.is_available:
             if Options.connector_animation:
-                a1, a2 = get_cross_fate_opacities(base_a, time() - segment_head_target_time, 0.5)
+                a1, a2 = get_cross_fate_opacities(base_a, time() - segment_head_target_time, 0.25)
                 normal_sprite.draw(layout, z=z + 1 / 128, a=a1)
                 active_sprite.draw(layout, z=z, a=a2)
             else:

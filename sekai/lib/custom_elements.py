@@ -1,30 +1,28 @@
+from math import cos, floor, log, pi
+
+from sonolus.script.bucket import Judgment, JudgmentWindow
+from sonolus.script.interval import Interval, unlerp, unlerp_clamped
+from sonolus.script.record import Record
+from sonolus.script.runtime import aspect_ratio, runtime_ui, screen, time
+from sonolus.script.vec import Vec2
+
+from sekai.lib.layer import LAYER_DAMAGE, LAYER_JUDGMENT, get_z
 from sekai.lib.layout import (
-    layout_combo_label,
-    ComboType,
     TARGET_ASPECT_RATIO,
+    ComboType,
     Layout,
-    transform_quad,
     Quad,
+    layout_combo_label,
+    transform_quad,
 )
-from sonolus.script.runtime import time
-from math import cos, pi, floor, log
-from sekai.lib.layer import LAYER_JUDGMENT, get_z, LAYER_DAMAGE
+from sekai.lib.options import Options
 from sekai.lib.skin import (
+    accuracy_text,
     combo_label,
     combo_number,
-    judgment_text,
-    accuracy_text,
     damage_flash,
+    judgment_text,
 )
-from sonolus.script.runtime import runtime_ui
-from sonolus.script.vec import Vec2
-from sonolus.script.runtime import aspect_ratio, screen
-from sonolus.script.interval import unlerp_clamped, unlerp
-from sekai.lib.options import Options
-from sonolus.script.record import Record
-from sonolus.script.debug import debug_log
-from sonolus.script.interval import Interval
-from sonolus.script.bucket import Judgment, JudgmentWindow
 
 
 def transform_fixed_size(h, w):
@@ -59,8 +57,8 @@ def draw_combo_label(draw_time: float, ap: bool):
     h, w = transform_fixed_size(base_h, base_w)
     a = ui.combo_config.alpha * 0.8 * (cos(time() * pi) + 1) / 2
     layout = layout_combo_label(screen_center, w=w / 2, h=h / 2)
-    z = get_z(layer=LAYER_JUDGMENT, time=-draw_time)
-    glow_z = get_z(layer=LAYER_JUDGMENT, time=-draw_time, etc=-1)
+    z = get_z(layer=LAYER_JUDGMENT, time=-draw_time, etc=10)
+    glow_z = get_z(layer=LAYER_JUDGMENT, time=-draw_time)
     if ap:
         combo_label.get_sprite(ComboType.NORMAL).draw(quad=layout, z=z, a=ui.combo_config.alpha)
     else:
@@ -75,7 +73,7 @@ def draw_combo_number(
 ):
     ui = runtime_ui()
 
-    digit_count = 1 if combo == 0 else floor(log(combo, 10)) + 1
+    digit_count = 1 if combo == 0 else floor(log(combo, 10)) + 1  # noqa: FURB163
 
     screen_center = Vec2(x=5.337, y=0.585)
 
@@ -84,7 +82,6 @@ def draw_combo_number(
     base_w = base_h * 0.79 * 7
     base_w2 = base_h2 * 0.79 * 7
 
-    # 애니메이션 = s * (원래좌표) + (1 - s) * centerX, s * (원래좌표) + (1 - s) * centerY
     s = 0.6 + 0.4 * unlerp_clamped(draw_time, draw_time + 0.112, time())
     s2 = 0.762 + 0.231 * unlerp_clamped(draw_time + 0.112, draw_time + 0.192, time())
 
@@ -136,9 +133,9 @@ def draw_combo_number(
             start_x=start_x2,
         ),
     )
-    z = get_z(layer=LAYER_JUDGMENT, time=-draw_time, etc=1)
+    z = get_z(layer=LAYER_JUDGMENT, time=-draw_time, etc=10)
     z2 = get_z(layer=LAYER_JUDGMENT, time=-draw_time, etc=0)
-    z3 = get_z(layer=LAYER_JUDGMENT, time=-draw_time, etc=2)
+    z3 = get_z(layer=LAYER_JUDGMENT, time=-draw_time, etc=20)
     drawing_combo.draw_number(z=z, z2=z2, z3=z3)
 
 
@@ -212,14 +209,22 @@ class ComboNumberLayout(Record):
             )
 
             if not self.core.ap:
-                combo_number.get_sprite(combo=digit, type=ComboType.GLOW).draw(quad=digit_layout, z=z3, a=self.alpha.a3)
-                combo_number.get_sprite(combo=digit, type=ComboType.AP).draw(quad=digit_layout2, z=z2, a=self.alpha.a2)
-                combo_number.get_sprite(combo=digit, type=ComboType.AP).draw(quad=digit_layout, z=z, a=self.alpha.a)
-            else:
-                combo_number.get_sprite(combo=digit, type=ComboType.NORMAL).draw(
+                combo_number.get_sprite(combo=digit, combo_type=ComboType.GLOW).draw(
+                    quad=digit_layout, z=z3, a=self.alpha.a3
+                )
+                combo_number.get_sprite(combo=digit, combo_type=ComboType.AP).draw(
                     quad=digit_layout2, z=z2, a=self.alpha.a2
                 )
-                combo_number.get_sprite(combo=digit, type=ComboType.NORMAL).draw(quad=digit_layout, z=z, a=self.alpha.a)
+                combo_number.get_sprite(combo=digit, combo_type=ComboType.AP).draw(
+                    quad=digit_layout, z=z, a=self.alpha.a
+                )
+            else:
+                combo_number.get_sprite(combo=digit, combo_type=ComboType.NORMAL).draw(
+                    quad=digit_layout2, z=z2, a=self.alpha.a2
+                )
+                combo_number.get_sprite(combo=digit, combo_type=ComboType.NORMAL).draw(
+                    quad=digit_layout, z=z, a=self.alpha.a
+                )
 
 
 def draw_judgment_text(draw_time: float, judgment: Judgment, windows_bad: Interval, accuracy: float, check_pass: bool):
@@ -234,9 +239,9 @@ def draw_judgment_text(draw_time: float, judgment: Judgment, windows_bad: Interv
     s = unlerp_clamped(draw_time, draw_time + 0.064, time())
     layout = layout_combo_label(screen_center, w=w * s / 2, h=h * s / 2)
     z = get_z(layer=LAYER_JUDGMENT, time=-draw_time)
-    judgment_text.get_sprite(type=judgment, windows_bad=windows_bad, accuracy=accuracy, check_pass=check_pass).draw(
-        quad=layout, z=z, a=a
-    )
+    judgment_text.get_sprite(
+        judgment_type=judgment, windows_bad=windows_bad, accuracy=accuracy, check_pass=check_pass
+    ).draw(quad=layout, z=z, a=a)
 
 
 def draw_judgment_accuracy(
