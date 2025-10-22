@@ -1,4 +1,4 @@
-from sonolus.script.options import options, slider_option, toggle_option, select_option
+from sonolus.script.options import options, select_option, slider_option, toggle_option
 from sonolus.script.text import StandardText
 
 
