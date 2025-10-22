@@ -1,6 +1,6 @@
 from math import cos, pi
 
-from sonolus.script.runtime import is_replay, is_watch, time
+from sonolus.script.runtime import is_watch, time
 
 from sekai.lib.effect import SFX_DISTANCE, Effects
 from sekai.lib.layer import (
@@ -78,7 +78,7 @@ def draw_stage_cover():
 
 
 def draw_auto_play():
-    if Options.custom_tag and is_watch() and not is_replay() and Options.auto_judgment:
+    if Options.custom_tag and is_watch():
         layout = layout_custom_tag()
         a = (cos(time() * pi) + 1) / 2
         Skin.auto_live.draw(layout, z=get_z(LAYER_JUDGMENT), a=a)
