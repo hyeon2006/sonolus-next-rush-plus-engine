@@ -9,6 +9,7 @@ from sekai.watch.connector import WATCH_CONNECTOR_ARCHETYPES
 from sekai.watch.custom_elements import CUSTOM_ARCHETYPES
 from sekai.watch.initialization import WatchInitialization
 from sekai.watch.note import WATCH_NOTE_ARCHETYPES
+from sekai.watch.particle_manager import ParticleManager
 from sekai.watch.sim_line import WatchSimLine
 from sekai.watch.slot_effect import WATCH_SLOT_EFFECT_ARCHETYPES
 from sekai.watch.stage import WatchScheduledLaneEffect, WatchStage
@@ -28,6 +29,7 @@ watch_mode = WatchMode(
         *WATCH_SLOT_EFFECT_ARCHETYPES,
         WatchSimLine,
         *CUSTOM_ARCHETYPES,
+        ParticleManager,
     ],
     skin=BaseSkin,
     effects=Effects,

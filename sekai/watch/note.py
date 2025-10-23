@@ -26,6 +26,7 @@ from sekai.lib.note import (
     draw_note,
     get_attach_params,
     get_note_bucket,
+    get_note_particles,
     get_note_window,
     get_note_window_bad,
     get_visual_spawn_time,
@@ -38,9 +39,11 @@ from sekai.lib.note import (
     schedule_note_slot_effects,
 )
 from sekai.lib.options import Options
+from sekai.lib.particle import Particles
 from sekai.lib.skin import accuracy_text, combo_label, combo_number, damage_flash, judgment_text
 from sekai.lib.timescale import group_hide_notes, group_scaled_time, group_time_to_scaled_time
 from sekai.play.note import derive_note_archetypes
+from sekai.watch.particle_manager import ParticleManager
 
 
 class WatchBaseNote(WatchArchetype):
@@ -150,6 +153,15 @@ class WatchBaseNote(WatchArchetype):
 
         if self.is_scored and self.next_ref.index > 0:
             self.spawn_custom()
+
+        if self.played_hit_effects or not is_replay():
+            self.spawn_critical_lane()
+
+    def spawn_critical_lane(self):
+        if Options.lane_effect_enabled:
+            particles = get_note_particles(self.kind)
+            if particles.lane.id == Particles.critical_flick_note_lane_linear.id:
+                ParticleManager.spawn(lane=self.lane, size=self.size, target_time=self.hit_time, particles=particles)
 
     def spawn_custom(self):
         if not Options.hide_custom:
