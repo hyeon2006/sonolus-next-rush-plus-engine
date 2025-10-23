@@ -241,20 +241,15 @@ def layout_hidden_cover() -> Quad:
 
 
 def layout_custom_tag() -> Quad:
-    h = 0.04
-    w = h * 32.55
-
-    target_width = w * Layout.fixed_w_scale / Layout.w_scale
-    target_height = h * Layout.fixed_h_scale / Layout.h_scale
-    x = 1.45 * aspect_ratio() / 2.045 / Layout.w_scale
-    y = 1.159181
-    return transform_quad(
-        Quad(
-            bl=Vec2(x - target_width, y + target_height),
-            br=Vec2(x + target_width, y + target_height),
-            tl=Vec2(x - target_width, y - target_height),
-            tr=Vec2(x + target_width, y - target_height),
-        )
+    h = 0.0684
+    w = h * 4.465
+    x = 8.711111 * aspect_ratio() / 2.045 / 5 - 0.1392 * aspect_ratio()
+    y = (-4.9 / 5) + 0.1335
+    return Quad(
+        bl=Vec2(x - w, y - h),
+        br=Vec2(x + w, y - h),
+        tl=Vec2(x - w, y + h),
+        tr=Vec2(x + w, y + h),
     )
 
 
