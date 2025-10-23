@@ -257,7 +257,7 @@ class BaseNote(PlayArchetype):
             return
         if self.should_do_delayed_trigger():
             if self.best_touch_matches_direction:
-                self.judge(self.best_touch_time)
+                self.complete()
             else:
                 self.judge_wrong_way(self.best_touch_time)
             return
