@@ -6,14 +6,15 @@ from sekai.lib.particle import Particles
 from sekai.lib.skin import Skin
 from sekai.play.bpm_change import BpmChange
 from sekai.play.connector import CONNECTOR_ARCHETYPES
+from sekai.play.custom_elements import CUSTOM_ARCHETYPES
 from sekai.play.initialization import Initialization
 from sekai.play.input_manager import InputManager
 from sekai.play.note import NOTE_ARCHETYPES
+from sekai.play.particle_manager import ParticleManager
 from sekai.play.sim_line import SimLine
 from sekai.play.slot_effect import SLOT_EFFECT_ARCHETYPES
 from sekai.play.stage import Stage
 from sekai.play.timescale import TimescaleChange, TimescaleGroup
-from sekai.play.custom_elements import CUSTOM_ARCHETYPES
 
 play_mode = PlayMode(
     archetypes=[
@@ -28,6 +29,7 @@ play_mode = PlayMode(
         *SLOT_EFFECT_ARCHETYPES,
         SimLine,
         *CUSTOM_ARCHETYPES,
+        ParticleManager,
     ],
     skin=Skin,
     effects=Effects,

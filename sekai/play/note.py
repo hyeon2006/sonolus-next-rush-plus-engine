@@ -27,13 +27,14 @@ from sekai.lib import archetype_names
 from sekai.lib.buckets import WINDOW_SCALE, get_judgment_interval
 from sekai.lib.connector import ActiveConnectorInfo, ConnectorKind
 from sekai.lib.ease import EaseType
-from sekai.lib.layout import FlickDirection, Layout, layout_hitbox, progress_to
+from sekai.lib.layout import FlickDirection, Layout, layout_hitbox, layout_lane, progress_to
 from sekai.lib.note import (
     NoteKind,
     draw_note,
     get_attach_params,
     get_leniency,
     get_note_bucket,
+    get_note_particles,
     get_note_window,
     get_note_window_bad,
     get_visual_spawn_time,
@@ -46,9 +47,11 @@ from sekai.lib.note import (
     schedule_note_auto_sfx,
 )
 from sekai.lib.options import Options
+from sekai.lib.particle import Particles
 from sekai.lib.timescale import group_hide_notes, group_scaled_time, group_time_to_scaled_time
 from sekai.play import input_manager
 from sekai.play.custom_elements import spawn_custom
+from sekai.play.particle_manager import ParticleManager
 
 DEFAULT_BEST_TOUCH_TIME = -1e8
 
@@ -267,6 +270,13 @@ class BaseNote(PlayArchetype):
             play_note_hit_effects(
                 self.kind, self.lane, self.size, self.direction, self.result.judgment, self.result.accuracy
             )
+            if Options.lane_effect_enabled:
+                particles = get_note_particles(self.kind)
+                if particles.lane.id == Particles.critical_flick_note_lane_linear.id:
+                    layout = layout_lane(self.lane, self.size)
+                    ParticleManager.spawn(
+                        particle=particles.lane.spawn(layout, duration=1), lane=self.lane, spawn_time=time()
+                    )
         self.end_time = offset_adjusted_time()
         self.played_hit_effects = self.should_play_hit_effects
         if self.is_scored:

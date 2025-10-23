@@ -65,6 +65,7 @@ from sekai.lib.layout import (
 from sekai.lib.options import Options
 from sekai.lib.particle import (
     NoteParticleSet,
+    Particles,
     critical_flick_note_particles,
     critical_note_particles,
     critical_slide_note_particles,
@@ -820,7 +821,8 @@ def play_note_hit_effects(
     if Options.lane_effect_enabled:
         layout = layout_lane(lane, size)
         if particles.lane.is_available:
-            particles.lane.spawn(layout, duration=1)
+            if particles.lane.id != Particles.critical_flick_note_lane_linear.id:
+                particles.lane.spawn(layout, duration=1)
         elif particles.lane_basic.is_available:
             particles.lane_basic.spawn(layout, duration=0.3)
     if Options.slot_effect_enabled and not is_watch():
