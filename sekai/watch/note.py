@@ -148,7 +148,7 @@ class WatchBaseNote(WatchArchetype):
 
         self.result.target_time = self.target_time
 
-        if self.is_scored and self.next_ref.index > 0:
+        if self.is_scored:
             self.spawn_custom()
 
         if self.played_hit_effects or not is_replay():
