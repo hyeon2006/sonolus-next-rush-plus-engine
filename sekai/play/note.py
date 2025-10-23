@@ -248,7 +248,7 @@ class BaseNote(PlayArchetype):
             return
         if offset_adjusted_time() >= self.target_time and self.best_touch_time > DEFAULT_BEST_TOUCH_TIME:
             if self.best_touch_matches_direction:
-                self.judge(self.best_touch_time)
+                self.complete()
             else:
                 self.judge_wrong_way(self.best_touch_time)
             return
