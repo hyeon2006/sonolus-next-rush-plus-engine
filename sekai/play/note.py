@@ -236,7 +236,7 @@ class BaseNote(PlayArchetype):
             return
         if time() < self.visual_start_time:
             return
-        if offset_adjusted_time() >= self.target_time and self.best_touch_time > DEFAULT_BEST_TOUCH_TIME:
+        if self.should_do_delayed_trigger():
             if self.best_touch_matches_direction:
                 self.judge(self.best_touch_time)
             else:
@@ -250,6 +250,39 @@ class BaseNote(PlayArchetype):
         if group_hide_notes(self.timescale_group):
             return
         draw_note(self.kind, self.lane, self.size, self.progress, self.direction, self.target_time)
+
+    def should_do_delayed_trigger(self) -> bool:
+        # Don't trigger if we haven't reached the target time yet.
+        if offset_adjusted_time() < self.target_time:
+            return False
+
+        # Don't trigger if we never had a touch recorded.
+        if self.best_touch_time == DEFAULT_BEST_TOUCH_TIME:
+            return False
+
+        # Give until the end of the perfect window to give a right-way touch if we've only had wrong-way touches.
+        # After that, wrong-way has no impact anyway.
+        # If we get a wrong-way touch after the target time, we will still trigger immediately from the touch
+        # callback though.
+        if (
+            not self.best_touch_matches_direction
+            and offset_adjusted_time() < self.target_time + self.judgment_window.perfect.end
+        ):
+            return False
+
+        # If a new input could improve the judgment...
+        if offset_adjusted_time() < self.target_time + (self.target_time - self.best_touch_time):
+            # If we're still in the perfect window, wait for it to end.
+            if offset_adjusted_time() < self.target_time + self.judgment_window.perfect.end:
+                return False
+            # Otherwise, see if there's any ongoing touches in the hitbox.
+            hitbox = self.get_full_hitbox()
+            for touch in touches():
+                if not touch.ended and hitbox.contains_point(touch.position):
+                    return False
+            # If we're past the perfect window, and there are no ongoing touches in the hitbox, we can trigger to
+            # avoid delaying the trigger by too long.
+        return True
 
     def terminate(self):
         if self.should_play_hit_effects:
@@ -303,6 +336,8 @@ class BaseNote(PlayArchetype):
     def handle_trace_input(self):
         if time() > self.input_interval.end:
             return
+        if self.should_do_delayed_trigger():
+            return
         hitbox = self.get_full_hitbox()
         has_touch = False
         for touch in touches():
@@ -324,6 +359,8 @@ class BaseNote(PlayArchetype):
 
     def handle_trace_flick_input(self):
         if time() > self.input_interval.end:
+            return
+        if self.should_do_delayed_trigger():
             return
         hitbox = self.get_full_hitbox()
         has_touch = False
