@@ -98,6 +98,8 @@ class WatchConnector(WatchArchetype):
                 visual_state = ConnectorVisualState.ACTIVE
             if group_hide_notes(segment_head.timescale_group):
                 return
+            if self.active_tail_ref.index > 0 and time() >= self.active_tail.despawn_time():
+                return
             draw_connector(
                 kind=self.kind,
                 visual_state=visual_state,
@@ -245,7 +247,7 @@ class WatchSlideManager(WatchArchetype):
         return self.active_head.target_time
 
     def despawn_time(self) -> float:
-        return self.active_tail.target_time
+        return self.active_tail.despawn_time()
 
     def update_parallel(self):
         if is_skip():

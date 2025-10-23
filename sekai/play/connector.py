@@ -32,7 +32,7 @@ from sekai.lib.note import draw_slide_note_head, get_attach_params
 from sekai.lib.options import Options
 from sekai.lib.streams import Streams
 from sekai.lib.timescale import group_hide_notes
-from sekai.play import note
+from sekai.play import input_manager, note
 
 CONNECTOR_LENIENCY = 1
 START_LENIENCY_BEATS = 0.5
@@ -130,6 +130,7 @@ class Connector(PlayArchetype):
                 hitbox = self.active_connector_info.get_hitbox(CONNECTOR_LENIENCY)
                 for touch in touches():
                     if not touch.ended and hitbox.contains_point(touch.position):
+                        input_manager.disallow_empty(touch)
                         if not self.active_connector_info.is_active:
                             self.active_connector_info.active_start_time = time()
                         self.active_connector_info.is_active = True
@@ -167,6 +168,8 @@ class Connector(PlayArchetype):
                 self.last_visual_state = visual_state
                 Streams.connector_visual_states[self.index][offset_adjusted_time()] = visual_state
             if group_hide_notes(segment_head.timescale_group):
+                return
+            if self.active_tail_ref.index > 0 and self.active_tail.is_despawned:
                 return
             draw_connector(
                 kind=self.kind,
@@ -254,7 +257,7 @@ class SlideManager(PlayArchetype):
 
     def update_parallel(self):
         connector_effect_kind_stream = Streams.connector_effect_kinds[self.active_head.index]
-        if time() >= self.active_tail.target_time:
+        if time() >= self.active_tail.target_time or self.active_tail.is_despawned:
             destroy_looped_particle(self.circular_particle)
             destroy_looped_particle(self.linear_particle)
             destroy_looped_sfx(self.sfx)
