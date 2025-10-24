@@ -6,7 +6,7 @@ from sonolus.script.containers import ArrayMap, ArraySet
 from sonolus.script.globals import level_memory
 from sonolus.script.particle import ParticleHandle
 from sonolus.script.record import Record
-from sonolus.script.runtime import time
+from sonolus.script.runtime import is_skip, time
 
 from sekai.lib import archetype_names
 from sekai.lib.layout import layout_lane
@@ -39,19 +39,25 @@ class ParticleManager(WatchArchetype):
         return self.target_time + 1
 
     def update_sequential(self):
+        if is_skip():
+            ParticleHandler.critical_flick_lane_effect.clear()
+            self.check = False
         if self.check:
             return
         layout = layout_lane(self.lane, self.size)
         handle_critical_flick_lane_effect(self.particles.lane.spawn(layout, duration=1), self.lane, self.target_time)
         self.check = True
 
+    def terminate(self):
+        self.check = False
+
 
 def handle_critical_flick_lane_effect(particle: ParticleHandle, lane: float, spawn_time: float):
     keys_to_remove = ArraySet[float, Dim[32]].new()
-    ttl_limit = time() - 1
+    diff = abs(time() - spawn_time)
 
     for key, entry in ParticleHandler.critical_flick_lane_effect.items():
-        if entry.spawn_time < ttl_limit:
+        if diff > 1:
             entry.particle.destroy()
             keys_to_remove.add(key)
 
