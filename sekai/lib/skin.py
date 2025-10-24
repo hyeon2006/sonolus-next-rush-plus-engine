@@ -133,6 +133,8 @@ class Skin:
     damage_note_middle: Sprite = sprite("Sekai Trace Note Purple Middle")
     damage_note_right: Sprite = sprite("Sekai Trace Note Purple Right")
     damage_note_fallback: StandardSprite.NOTE_HEAD_PURPLE
+    damage_tick_note: Sprite = sprite("Sekai Trace Diamond Purple")
+    damage_tick_note_fallback: StandardSprite.NOTE_TICK_RED
 
     beat_line: StandardSprite.GRID_NEUTRAL
     bpm_change_line: StandardSprite.GRID_PURPLE
@@ -288,8 +290,8 @@ class JudgmentSprite(Record):
             return JudgmentType.AUTO
         elif (
             judgment == Judgment.MISS
-            and windows_bad != Interval(0, 0)
-            and windows_bad.start <= accuracy <= windows_bad.end
+            and windows_bad != Interval(-1, -1)
+            and (windows_bad.start <= accuracy <= windows_bad.end or windows_bad == Interval(0, 0))
             and check_pass
         ):
             return JudgmentType.BAD
@@ -451,6 +453,10 @@ critical_trace_tick_sprites = TickSprites(
 )
 trace_flick_tick_sprites = TickSprites(
     normal=Skin.trace_flick_tick_note,
+    fallback=Skin.trace_flick_tick_note_fallback,
+)
+damage_tick_sprites = TickSprites(
+    normal=Skin.damage_tick_note,
     fallback=Skin.trace_flick_tick_note_fallback,
 )
 

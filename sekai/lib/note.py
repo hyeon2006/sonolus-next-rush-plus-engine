@@ -93,6 +93,7 @@ from sekai.lib.skin import (
     critical_trace_note_body_sprites,
     critical_trace_tick_sprites,
     damage_note_body_sprites,
+    damage_tick_sprites,
     flick_note_body_sprites,
     normal_arrow_sprites,
     normal_note_body_sprites,
@@ -427,6 +428,11 @@ def draw_note_tick(kind: NoteKind, lane: float, travel: float, target_time: floa
             _draw_tick(critical_trace_tick_sprites, lane, travel, target_time)
         case NoteKind.NORM_TRACE_FLICK | NoteKind.NORM_HEAD_TRACE_FLICK | NoteKind.NORM_TAIL_TRACE_FLICK:
             _draw_tick(trace_flick_tick_sprites, lane, travel, target_time)
+        case NoteKind.DAMAGE:
+            if Options.using_damage_tick:
+                _draw_tick(damage_tick_sprites, lane, travel, target_time)
+            else:
+                pass
         case (
             NoteKind.NORM_TAP
             | NoteKind.CRIT_TAP
@@ -448,7 +454,6 @@ def draw_note_tick(kind: NoteKind, lane: float, travel: float, target_time: floa
             | NoteKind.CRIT_TAIL_RELEASE
             | NoteKind.HIDE_TICK
             | NoteKind.ANCHOR
-            | NoteKind.DAMAGE
         ):
             pass
         case _:
@@ -940,7 +945,7 @@ def get_note_window_bad(kind: NoteKind) -> Interval:
         case NoteKind.CRIT_FLICK | NoteKind.CRIT_HEAD_FLICK:
             result @= FLICK_NORMAL_WINDOW_BAD
         case NoteKind.DAMAGE:
-            result @= Interval(-999, 999)
+            result @= Interval(0, 0)
         case (
             NoteKind.NORM_TAIL_FLICK
             | NoteKind.CRIT_TAIL_FLICK
@@ -969,7 +974,7 @@ def get_note_window_bad(kind: NoteKind) -> Interval:
             | NoteKind.HIDE_TICK
             | NoteKind.ANCHOR
         ):
-            result @= Interval(0, 0)
+            result @= Interval(-1, -1)
         case _:
             assert_never(kind)
     return result
