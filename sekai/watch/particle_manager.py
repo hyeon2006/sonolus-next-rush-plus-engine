@@ -59,7 +59,7 @@ def handle_critical_flick_lane_effect(particle: ParticleHandle, lane: float, spa
         ParticleHandler.critical_flick_lane_effect.__delitem__(key)
 
     if ParticleHandler.critical_flick_lane_effect.__len__() > 6:
-        oldest_key = -1
+        oldest_key = -999
         oldest_time = 1e8
 
         for key, entry in ParticleHandler.critical_flick_lane_effect.items():
@@ -67,11 +67,10 @@ def handle_critical_flick_lane_effect(particle: ParticleHandle, lane: float, spa
                 oldest_time = entry.spawn_time
                 oldest_key = key
 
-        if oldest_key not in (-1, lane):
+        if oldest_key != -999:
             entry_to_remove = ParticleHandler.critical_flick_lane_effect.pop(oldest_key)
             if entry_to_remove:
                 entry_to_remove.particle.destroy()
-                ParticleHandler.critical_flick_lane_effect.__delitem__(oldest_key)
 
     if lane in ParticleHandler.critical_flick_lane_effect:
         ParticleHandler.critical_flick_lane_effect[lane].particle.destroy()
