@@ -264,3 +264,9 @@ class Options:
         step=0.1,
         unit=StandardText.PERCENTAGE_UNIT,
     )
+    using_damage_tick: bool = toggle_option(
+        name="Using Damage Note Tick",
+        description="The damage note have a tick",
+        scope="Rush",
+        default=False,
+    )
