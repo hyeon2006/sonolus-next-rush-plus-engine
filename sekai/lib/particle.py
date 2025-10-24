@@ -183,7 +183,7 @@ critical_trace_flick_note_particles = NoteParticleSet(
     linear_fallback=EMPTY_PARTICLE,
     directional=Particles.critical_note_directional,
     tick=EMPTY_PARTICLE,
-    lane=EMPTY_PARTICLE,
+    lane=Particles.critical_flick_note_lane_linear,
     lane_basic=EMPTY_PARTICLE,
     slot_linear=EMPTY_PARTICLE,
 )
@@ -195,7 +195,7 @@ damage_note_particles = NoteParticleSet(
     directional=EMPTY_PARTICLE,
     tick=EMPTY_PARTICLE,
     lane=EMPTY_PARTICLE,
-    lane_basic=Particles.lane,
+    lane_basic=EMPTY_PARTICLE,
     slot_linear=EMPTY_PARTICLE,
 )
 normal_tick_particles = NoteParticleSet(
