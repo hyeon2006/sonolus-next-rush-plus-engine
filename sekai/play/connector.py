@@ -32,7 +32,7 @@ from sekai.lib.note import draw_slide_note_head, get_attach_params
 from sekai.lib.options import Options
 from sekai.lib.streams import Streams
 from sekai.lib.timescale import group_hide_notes
-from sekai.play import note
+from sekai.play import input_manager, note
 
 CONNECTOR_LENIENCY = 1
 START_LENIENCY_BEATS = 0.5
