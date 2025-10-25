@@ -561,7 +561,7 @@ def draw_connector_slot_glow_effect(
     height = (
         (3.25 + (cos((time() - start_time) * 8 * pi) + 1) / 2) / 4.25 + 0.2
         if Options.version == 0
-        else 4 * ((sin((time() - start_time) * 2.5 * pi) + 1) / 2)
+        else (4 * (sin((time() - start_time) * 2.5 * pi) + 1) / 2) / 4.25 + 0.2
     )
     ex = 0.035 * abs(2 * size) + 0.08 if Options.version == 0 else 0
     layout = layout_slot_glow_effect(lane, size + ex, height)
