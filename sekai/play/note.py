@@ -299,6 +299,8 @@ class BaseNote(PlayArchetype):
         self.judge(touch.start_time)
 
     def handle_release_input(self):
+        if not self.active_head_ref.get().active_connector_info.can_judge:
+            return
         if time() > self.input_interval.end:
             return
         if self.captured_touch_id == 0:
@@ -399,6 +401,11 @@ class BaseNote(PlayArchetype):
             self.complete()
         else:
             self.fail_late(0.125)
+        if (
+            self.attach_tail_ref.get().active_head_ref.index > 0
+            and self.beat >= self.attach_tail_ref.get().active_head_ref.get().active_connector_info.tail_beat - 0.5
+        ):
+            self.attach_tail_ref.get().active_head_ref.get().active_connector_info.can_judge = True
 
     def handle_damage_input(self):
         hitbox = self.get_full_hitbox()
