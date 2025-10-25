@@ -5,9 +5,10 @@ A new Project Sekai inspired engine for [Sonolus](https://sonolus.com).
 ## Official Resources
 
 Server: https://coconut.sonolus.com/next-sekai/  
-Editor: https://next-sekai-editor.sonolus.com/  
+Editor: https://next-sekai-editor.sonolus.com/
 
 ## Quick Dev Setup
+
 1. Install [uv](https://docs.astral.sh/uv/).
 2. Run `uv sync`.
 3. Add resources (full exported scp files) such as skins and levels to the `/resources` folder.
@@ -19,7 +20,7 @@ Editor: https://next-sekai-editor.sonolus.com/
 ### Skin Sprites
 
 | Name                                          |
-|-----------------------------------------------|
+| --------------------------------------------- |
 | `Sekai Stage`                                 |
 | `Sekai Stage Surface`                         |
 | `Sekai Note Cyan Left`                        |
@@ -126,11 +127,28 @@ Editor: https://next-sekai-editor.sonolus.com/
 | `Sekai Trace Note Purple Middle`              |
 | `Sekai Trace Note Purple Right`               |
 | `Sekai Black Background`                      |
+| `Perfect`                                     |
+| `Great`                                       |
+| `Good`                                        |
+| `Bad`                                         |
+| `Miss`                                        |
+| `Auto`                                        |
+| `AP Combo Number (0 to 9)`                    |
+| `Combo Number (0 to 9)`                       |
+| `Combo Number Glow (0 to 9)`                  |
+| `AP Combo Label`                              |
+| `Combo Label`                                 |
+| `Combo Label Glow`                            |
+| `Fast Warning`                                |
+| `Late Warning`                                |
+| `Flick Warning`                               |
+| `Damage Flash`                                |
+| `Auto Live`                                   |
 
 ### Effect Clips
 
 | Name                   |
-|------------------------|
+| ---------------------- |
 | `Sekai Tick`           |
 | `Sekai Critical Tap`   |
 | `Sekai Critical Flick` |
@@ -142,7 +160,7 @@ Editor: https://next-sekai-editor.sonolus.com/
 ### Particle Effects
 
 | Name                                   |
-|----------------------------------------|
+| -------------------------------------- |
 | `Sekai Note Lane Linear`               |
 | `Sekai Critical Lane Linear`           |
 | `Sekai Critical Flick Lane Linear`     |
