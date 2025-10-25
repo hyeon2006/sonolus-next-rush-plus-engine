@@ -49,7 +49,7 @@ def handle_critical_flick_lane_effect(particle: ParticleHandle, lane: float, spa
     for key in keys_to_remove:
         ParticleHandler.critical_flick_lane_effect.__delitem__(key)
 
-    if ParticleHandler.critical_flick_lane_effect.__len__() > 6:
+    if ParticleHandler.critical_flick_lane_effect.__len__() >= 6:
         oldest_key = -999
         oldest_time = 1e8
 
