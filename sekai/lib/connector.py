@@ -246,6 +246,32 @@ def get_connector_quality_option(kind: ConnectorKind) -> float:
             assert_never(kind)
 
 
+def get_max_guide_quality_option(kind: ConnectorKind) -> float:
+    match kind:
+        case (
+            ConnectorKind.ACTIVE_NORMAL
+            | ConnectorKind.ACTIVE_FAKE_NORMAL
+            | ConnectorKind.ACTIVE_CRITICAL
+            | ConnectorKind.ACTIVE_FAKE_CRITICAL
+        ):
+            return 0
+        case (
+            ConnectorKind.GUIDE_NEUTRAL
+            | ConnectorKind.GUIDE_RED
+            | ConnectorKind.GUIDE_GREEN
+            | ConnectorKind.GUIDE_BLUE
+            | ConnectorKind.GUIDE_YELLOW
+            | ConnectorKind.GUIDE_PURPLE
+            | ConnectorKind.GUIDE_CYAN
+            | ConnectorKind.GUIDE_BLACK
+        ):
+            return Options.max_guide_quality
+        case ConnectorKind.NONE:
+            return 0
+        case _:
+            assert_never(kind)
+
+
 def draw_connector(
     kind: ConnectorKind,
     visual_state: ConnectorVisualState,
@@ -421,7 +447,8 @@ def draw_connector(
         (abs(start_alpha - end_alpha) * get_connector_alpha_option(kind)) ** 0.5 * abs(start_pos_y - end_pos_y) * 3,
     )
     quality = get_connector_quality_option(kind)
-    segment_count = max(1, ceil(max(curve_change_scale, alpha_change_scale) * quality * 10))
+    max_segment = get_max_guide_quality_option(kind) if get_max_guide_quality_option(kind) > 0 else 256
+    segment_count = min(max(1, ceil(max(curve_change_scale, alpha_change_scale) * quality * 10)), max_segment)
 
     z_normal = get_connector_z(kind, segment_head_target_time, segment_head_lane, active=False, layer=layer)
     if visual_state == ConnectorVisualState.ACTIVE and active_sprite.is_available:

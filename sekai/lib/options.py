@@ -270,3 +270,12 @@ class Options:
         scope="Rush",
         default=False,
     )
+    max_guide_quality: float = slider_option(
+        name="Max Guide Quality",
+        description="Max Guide Quality. 0 is disable",
+        scope="Sekai",
+        default=0,
+        min=0,
+        max=50,
+        step=1,
+    )
