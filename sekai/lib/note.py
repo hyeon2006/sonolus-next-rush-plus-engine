@@ -1064,47 +1064,10 @@ def get_note_bucket(kind: NoteKind) -> Bucket:
 
 
 def get_leniency(kind: NoteKind) -> float:
-    match kind:
-        case (
-            NoteKind.NORM_TAP
-            | NoteKind.CRIT_TAP
-            | NoteKind.NORM_FLICK
-            | NoteKind.CRIT_FLICK
-            | NoteKind.NORM_TRACE
-            | NoteKind.CRIT_TRACE
-            | NoteKind.NORM_TRACE_FLICK
-            | NoteKind.CRIT_TRACE_FLICK
-            | NoteKind.NORM_RELEASE
-            | NoteKind.CRIT_RELEASE
-            | NoteKind.NORM_HEAD_TAP
-            | NoteKind.CRIT_HEAD_TAP
-            | NoteKind.NORM_HEAD_FLICK
-            | NoteKind.CRIT_HEAD_FLICK
-            | NoteKind.NORM_HEAD_TRACE
-            | NoteKind.CRIT_HEAD_TRACE
-            | NoteKind.NORM_HEAD_TRACE_FLICK
-            | NoteKind.CRIT_HEAD_TRACE_FLICK
-            | NoteKind.NORM_HEAD_RELEASE
-            | NoteKind.CRIT_HEAD_RELEASE
-            | NoteKind.NORM_TAIL_TAP
-            | NoteKind.CRIT_TAIL_TAP
-            | NoteKind.NORM_TAIL_FLICK
-            | NoteKind.CRIT_TAIL_FLICK
-            | NoteKind.NORM_TAIL_TRACE
-            | NoteKind.CRIT_TAIL_TRACE
-            | NoteKind.NORM_TAIL_TRACE_FLICK
-            | NoteKind.CRIT_TAIL_TRACE_FLICK
-            | NoteKind.NORM_TAIL_RELEASE
-            | NoteKind.CRIT_TAIL_RELEASE
-            | NoteKind.NORM_TICK
-            | NoteKind.CRIT_TICK
-            | NoteKind.HIDE_TICK
-        ):
-            return 1.0
-        case NoteKind.ANCHOR | NoteKind.DAMAGE:
-            return 0
-        case _:
-            assert_never(kind)
+    if kind == NoteKind.DAMAGE:
+        return 0.0
+    # For notes without input, this value doesn't matter
+    return 1.0
 
 
 def has_tap_input(kind: NoteKind) -> bool:
