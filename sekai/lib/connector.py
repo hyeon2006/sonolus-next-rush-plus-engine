@@ -448,7 +448,7 @@ def draw_connector(
     )
     quality = get_connector_quality_option(kind)
     max_segment = get_max_guide_quality_option(kind) if get_max_guide_quality_option(kind) > 0 else 256
-    segment_count = min(max(1, ceil(max(curve_change_scale, alpha_change_scale) * quality * 10)), max_segment)
+    segment_count = clamp(ceil(max(curve_change_scale, alpha_change_scale) * quality * 10), 1, max_segment)
 
     z_normal = get_connector_z(kind, segment_head_target_time, segment_head_lane, active=False, layer=layer)
     if visual_state == ConnectorVisualState.ACTIVE and active_sprite.is_available:
