@@ -485,6 +485,23 @@ def layout_rotated_linear_effect(lane: float, shear: float) -> Quad:
     ).rotate_about(atan(-(shear + 0.125 * lane) / 2), pivot=(bl + br) / 2)
 
 
+def layout_rotated2_linear_effect(lane: float, degree: float) -> Quad:
+    w = Options.note_effect_size
+    p = 1 + 0.125 * w
+    bl = transform_vec(Vec2(lane - w, 1))
+    br = transform_vec(Vec2(lane + w, 1))
+    tl = transform_vec(Vec2(lane * p - w, 1))
+    tr = transform_vec(Vec2(lane * p + w, 1))
+    up = (tr - tl).orthogonal()
+    radian = degree * pi / 180
+    return Quad(
+        bl=bl,
+        br=br,
+        tl=tl + up,
+        tr=tr + up,
+    ).rotate_about(radian, pivot=(bl + br) / 2)
+
+
 def layout_circular_effect(lane: float, w: float, h: float) -> Quad:
     w *= Options.note_effect_size
     h *= Options.note_effect_size * Layout.w_scale / Layout.h_scale

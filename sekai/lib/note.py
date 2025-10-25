@@ -57,7 +57,7 @@ from sekai.lib.layout import (
     layout_linear_effect,
     layout_regular_note_body,
     layout_regular_note_body_fallback,
-    layout_rotated_linear_effect,
+    layout_rotated2_linear_effect,
     layout_slim_note_body,
     layout_slim_note_body_fallback,
     layout_tick,
@@ -873,16 +873,29 @@ def play_note_hit_effects(
             layout = layout_circular_effect(lane, w=1.75, h=1.05)
             particles.circular.spawn(layout, duration=0.6)
         if particles.directional.is_available:
+            degree = (
+                45
+                if kind
+                in (
+                    NoteKind.CRIT_FLICK,
+                    NoteKind.CRIT_HEAD_FLICK,
+                    NoteKind.CRIT_HEAD_TRACE_FLICK,
+                    NoteKind.CRIT_TAIL_FLICK,
+                    NoteKind.CRIT_TAIL_TRACE_FLICK,
+                )
+                and Options.version == 1
+                else 22.5
+            )
             match direction:
                 case FlickDirection.UP_OMNI | FlickDirection.DOWN_OMNI:
                     shear = 0
                 case FlickDirection.UP_LEFT | FlickDirection.DOWN_RIGHT:
-                    shear = -1
+                    shear = degree
                 case FlickDirection.UP_RIGHT | FlickDirection.DOWN_LEFT:
-                    shear = 1
+                    shear = -degree
                 case _:
                     assert_never(direction)
-            layout = layout_rotated_linear_effect(lane, shear=shear)
+            layout = layout_rotated2_linear_effect(lane, degree=shear)
             particles.directional.spawn(layout, duration=0.32)
         if particles.tick.is_available:
             layout = layout_tick_effect(lane)
