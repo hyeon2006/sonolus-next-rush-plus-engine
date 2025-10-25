@@ -242,7 +242,7 @@ def draw_judgment_accuracy(
 
     screen_center = Vec2(x=0, y=0.723)
 
-    base_h = 0.054 * ui.judgment_config.scale
+    base_h = 0.054 * 1.3 * ui.judgment_config.scale
     base_w = base_h * 23.6
     h, w = transform_fixed_size(base_h, base_w)
     a = ui.judgment_config.alpha
