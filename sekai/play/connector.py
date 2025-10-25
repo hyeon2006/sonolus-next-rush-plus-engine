@@ -74,6 +74,8 @@ class Connector(PlayArchetype):
         )
         self.end_time = max(self.visual_active_interval.end, self.input_active_interval.end)
         self.last_visual_state = ConnectorVisualState.WAITING
+        if self.active_head.beat >= self.active_tail.beat - 0.5:
+            self.active_connector_info.can_judge = True
 
         if Options.auto_sfx and self.head_ref.index == self.segment_head_ref.index:
             match self.kind:
