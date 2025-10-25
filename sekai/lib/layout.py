@@ -225,7 +225,17 @@ def layout_stage_cover() -> Quad:
         l=-6,
         r=6,
         t=LANE_T,
-        b=b,
+        b=b + 0.002,
+    )
+
+
+def layout_stage_cover_line() -> Quad:
+    t = lerp(approach(0), 1.0, Options.stage_cover)
+    return perspective_rect(
+        l=-6,
+        r=6,
+        t=t + 0.002,
+        b=t,
     )
 
 

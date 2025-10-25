@@ -20,6 +20,7 @@ from sekai.lib.layout import (
     layout_lane_by_edges,
     layout_sekai_stage,
     layout_stage_cover,
+    layout_stage_cover_line,
 )
 from sekai.lib.options import Options
 from sekai.lib.particle import Particles
@@ -71,7 +72,9 @@ def draw_fallback_stage():
 def draw_stage_cover():
     if Options.stage_cover > 0:
         layout = layout_stage_cover()
-        Skin.cover.draw(layout, z=get_z(LAYER_COVER), a=1)
+        layout2 = layout_stage_cover_line()
+        Skin.cover.draw(layout, z=get_z(LAYER_COVER), a=0.9)
+        Skin.guide_neutral.draw(layout2, z=get_z(LAYER_COVER + 0.1), a=0.75)
     if Options.hidden > 0:
         layout = layout_hidden_cover()
         Skin.cover.draw(layout, z=get_z(LAYER_COVER), a=1)
