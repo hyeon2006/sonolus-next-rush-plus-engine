@@ -1,4 +1,4 @@
-# Next SEKAI Sonolus Engine
+# Next RUSH+ Sonolus Engine
 
 A new Project Sekai inspired engine for [Sonolus](https://sonolus.com).
 
