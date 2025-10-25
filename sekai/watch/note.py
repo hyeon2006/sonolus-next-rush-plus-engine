@@ -44,6 +44,8 @@ from sekai.lib.timescale import group_hide_notes, group_scaled_time, group_time_
 from sekai.play.note import derive_note_archetypes
 from sekai.watch.particle_manager import ParticleManager
 
+MIN_START_TIME = 0.002  # Executes the terminate process with a guaranteed minimum duration.
+
 
 class WatchBaseNote(WatchArchetype):
     beat: StandardImport.BEAT
@@ -104,7 +106,7 @@ class WatchBaseNote(WatchArchetype):
         if not self.is_attached:
             self.target_scaled_time = group_time_to_scaled_time(self.timescale_group, self.target_time)
             self.visual_start_time = get_visual_spawn_time(self.timescale_group, self.target_scaled_time)
-            self.start_time = self.visual_start_time
+            self.start_time = self.get_min_start_time()
 
     def preprocess(self):
         self.init_data()
@@ -130,7 +132,7 @@ class WatchBaseNote(WatchArchetype):
             self.lane = lane
             self.size = size
             self.visual_start_time = min(attach_head.visual_start_time, attach_tail.visual_start_time)
-            self.start_time = self.visual_start_time
+            self.start_time = self.get_min_start_time()
 
         if is_replay():
             if self.played_hit_effects:
@@ -153,6 +155,13 @@ class WatchBaseNote(WatchArchetype):
 
         if self.played_hit_effects or not is_replay():
             self.spawn_critical_lane()
+
+    def get_min_start_time(self):
+        return (
+            self.visual_start_time
+            if self.hit_time - self.visual_start_time >= MIN_START_TIME
+            else self.hit_time - MIN_START_TIME
+        )
 
     def spawn_critical_lane(self):
         if Options.lane_effect_enabled:
