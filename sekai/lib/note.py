@@ -28,6 +28,7 @@ from sekai.lib.buckets import (
     TRACE_NORMAL_WINDOW,
     Buckets,
 )
+from sekai.lib.connector import ActiveConnectorKind, ConnectorKind
 from sekai.lib.ease import EaseType, ease
 from sekai.lib.effect import EMPTY_EFFECT, SFX_DISTANCE, Effects, first_available_effect
 from sekai.lib.layer import (
@@ -297,11 +298,96 @@ def draw_note(kind: NoteKind, lane: float, size: float, progress: float, directi
     draw_note_tick(kind, lane, travel, target_time)
 
 
-def draw_slide_note_head(kind: NoteKind, lane: float, size: float, target_time: float):
+def draw_slide_note_head(
+    kind: NoteKind, connector_kind: ActiveConnectorKind, lane: float, size: float, target_time: float
+):
     if Options.hidden > 0:
         return
+    match connector_kind:
+        case ConnectorKind.ACTIVE_NORMAL | ConnectorKind.ACTIVE_FAKE_NORMAL:
+            kind = note_kind_as_normal(kind)
+        case ConnectorKind.ACTIVE_CRITICAL | ConnectorKind.ACTIVE_FAKE_CRITICAL:
+            kind = note_kind_as_critical(kind)
+        case _:
+            assert_never(connector_kind)
     draw_note_body(kind, lane, size, 1.0, target_time)
     draw_note_tick(kind, lane, 1.0, target_time)
+
+
+def note_kind_as_normal(kind: NoteKind) -> NoteKind:
+    match kind:
+        case NoteKind.CRIT_TAP:
+            return NoteKind.NORM_TAP
+        case NoteKind.CRIT_FLICK:
+            return NoteKind.NORM_FLICK
+        case NoteKind.CRIT_TRACE:
+            return NoteKind.NORM_TRACE
+        case NoteKind.CRIT_TRACE_FLICK:
+            return NoteKind.NORM_TRACE_FLICK
+        case NoteKind.CRIT_RELEASE:
+            return NoteKind.NORM_RELEASE
+        case NoteKind.CRIT_HEAD_TAP:
+            return NoteKind.NORM_HEAD_TAP
+        case NoteKind.CRIT_HEAD_FLICK:
+            return NoteKind.NORM_HEAD_FLICK
+        case NoteKind.CRIT_HEAD_TRACE:
+            return NoteKind.NORM_HEAD_TRACE
+        case NoteKind.CRIT_HEAD_TRACE_FLICK:
+            return NoteKind.NORM_HEAD_TRACE_FLICK
+        case NoteKind.CRIT_HEAD_RELEASE:
+            return NoteKind.NORM_HEAD_RELEASE
+        case NoteKind.CRIT_TAIL_TAP:
+            return NoteKind.NORM_TAIL_TAP
+        case NoteKind.CRIT_TAIL_FLICK:
+            return NoteKind.NORM_TAIL_FLICK
+        case NoteKind.CRIT_TAIL_TRACE:
+            return NoteKind.NORM_TAIL_TRACE
+        case NoteKind.CRIT_TAIL_TRACE_FLICK:
+            return NoteKind.NORM_TAIL_TRACE_FLICK
+        case NoteKind.CRIT_TAIL_RELEASE:
+            return NoteKind.NORM_TAIL_RELEASE
+        case NoteKind.CRIT_TICK:
+            return NoteKind.NORM_TICK
+        case _:
+            return kind
+
+
+def note_kind_as_critical(kind: NoteKind) -> NoteKind:
+    match kind:
+        case NoteKind.NORM_TAP:
+            return NoteKind.CRIT_TAP
+        case NoteKind.NORM_FLICK:
+            return NoteKind.CRIT_FLICK
+        case NoteKind.NORM_TRACE:
+            return NoteKind.CRIT_TRACE
+        case NoteKind.NORM_TRACE_FLICK:
+            return NoteKind.CRIT_TRACE_FLICK
+        case NoteKind.NORM_RELEASE:
+            return NoteKind.CRIT_RELEASE
+        case NoteKind.NORM_HEAD_TAP:
+            return NoteKind.CRIT_HEAD_TAP
+        case NoteKind.NORM_HEAD_FLICK:
+            return NoteKind.CRIT_HEAD_FLICK
+        case NoteKind.NORM_HEAD_TRACE:
+            return NoteKind.CRIT_HEAD_TRACE
+        case NoteKind.NORM_HEAD_TRACE_FLICK:
+            return NoteKind.CRIT_HEAD_TRACE_FLICK
+        case NoteKind.NORM_HEAD_RELEASE:
+            return NoteKind.CRIT_HEAD_RELEASE
+        case NoteKind.NORM_TAIL_TAP:
+            return NoteKind.CRIT_TAIL_TAP
+        case NoteKind.NORM_TAIL_FLICK:
+            return NoteKind.CRIT_TAIL_FLICK
+        case NoteKind.NORM_TAIL_TRACE:
+            return NoteKind.CRIT_TAIL_TRACE
+        case NoteKind.NORM_TAIL_TRACE_FLICK:
+            return NoteKind.CRIT_TAIL_TRACE_FLICK
+        case NoteKind.NORM_TAIL_RELEASE:
+            return NoteKind.CRIT_TAIL_RELEASE
+        case NoteKind.NORM_TICK:
+            return NoteKind.CRIT_TICK
+        case _:
+            return kind
 
 
 def draw_note_body(kind: NoteKind, lane: float, size: float, travel: float, target_time: float):

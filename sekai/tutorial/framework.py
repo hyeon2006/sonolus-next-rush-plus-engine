@@ -368,6 +368,7 @@ class QueuedTutorialNoteDrawConnectorTo(Record):
             draw_connector_slot_glow_effect(kind, head_target_time, lane, size)
             draw_slide_note_head(
                 self.active_head_kind,
+                kind,
                 lane,
                 size,
                 head_target_time,

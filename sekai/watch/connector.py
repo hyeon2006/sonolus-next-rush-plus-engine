@@ -90,12 +90,15 @@ class WatchConnector(WatchArchetype):
             tail = self.tail
             segment_head = self.segment_head
             segment_tail = self.segment_tail
-            if is_replay():
-                visual_state = Streams.connector_visual_states[self.index].get_previous_inclusive(time())
-            elif time() < self.active_head.target_time:
-                visual_state = ConnectorVisualState.WAITING
+            if self.active_head_ref.index > 0:
+                if is_replay():
+                    visual_state = Streams.connector_visual_states[self.index].get_previous_inclusive(time())
+                elif time() < self.active_head.target_time:
+                    visual_state = ConnectorVisualState.WAITING
+                else:
+                    visual_state = ConnectorVisualState.ACTIVE
             else:
-                visual_state = ConnectorVisualState.ACTIVE
+                visual_state = ConnectorVisualState.WAITING
             if group_hide_notes(segment_head.timescale_group):
                 return
             if self.active_tail_ref.index > 0 and time() >= self.active_tail.despawn_time():
@@ -309,6 +312,7 @@ class WatchSlideManager(WatchArchetype):
             ):
                 draw_slide_note_head(
                     self.active_head.kind,
+                    info.connector_kind,
                     info.visual_lane,
                     info.visual_size,
                     self.active_head.target_time,
