@@ -13,11 +13,11 @@ from sekai.watch.note import WatchBaseNote
 
 class ComboLabel(WatchArchetype):
     next_ref: EntityRef[WatchBaseNote] = entity_memory()
-    index: float = entity_memory()
+    note_index: int = entity_memory()
     name = archetype_names.COMBO_LABEL
 
     def spawn_time(self) -> float:
-        return WatchBaseNote.at(self.index).hit_time
+        return WatchBaseNote.at(self.note_index).hit_time
 
     def despawn_time(self):
         if self.next_ref.index > 0:
@@ -26,18 +26,18 @@ class ComboLabel(WatchArchetype):
             return 1e8
 
     def update_parallel(self):
-        if WatchBaseNote.at(self.index).combo == 0:
+        if WatchBaseNote.at(self.note_index).combo == 0:
             return
-        draw_combo_label(draw_time=self.spawn_time(), ap=WatchBaseNote.at(self.index).ap)
+        draw_combo_label(draw_time=self.spawn_time(), ap=WatchBaseNote.at(self.note_index).ap)
 
 
 class ComboNumber(WatchArchetype):
     next_ref: EntityRef[WatchBaseNote] = entity_memory()
-    index: float = entity_memory()
+    note_index: int = entity_memory()
     name = archetype_names.COMBO_NUMBER
 
     def spawn_time(self) -> float:
-        return WatchBaseNote.at(self.index).hit_time
+        return WatchBaseNote.at(self.note_index).hit_time
 
     def despawn_time(self):
         if self.next_ref.index > 0:
@@ -46,74 +46,79 @@ class ComboNumber(WatchArchetype):
             return 1e8
 
     def update_parallel(self):
-        if WatchBaseNote.at(self.index).combo == 0:
+        if WatchBaseNote.at(self.note_index).combo == 0:
             return
         draw_combo_number(
-            draw_time=self.spawn_time(), ap=WatchBaseNote.at(self.index).ap, combo=WatchBaseNote.at(self.index).combo
+            draw_time=self.spawn_time(),
+            ap=WatchBaseNote.at(self.note_index).ap,
+            combo=WatchBaseNote.at(self.note_index).combo,
         )
 
 
 class JudgmentText(WatchArchetype):
     next_ref: EntityRef[WatchBaseNote] = entity_memory()
-    index: float = entity_memory()
+    note_index: int = entity_memory()
     name = archetype_names.JUDGMENT_TEXT
 
     def spawn_time(self) -> float:
-        return WatchBaseNote.at(self.index).hit_time
+        return WatchBaseNote.at(self.note_index).hit_time
 
     def despawn_time(self):
-        if self.next_ref.index > 0 and WatchBaseNote.at(self.index).hit_time + 0.5 >= self.next_ref.get().hit_time:
+        if self.next_ref.index > 0 and WatchBaseNote.at(self.note_index).hit_time + 0.5 >= self.next_ref.get().hit_time:
             return self.next_ref.get().hit_time
         else:
-            return WatchBaseNote.at(self.index).hit_time + 0.5
+            return WatchBaseNote.at(self.note_index).hit_time + 0.5
 
     def update_parallel(self):
         draw_judgment_text(
             draw_time=self.spawn_time(),
-            judgment=WatchBaseNote.at(self.index).judgment,
-            windows_bad=WatchBaseNote.at(self.index).judgment_window_bad,
-            accuracy=WatchBaseNote.at(self.index).accuracy,
-            check_pass=WatchBaseNote.at(self.index).played_hit_effects,
+            judgment=WatchBaseNote.at(self.note_index).judgment,
+            windows_bad=WatchBaseNote.at(self.note_index).judgment_window_bad,
+            accuracy=WatchBaseNote.at(self.note_index).accuracy,
+            check_pass=WatchBaseNote.at(self.note_index).played_hit_effects,
         )
 
 
 class JudgmentAccuracy(WatchArchetype):
     next_ref: EntityRef[WatchBaseNote] = entity_memory()
-    index: float = entity_memory()
+    note_index: int = entity_memory()
     name = archetype_names.JUDGMENT_ACCURACY
 
     def spawn_time(self) -> float:
-        return WatchBaseNote.at(self.index).hit_time
+        return WatchBaseNote.at(self.note_index).hit_time
 
     def despawn_time(self):
-        if self.next_ref.index > 0 and WatchBaseNote.at(self.index).hit_time + 0.5 >= self.next_ref.get().hit_time:
+        if self.next_ref.index > 0 and WatchBaseNote.at(self.note_index).hit_time + 0.5 >= self.next_ref.get().hit_time:
             return self.next_ref.get().hit_time
         else:
-            return WatchBaseNote.at(self.index).hit_time + 0.5
+            return WatchBaseNote.at(self.note_index).hit_time + 0.5
 
     def update_parallel(self):
         draw_judgment_accuracy(
             draw_time=self.spawn_time(),
-            judgment=WatchBaseNote.at(self.index).judgment,
-            windows=WatchBaseNote.at(self.index).judgment_window,
-            accuracy=WatchBaseNote.at(self.index).accuracy,
-            wrong_way=WatchBaseNote.at(self.index).wrong_way_check,
+            judgment=WatchBaseNote.at(self.note_index).judgment,
+            windows=WatchBaseNote.at(self.note_index).judgment_window,
+            accuracy=WatchBaseNote.at(self.note_index).accuracy,
+            wrong_way=WatchBaseNote.at(self.note_index).wrong_way_check,
         )
 
 
 class DamageFlash(WatchArchetype):
     next_ref: EntityRef[WatchBaseNote] = entity_memory()
-    index: float = entity_memory()
+    note_index: int = entity_memory()
     name = archetype_names.DAMAGE_FLASH
 
     def spawn_time(self) -> float:
-        return WatchBaseNote.at(self.index).hit_time
+        return WatchBaseNote.at(self.note_index).hit_time
 
     def despawn_time(self):
-        if self.next_ref.index > 0 and WatchBaseNote.at(self.index).hit_time + 0.35 >= self.next_ref.get().hit_time:
+        if (
+            self.next_ref.index > 0
+            and WatchBaseNote.at(self.note_index).hit_time + 0.35 >= self.next_ref.get().hit_time
+        ):
             return self.next_ref.get().hit_time
         else:
-            return WatchBaseNote.at(self.index).hit_time + 0.35
+            return WatchBaseNote.at(self.note_index).hit_time + 0.35
 
     def update_parallel(self):
         draw_damage_flash(draw_time=self.spawn_time())
