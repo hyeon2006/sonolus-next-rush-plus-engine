@@ -313,8 +313,6 @@ class JudgmentSprite(Record):
                 result @= self.miss
             case JudgmentType.AUTO:
                 result @= self.auto
-            case _:
-                assert_never(judgment_type)
         return result
 
     @property
@@ -327,7 +325,7 @@ class AccuracySprite(Record):
     late: Sprite
     flick: Sprite
 
-    def get_accuracy(self, judgment: Judgment, windows: Interval, accuracy: float, wrong_way: bool):
+    def get_accuracy(self, judgment: Judgment, windows: Interval, accuracy: float, wrong_way: bool) -> AccuracyType:
         if judgment != Judgment.PERFECT:
             if wrong_way:
                 return AccuracyType.Flick
@@ -347,8 +345,6 @@ class AccuracySprite(Record):
                 result @= self.late
             case AccuracyType.Flick:
                 result @= self.flick
-            case _:
-                assert_never(type)
         return result
 
     @property
