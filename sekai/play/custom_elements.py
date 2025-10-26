@@ -24,36 +24,37 @@ def spawn_custom(
     wrong_way: bool,
     check_pass: bool,
 ):
-    if not Options.hide_custom:
-        if Options.custom_combo and combo_label.custom_available:
-            ComboLabel.spawn(spawn_time=time(), judgment=judgment)
-        if Options.custom_combo and combo_number.custom_available:
-            ComboNumber.spawn(spawn_time=time(), judgment=judgment)
-        if Options.custom_judgment and judgment_text.custom_available:
-            JudgmentText.spawn(
-                spawn_time=time(),
-                judgment=judgment,
-                windows_bad=windows_bad,
-                accuracy=accuracy,
-                check_pass=check_pass,
-            )
-        if (
-            Options.custom_judgment
-            and Options.custom_accuracy
-            and judgment_text.custom_available
-            and accuracy_text.custom_available
-            and judgment != Judgment.PERFECT
-            and check_pass
-        ):
-            JudgmentAccuracy.spawn(
-                spawn_time=time(),
-                judgment=judgment,
-                accuracy=accuracy,
-                windows=windows,
-                wrong_way=wrong_way,
-            )
-        if Options.custom_damage and damage_flash.custom_available and judgment == Judgment.MISS:
-            DamageFlash.spawn(spawn_time=time())
+    if Options.hide_custom:
+        return
+    if Options.custom_combo and combo_label.custom_available:
+        ComboLabel.spawn(spawn_time=time(), judgment=judgment)
+    if Options.custom_combo and combo_number.custom_available:
+        ComboNumber.spawn(spawn_time=time(), judgment=judgment)
+    if Options.custom_judgment and judgment_text.custom_available:
+        JudgmentText.spawn(
+            spawn_time=time(),
+            judgment=judgment,
+            windows_bad=windows_bad,
+            accuracy=accuracy,
+            check_pass=check_pass,
+        )
+    if (
+        Options.custom_judgment
+        and Options.custom_accuracy
+        and judgment_text.custom_available
+        and accuracy_text.custom_available
+        and judgment != Judgment.PERFECT
+        and check_pass
+    ):
+        JudgmentAccuracy.spawn(
+            spawn_time=time(),
+            judgment=judgment,
+            accuracy=accuracy,
+            windows=windows,
+            wrong_way=wrong_way,
+        )
+    if Options.custom_damage and damage_flash.custom_available and judgment == Judgment.MISS:
+        DamageFlash.spawn(spawn_time=time())
 
 
 @level_memory
