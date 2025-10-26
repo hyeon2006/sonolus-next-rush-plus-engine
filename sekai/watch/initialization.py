@@ -57,7 +57,6 @@ def sorted_linked_list():
         return
 
     sorted_list_head = sort_entities(list_head)
-    WatchBaseNote.at(0).sorted_list_head = sorted_list_head
 
     setting_combo(sorted_list_head.index)
 
@@ -65,9 +64,12 @@ def sorted_linked_list():
 def initial_list(entity_count):
     list_head = 0
     list_length = 0
+    watch_note_id = WatchBaseNote._compile_time_id()
     for i in range(entity_count):
         entity_index = entity_count - 1 - i
-        if WatchBaseNote.at(entity_index).is_scored:
+        info = entity_info_at(entity_index)
+        is_watch_note = watch_note_id in WatchBaseNote._get_mro_id_array(info.archetype_id)
+        if is_watch_note and WatchBaseNote.at(entity_index).is_scored:
             WatchBaseNote.at(entity_index).init_data()
             list_length += 1
             WatchBaseNote.at(entity_index).next_ref.index = list_head
@@ -91,9 +93,6 @@ def setting_combo(head: int) -> None:
     accuracy = head
     damage_flash = head
     while ptr > 0:
-        if is_replay() and ap:
-            WatchBaseNote.at(ptr).ap = True
-
         judgment = WatchBaseNote.at(ptr).judgment
         if is_replay() and judgment in (Judgment.GOOD, Judgment.MISS):
             combo = 0
@@ -101,6 +100,9 @@ def setting_combo(head: int) -> None:
         else:
             combo += 1
         WatchBaseNote.at(ptr).combo = combo
+
+        if is_replay() and ap:
+            WatchBaseNote.at(ptr).ap = True
 
         if is_replay() and judgment != Judgment.PERFECT and WatchBaseNote.at(ptr).played_hit_effects:
             WatchBaseNote.at(accuracy).next_ref_accuracy.index = ptr
