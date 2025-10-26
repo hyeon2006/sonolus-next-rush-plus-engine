@@ -102,11 +102,12 @@ def setting_combo(head: int) -> None:
         judgment = WatchBaseNote.at(ptr).judgment
         if is_replay() and judgment in (Judgment.GOOD, Judgment.MISS):
             combo = 0
-            ap = True
         else:
             combo += 1
         WatchBaseNote.at(ptr).combo = combo
 
+        if is_replay() and judgment != Judgment.PERFECT:
+            ap = True
         if is_replay() and ap:
             WatchBaseNote.at(ptr).ap = True
 
