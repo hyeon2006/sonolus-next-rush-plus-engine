@@ -3,9 +3,15 @@ name = "next-rush"
 version = "0.1.0"
 description = "Next RUSH+ Sonolus engine"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.12.5"
 dependencies = [
-    "sonolus-py~=0.11.1",
+    "sonolus-py~=0.12.0",
+]
+
+[dependency-groups]
+dev = [
+    "ruff",
+    "pyright",
 ]
 
 [tool.ruff]
