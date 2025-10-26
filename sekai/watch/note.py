@@ -72,7 +72,6 @@ class WatchBaseNote(WatchArchetype):
     target_scaled_time: float = entity_data()
 
     active_connector_info: ActiveConnectorInfo = shared_memory()
-    sorted_list_head: EntityRef[WatchBaseNote] = shared_memory()
     next_ref_accuracy: EntityRef[WatchBaseNote] = shared_memory()
     next_ref_damage_flash: EntityRef[WatchBaseNote] = shared_memory()
     judgment_window: JudgmentWindow = shared_memory()
@@ -177,17 +176,17 @@ class WatchBaseNote(WatchArchetype):
             if Options.custom_combo and combo_label.custom_available and (not Options.auto_judgment or is_replay()):
                 get_archetype_by_name("ComboLabel").spawn(
                     next_ref=self.next_ref,
-                    index=self.index,
+                    note_index=self.index,
                 )
             if Options.custom_combo and combo_number.custom_available and (not Options.auto_judgment or is_replay()):
                 get_archetype_by_name("ComboNumber").spawn(
                     next_ref=self.next_ref,
-                    index=self.index,
+                    note_index=self.index,
                 )
         if Options.custom_judgment and judgment_text.custom_available:
             get_archetype_by_name("JudgmentText").spawn(
                 next_ref=self.next_ref,
-                index=self.index,
+                note_index=self.index,
             )
         if (
             Options.custom_judgment
@@ -200,12 +199,12 @@ class WatchBaseNote(WatchArchetype):
         ):
             get_archetype_by_name("JudgmentAccuracy").spawn(
                 next_ref=self.next_ref_accuracy,
-                index=self.index,
+                note_index=self.index,
             )
         if Options.custom_damage and damage_flash.custom_available and self.judgment == Judgment.MISS and is_replay():
             get_archetype_by_name("DamageFlash").spawn(
                 next_ref=self.next_ref_damage_flash,
-                index=self.index,
+                note_index=self.index,
             )
 
     def spawn_time(self) -> float:
