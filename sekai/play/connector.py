@@ -74,8 +74,12 @@ class Connector(PlayArchetype):
         )
         self.end_time = max(self.visual_active_interval.end, self.input_active_interval.end)
         self.last_visual_state = ConnectorVisualState.WAITING
-        if self.active_head.beat >= self.active_tail.beat - 0.5:
-            self.active_connector_info.can_judge = True
+        if (
+            self.head.kind in (note.NoteKind.CRIT_TICK, note.NoteKind.HIDE_TICK, note.NoteKind.NORM_TICK)
+            and self.head.beat >= self.active_connector_info.last_judge_beat
+        ):
+            self.active_connector_info.last_judge_index = self.head_ref.index
+            self.active_connector_info.last_judge_beat = self.head.beat
 
         if Options.auto_sfx and self.head_ref.index == self.segment_head_ref.index:
             match self.kind:

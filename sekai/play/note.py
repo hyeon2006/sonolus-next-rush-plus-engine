@@ -9,6 +9,7 @@ from sonolus.script.archetype import (
     PlayArchetype,
     StandardImport,
     entity_data,
+    entity_info_at,
     entity_memory,
     exported,
     imported,
@@ -224,11 +225,19 @@ class BaseNote(PlayArchetype):
                 | NoteKind.CRIT_TRACE_FLICK
                 | NoteKind.NORM_HEAD_TRACE_FLICK
                 | NoteKind.CRIT_HEAD_TRACE_FLICK
-                | NoteKind.NORM_TAIL_FLICK
+            ):
+                self.handle_trace_flick_input()
+            case (
+                NoteKind.NORM_TAIL_FLICK
                 | NoteKind.CRIT_TAIL_FLICK
                 | NoteKind.NORM_TAIL_TRACE_FLICK
                 | NoteKind.CRIT_TAIL_TRACE_FLICK
             ):
+                last_tick_index = entity_info_at(
+                    self.active_head_ref.get().active_connector_info.last_judge_index
+                ).index
+                if last_tick_index > 0 and not BaseNote.at(last_tick_index).is_despawned:
+                    return
                 self.handle_trace_flick_input()
             case (
                 NoteKind.NORM_RELEASE
@@ -238,6 +247,11 @@ class BaseNote(PlayArchetype):
                 | NoteKind.NORM_TAIL_RELEASE
                 | NoteKind.CRIT_TAIL_RELEASE
             ):
+                last_tick_index = entity_info_at(
+                    self.active_head_ref.get().active_connector_info.last_judge_index
+                ).index
+                if last_tick_index > 0 and not BaseNote.at(last_tick_index).is_despawned:
+                    return
                 self.handle_release_input()
             case NoteKind.NORM_TICK | NoteKind.CRIT_TICK | NoteKind.HIDE_TICK:
                 self.handle_tick_input()
@@ -340,8 +354,6 @@ class BaseNote(PlayArchetype):
         self.judge(touch.start_time)
 
     def handle_release_input(self):
-        if not self.active_head_ref.get().active_connector_info.can_judge:
-            return
         if time() > self.input_interval.end:
             return
         if self.captured_touch_id == 0:
@@ -446,11 +458,6 @@ class BaseNote(PlayArchetype):
             self.complete()
         else:
             self.fail_late(0.125)
-        if (
-            self.attach_tail_ref.get().active_head_ref.index > 0
-            and self.beat >= self.attach_tail_ref.get().active_head_ref.get().active_connector_info.tail_beat - 0.5
-        ):
-            self.attach_tail_ref.get().active_head_ref.get().active_connector_info.can_judge = True
 
     def handle_damage_input(self):
         hitbox = self.get_full_hitbox()
