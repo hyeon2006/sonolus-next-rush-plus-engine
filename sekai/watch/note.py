@@ -169,17 +169,18 @@ class WatchBaseNote(WatchArchetype):
                 ParticleManager.spawn(lane=self.lane, size=self.size, target_time=self.hit_time, particles=particles)
 
     def spawn_custom(self):
-        if not Options.hide_custom:
-            if Options.custom_combo and combo_label.custom_available and (not Options.auto_judgment or is_replay()):
-                get_archetype_by_name("ComboLabel").spawn(
-                    next_ref=self.next_ref,
-                    note_index=self.index,
-                )
-            if Options.custom_combo and combo_number.custom_available and (not Options.auto_judgment or is_replay()):
-                get_archetype_by_name("ComboNumber").spawn(
-                    next_ref=self.next_ref,
-                    note_index=self.index,
-                )
+        if Options.hide_custom:
+            return
+        if Options.custom_combo and combo_label.custom_available and (not Options.auto_judgment or is_replay()):
+            get_archetype_by_name("ComboLabel").spawn(
+                next_ref=self.next_ref,
+                note_index=self.index,
+            )
+        if Options.custom_combo and combo_number.custom_available and (not Options.auto_judgment or is_replay()):
+            get_archetype_by_name("ComboNumber").spawn(
+                next_ref=self.next_ref,
+                note_index=self.index,
+            )
         if Options.custom_judgment and judgment_text.custom_available:
             get_archetype_by_name("JudgmentText").spawn(
                 next_ref=self.next_ref,
