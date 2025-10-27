@@ -45,7 +45,7 @@ from sekai.lib.timescale import group_hide_notes, group_scaled_time, group_time_
 from sekai.play.note import derive_note_archetypes
 from sekai.watch.particle_manager import ParticleManager
 
-MIN_START_TIME = 0.0025  # Executes the terminate process with a guaranteed minimum duration.
+MIN_START_TIME = 0.0161  # Executes the terminate process with a guaranteed minimum duration.
 
 
 class WatchBaseNote(WatchArchetype):
