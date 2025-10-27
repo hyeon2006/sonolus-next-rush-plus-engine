@@ -158,9 +158,9 @@ class WatchBaseNote(WatchArchetype):
 
     def get_min_start_time(self):
         if self.hit_time - self.visual_start_time > MIN_START_TIME:
-            self.not_render = True
             return self.visual_start_time
         else:
+            self.not_render = True
             return self.hit_time - MIN_START_TIME
 
     def spawn_critical_lane(self):
