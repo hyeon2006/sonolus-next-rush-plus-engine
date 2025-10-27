@@ -68,6 +68,7 @@ class WatchBaseNote(WatchArchetype):
     visual_start_time: float = entity_data()
     start_time: float = entity_data()
     target_scaled_time: float = entity_data()
+    not_render: float = entity_data()
 
     active_connector_info: ActiveConnectorInfo = shared_memory()
     next_ref_accuracy: EntityRef[WatchBaseNote] = shared_memory()
@@ -156,11 +157,11 @@ class WatchBaseNote(WatchArchetype):
             self.spawn_critical_lane()
 
     def get_min_start_time(self):
-        return (
-            self.visual_start_time
-            if self.hit_time - self.visual_start_time > MIN_START_TIME
-            else self.hit_time - MIN_START_TIME
-        )
+        if self.hit_time - self.visual_start_time > MIN_START_TIME:
+            self.not_render = True
+            return self.visual_start_time
+        else:
+            return self.hit_time - MIN_START_TIME
 
     def spawn_critical_lane(self):
         if Options.lane_effect_enabled:
@@ -229,6 +230,8 @@ class WatchBaseNote(WatchArchetype):
         if is_head(self.kind) and time() > self.target_time:
             return
         if group_hide_notes(self.timescale_group):
+            return
+        if self.not_render:
             return
         draw_note(self.kind, self.lane, self.size, self.progress, self.direction, self.target_time)
 
