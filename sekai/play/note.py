@@ -9,7 +9,6 @@ from sonolus.script.archetype import (
     PlayArchetype,
     StandardImport,
     entity_data,
-    entity_info_at,
     entity_memory,
     exported,
     imported,
@@ -90,6 +89,7 @@ class BaseNote(PlayArchetype):
     # This is set by the input manager rather than the note itself.
     captured_touch_id: int = shared_memory()
     captured_touch_time: float = shared_memory()
+    tick_tail_ref: EntityRef[BaseNote] = shared_memory()
 
     active_connector_info: ActiveConnectorInfo = shared_memory()
 
@@ -233,11 +233,6 @@ class BaseNote(PlayArchetype):
                 | NoteKind.NORM_TAIL_TRACE_FLICK
                 | NoteKind.CRIT_TAIL_TRACE_FLICK
             ):
-                last_tick_index = entity_info_at(
-                    self.active_head_ref.get().active_connector_info.last_judge_index
-                ).index
-                if last_tick_index > 0 and not BaseNote.at(last_tick_index).is_despawned:
-                    return
                 self.handle_trace_flick_input()
             case (
                 NoteKind.NORM_RELEASE
@@ -247,11 +242,6 @@ class BaseNote(PlayArchetype):
                 | NoteKind.NORM_TAIL_RELEASE
                 | NoteKind.CRIT_TAIL_RELEASE
             ):
-                last_tick_index = entity_info_at(
-                    self.active_head_ref.get().active_connector_info.last_judge_index
-                ).index
-                if last_tick_index > 0 and not BaseNote.at(last_tick_index).is_despawned:
-                    return
                 self.handle_release_input()
             case NoteKind.NORM_TICK | NoteKind.CRIT_TICK | NoteKind.HIDE_TICK:
                 self.handle_tick_input()
@@ -265,6 +255,13 @@ class BaseNote(PlayArchetype):
     def update_parallel(self):
         if self.despawn:
             return
+        if (
+            self.attach_head_ref.index > 0
+            and self.kind == NoteKind.HIDE_TICK
+            and self.attach_head_ref.get().tick_tail_ref.index > 0
+            and self.attach_head_ref.get().tick_tail_ref.get().is_despawned
+        ):
+            self.complete()
         if not self.is_scored and time() >= self.target_time:
             self.despawn = True
             return
