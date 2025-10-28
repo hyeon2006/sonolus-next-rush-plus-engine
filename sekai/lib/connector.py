@@ -479,8 +479,6 @@ class ActiveConnectorInfo(Record):
     is_active: bool
     active_start_time: float
     connector_kind: ConnectorKind
-    last_judge_index: int
-    last_judge_beat: float
 
     def get_hitbox(self, leniency: float) -> Rect:
         return layout_hitbox(
