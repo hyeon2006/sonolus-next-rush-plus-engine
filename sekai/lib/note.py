@@ -868,10 +868,14 @@ def play_note_hit_effects(
     if Options.note_effect_enabled:
         if particles.linear.is_available:
             layout = layout_linear_effect(lane, shear=0)
-            particles.linear.spawn(layout, duration=0.5)
-        if particles.circular.is_available:
+            linear_particle.spawn(layout, duration=0.5 * Options.note_effect_duration)
+        circular_particle = first_available_particle(
+            particles.circular,
+            particles.circular_fallback,
+        )
+        if circular_particle.is_available:
             layout = layout_circular_effect(lane, w=1.75, h=1.05)
-            particles.circular.spawn(layout, duration=0.6)
+            circular_particle.spawn(layout, duration=0.6 * Options.note_effect_duration)
         if particles.directional.is_available:
             degree = (
                 45
@@ -896,21 +900,21 @@ def play_note_hit_effects(
                 case _:
                     assert_never(direction)
             layout = layout_rotated2_linear_effect(lane, degree=shear)
-            particles.directional.spawn(layout, duration=0.32)
+            particles.directional.spawn(layout, duration=0.32 * Options.note_effect_duration)
         if particles.tick.is_available:
             layout = layout_tick_effect(lane)
-            particles.tick.spawn(layout, duration=0.6)
+            particles.tick.spawn(layout, duration=0.6 * Options.note_effect_duration)
         if particles.slot_linear.is_available:
             for slot_lane in iter_slot_lanes(lane, size):
                 layout = layout_linear_effect(slot_lane, shear=0)
-                particles.slot_linear.spawn(layout, duration=0.5)
+                particles.slot_linear.spawn(layout, duration=0.5 * Options.note_effect_duration)
     if Options.lane_effect_enabled:
         layout = layout_lane(lane, size)
         if particles.lane.is_available:
             if particles.lane.id != Particles.critical_flick_note_lane_linear.id:
-                particles.lane.spawn(layout, duration=1)
+                particles.lane.spawn(layout, duration=1 * Options.note_effect_duration)
         elif particles.lane_basic.is_available:
-            particles.lane_basic.spawn(layout, duration=0.3)
+            particles.lane_basic.spawn(layout, duration=0.3 * Options.note_effect_duration)
     if Options.slot_effect_enabled and not is_watch():
         schedule_note_slot_effects(kind, lane, size, time(), direction)
 
@@ -952,25 +956,22 @@ def schedule_note_slot_effects(kind: NoteKind, lane: float, size: float, target_
         )
 
 
-def draw_tutorial_note_slot_effects(
-    kind: NoteKind, lane: float, size: float, start_time: float, direction: FlickDirection
-):
-    sprite_set = get_note_sprite_set(kind, direction)
-    slot_sprite = sprite_set.slot
-    if slot_sprite.is_available and time() < start_time + SLOT_EFFECT_DURATION:
+def draw_tutorial_note_slot_effects(kind: NoteKind, lane: float, size: float, start_time: float):
+    slot_sprite = get_note_slot_sprite(kind)
+    if slot_sprite.is_available and time() < start_time + SLOT_EFFECT_DURATION * Options.note_effect_duration:
         for slot_lane in iter_slot_lanes(lane, size):
             draw_slot_effect(
                 sprite=slot_sprite,
                 start_time=start_time,
-                end_time=start_time + SLOT_EFFECT_DURATION,
+                end_time=start_time + SLOT_EFFECT_DURATION * Options.note_effect_duration,
                 lane=slot_lane,
             )
-    slot_glow_sprite = sprite_set.slot_glow
-    if slot_glow_sprite.is_available and time() < start_time + SLOT_GLOW_EFFECT_DURATION:
+    slot_glow_sprite = get_note_slot_glow_sprite(kind)
+    if slot_glow_sprite.is_available and time() < start_time + SLOT_GLOW_EFFECT_DURATION * Options.note_effect_duration:
         draw_slot_glow_effect(
             sprite=slot_glow_sprite,
             start_time=start_time,
-            end_time=start_time + SLOT_GLOW_EFFECT_DURATION,
+            end_time=start_time + SLOT_GLOW_EFFECT_DURATION * Options.note_effect_duration,
             lane=lane,
             size=size,
         )

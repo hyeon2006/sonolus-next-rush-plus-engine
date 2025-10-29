@@ -327,7 +327,9 @@ class BaseNote(PlayArchetype):
                 if particles.lane.id == Particles.critical_flick_note_lane_linear.id:
                     layout = layout_lane(self.lane, self.size)
                     ParticleManager.spawn(
-                        particle=particles.lane.spawn(layout, duration=1), lane=self.lane, spawn_time=time()
+                        particle=particles.lane.spawn(layout, duration=1 * Options.note_effect_duration),
+                        lane=self.lane,
+                        spawn_time=time(),
                     )
         self.end_time = offset_adjusted_time()
         self.played_hit_effects = self.should_play_hit_effects

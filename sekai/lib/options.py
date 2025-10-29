@@ -52,10 +52,14 @@ class Options:
         scope="Sekai",
         default=False,
     )
-    haptics_enabled: bool = toggle_option(
-        name=StandardText.HAPTIC,
+    note_effect_duration: float = slider_option(
+        name="Effect Duration",
         scope="Sekai",
-        default=False,
+        default=1,
+        min=0.1,
+        max=1,
+        step=0.05,
+        unit=StandardText.PERCENTAGE_UNIT,
     )
     note_effect_enabled: bool = toggle_option(
         name=StandardText.NOTE_EFFECT,
