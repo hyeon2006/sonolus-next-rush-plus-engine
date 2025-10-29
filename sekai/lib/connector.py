@@ -246,7 +246,7 @@ def get_connector_quality_option(kind: ConnectorKind) -> float:
             assert_never(kind)
 
 
-def get_max_guide_quality_option(kind: ConnectorKind) -> float:
+def get_max_quality_option(kind: ConnectorKind) -> float:
     match kind:
         case (
             ConnectorKind.ACTIVE_NORMAL
@@ -254,7 +254,7 @@ def get_max_guide_quality_option(kind: ConnectorKind) -> float:
             | ConnectorKind.ACTIVE_CRITICAL
             | ConnectorKind.ACTIVE_FAKE_CRITICAL
         ):
-            return 0
+            return Options.max_slide_quality
         case (
             ConnectorKind.GUIDE_NEUTRAL
             | ConnectorKind.GUIDE_RED
@@ -447,7 +447,7 @@ def draw_connector(
         (abs(start_alpha - end_alpha) * get_connector_alpha_option(kind)) ** 0.5 * abs(start_pos_y - end_pos_y) * 3,
     )
     quality = get_connector_quality_option(kind)
-    max_segment = get_max_guide_quality_option(kind) if get_max_guide_quality_option(kind) > 0 else 256
+    max_segment = get_max_quality_option(kind) if get_max_quality_option(kind) > 0 else 256
     segment_count = int(clamp(ceil(max(curve_change_scale, alpha_change_scale) * quality * 10), 1, max_segment))
 
     z_normal = get_connector_z(kind, segment_head_target_time, segment_head_lane, active=False, layer=layer)
