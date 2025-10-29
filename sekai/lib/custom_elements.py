@@ -263,25 +263,17 @@ def draw_damage_flash(
     a = 0.768 * t**0.1 * (1 - t) ** 1.35
     z = get_z(layer=LAYER_DAMAGE, time=-draw_time)
 
-    scaled_screen_l = screen().l / Layout.w_scale
-    scaled_screen_t = screen().t / Layout.h_scale
-    scaled_screen_b = screen().b / Layout.h_scale
-    scaled_screen_w_to_h = Layout.w_scale / Layout.h_scale
-    b = scaled_screen_b + scaled_screen_w_to_h
-
     for i in range(2):
         for j in range(2):
-            l_val = scaled_screen_l if j == 0 else -scaled_screen_l
+            l_val = screen().l if j == 0 else screen().r
             if i == 0:
-                t_val = scaled_screen_t - scaled_screen_w_to_h
+                t_val = screen().t
             else:
-                t_val = scaled_screen_b - scaled_screen_t - scaled_screen_w_to_h
-            layout = transform_quad(
-                Quad(
-                    bl=Vec2(l_val, b),
-                    br=Vec2(0, b),
-                    tl=Vec2(l_val, t_val),
-                    tr=Vec2(0, t_val),
-                )
+                t_val = screen().b
+            layout = Quad(
+                bl=Vec2(l_val, 0),
+                br=Vec2(0, 0),
+                tl=Vec2(l_val, t_val),
+                tr=Vec2(0, t_val),
             )
             damage_flash.get_sprite().draw(quad=layout, z=z, a=a)
