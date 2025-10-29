@@ -272,6 +272,15 @@ def layout_custom_tag() -> Quad:
     )
 
 
+def layout_background_cover() -> Quad:
+    return Quad(
+        bl=screen().bl,
+        br=screen().br,
+        tl=screen().tl,
+        tr=screen().tr,
+    )
+
+
 def layout_fallback_judge_line() -> Quad:
     return perspective_rect(l=-6, r=6, t=1 - NOTE_H, b=1 + NOTE_H)
 

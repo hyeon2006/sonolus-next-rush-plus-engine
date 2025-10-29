@@ -9,10 +9,12 @@ from sekai.lib.layer import (
     LAYER_JUDGMENT,
     LAYER_JUDGMENT_LINE,
     LAYER_STAGE,
+    LAYER_STAGE_COVER,
     LAYER_STAGE_LANE,
     get_z,
 )
 from sekai.lib.layout import (
+    layout_background_cover,
     layout_custom_tag,
     layout_fallback_judge_line,
     layout_hidden_cover,
@@ -31,13 +33,14 @@ def draw_stage_and_accessories():
     draw_stage()
     draw_stage_cover()
     draw_auto_play()
+    draw_background_cover()
 
 
 def draw_stage():
     if not Options.show_lane:
         return
     if Skin.sekai_stage_lane.is_available and Skin.sekai_stage_cover.is_available:
-        draw_sekai_dynamic_stage()
+        draw_sekai_divided_stage()
     elif Skin.sekai_stage.is_available:
         draw_sekai_stage()
     else:
@@ -49,10 +52,10 @@ def draw_sekai_stage():
     ActiveSkin.sekai_stage.draw(layout, z=get_z(LAYER_STAGE))
 
 
-def draw_sekai_dynamic_stage():
+def draw_sekai_divided_stage():
     layout = layout_sekai_stage()
     Skin.sekai_stage_lane.draw(layout, z=get_z(LAYER_STAGE_LANE))
-    Skin.sekai_stage_cover.draw(layout, z=get_z(LAYER_BACKGROUND_COVER), a=Options.lane_alpha)
+    Skin.sekai_stage_cover.draw(layout, z=get_z(LAYER_STAGE_COVER), a=Options.lane_alpha)
 
 
 def draw_fallback_stage():
@@ -78,6 +81,12 @@ def draw_stage_cover():
     if Options.hidden > 0:
         layout = layout_hidden_cover()
         ActiveSkin.cover.draw(layout, z=get_z(LAYER_COVER), a=1)
+
+
+def draw_background_cover():
+    if Options.background_alpha != 1:
+        layout = layout_background_cover()
+        Skin.guide_black.draw(layout, z=get_z(LAYER_BACKGROUND_COVER), a=1 - Options.background_alpha)
 
 
 def draw_auto_play():

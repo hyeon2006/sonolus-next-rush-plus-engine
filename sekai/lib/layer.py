@@ -1,7 +1,5 @@
-from sonolus.script import runtime
-from sonolus.script.numtools import make_comparable_float, quantize_to_step
-
-LAYER_BACKGROUND_COVER = -1
+LAYER_BACKGROUND_COVER = -2
+LAYER_STAGE_COVER = -1
 LAYER_STAGE = 0
 LAYER_COVER = 1
 LAYER_STAGE_LANE = 1.5

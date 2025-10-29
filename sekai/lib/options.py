@@ -255,6 +255,15 @@ class Options:
         scope="Rush",
         default=False,
     )
+    background_alpha: float = slider_option(
+        name=StandardText.STAGE_ALPHA,
+        scope="Sekai",
+        default=1,
+        min=0.5,
+        max=1,
+        step=0.1,
+        unit=StandardText.PERCENTAGE_UNIT,
+    )
     lane_alpha: float = slider_option(
         name=StandardText.LANE_ALPHA,
         scope="Sekai",
