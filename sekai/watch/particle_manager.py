@@ -10,6 +10,7 @@ from sonolus.script.runtime import is_skip, time
 
 from sekai.lib import archetype_names
 from sekai.lib.layout import layout_lane
+from sekai.lib.options import Options
 from sekai.lib.particle import NoteParticleSet
 
 
@@ -45,7 +46,9 @@ class ParticleManager(WatchArchetype):
         if self.check:
             return
         layout = layout_lane(self.lane, self.size)
-        handle_critical_flick_lane_effect(self.particles.lane.spawn(layout, duration=1), self.lane, self.target_time)
+        handle_critical_flick_lane_effect(
+            self.particles.lane.spawn(layout, duration=1 * Options.note_effect_duration), self.lane, self.target_time
+        )
         self.check = True
 
     def terminate(self):

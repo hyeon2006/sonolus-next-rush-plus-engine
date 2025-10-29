@@ -27,7 +27,7 @@ class Effects:
     critical_trace: Effect = effect("Sekai Critical Trace")
 
 
-SFX_DISTANCE = 0.02
+SFX_DISTANCE = 0.032
 
 
 def first_available_effect(*args: Effect) -> Effect:

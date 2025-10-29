@@ -36,6 +36,15 @@ class Options:
         scope="Sekai",
         default=False,
     )
+    note_effect_duration: float = slider_option(
+        name="Effect Duration",
+        scope="Sekai",
+        default=1,
+        min=0.1,
+        max=1,
+        step=0.05,
+        unit=StandardText.PERCENTAGE_UNIT,
+    )
     note_effect_enabled: bool = toggle_option(
         name=StandardText.NOTE_EFFECT,
         scope="Sekai",
