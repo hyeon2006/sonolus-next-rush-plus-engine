@@ -259,7 +259,13 @@ class BaseNote(PlayArchetype):
             self.attach_head_ref.index > 0
             and self.kind == NoteKind.HIDE_TICK
             and self.attach_head_ref.get().tick_tail_ref.index > 0
-            and self.attach_head_ref.get().tick_tail_ref.get().is_despawned
+            and (
+                self.attach_head_ref.get().tick_tail_ref.get().is_despawned
+                or (
+                    self.attach_head_ref.get().tick_tail_ref.get().kind == NoteKind.ANCHOR
+                    and time() >= self.attach_head_ref.get().tick_tail_ref.get().target_time
+                )
+            )
         ):
             self.complete()
         if not self.is_scored and time() >= self.target_time:
