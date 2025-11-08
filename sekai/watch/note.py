@@ -212,7 +212,7 @@ class WatchBaseNote(WatchArchetype):
         return self.start_time
 
     def despawn_time(self) -> float:
-        self.hit_time()
+        return self.hit_time
 
     @property
     def hit_time(self) -> float:
