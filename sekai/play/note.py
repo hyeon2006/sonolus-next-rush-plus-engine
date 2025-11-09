@@ -326,7 +326,12 @@ class BaseNote(PlayArchetype):
         if self.should_play_hit_effects:
             # We do this here for parallelism, and to reduce compilation time.
             play_note_hit_effects(
-                self.kind, self.lane, self.size, self.direction, self.result.judgment, self.result.accuracy
+                self.kind,
+                self.effect_kind,
+                self.lane,
+                self.size,
+                self.direction,
+                self.result.judgment,
             )
             if Options.lane_effect_enabled:
                 particles = get_note_particles(self.kind)

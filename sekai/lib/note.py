@@ -703,11 +703,11 @@ def get_note_effect(kind: NoteKind, judgment: Judgment, accuracy: float):
                 case Judgment.PERFECT:
                     result @= Effects.flick_perfect
                 case Judgment.GREAT:
-                    result @= Effects.flick_great
+                    result @= Effects.flick_perfect
                 case Judgment.GOOD:
-                    result @= Effects.flick_good
+                    result @= Effects.flick_perfect
                 case Judgment.MISS:
-                    result @= Effects.flick_good
+                    result @= Effects.flick_perfect
                 case _:
                     assert_never(judgment)
         case NoteEffectKind.NORM_TRACE:
@@ -857,11 +857,16 @@ def get_note_slot_glow_sprite(kind: NoteKind) -> Sprite:
 
 
 def play_note_hit_effects(
-    kind: NoteKind, lane: float, size: float, direction: FlickDirection, judgment: Judgment, accuracy: float = 0
+    kind: NoteKind,
+    effect_kind: NoteEffectKind,
+    lane: float,
+    size: float,
+    direction: FlickDirection,
+    judgment: Judgment,
 ):
     if kind == NoteKind.DAMAGE and judgment == Judgment.PERFECT:
         return
-    sfx = get_note_effect(kind, judgment, accuracy)
+    sfx = get_note_effect(effect_kind, judgment)
     particles = get_note_particles(kind)
     if Options.sfx_enabled and not Options.auto_sfx and not is_watch() and sfx.is_available:
         sfx.play(SFX_DISTANCE)
@@ -924,15 +929,15 @@ def schedule_note_auto_sfx(kind: NoteKind, target_time: float, accuracy: float =
         return
     if not Options.auto_sfx:
         return
-    sfx = get_note_effect(kind, Judgment.PERFECT, accuracy)
+    sfx = get_note_effect(kind, Judgment.PERFECT)
     if sfx.is_available:
         sfx.schedule(target_time, SFX_DISTANCE)
 
 
-def schedule_note_sfx(kind: NoteKind, judgment: Judgment, target_time: float, accuracy: float = 0):
+def schedule_note_sfx(kind: NoteEffectKind, judgment: Judgment, target_time: float):
     if not Options.sfx_enabled:
         return
-    sfx = get_note_effect(kind, judgment, accuracy)
+    sfx = get_note_effect(kind, judgment)
     if sfx.is_available:
         sfx.schedule(target_time, SFX_DISTANCE)
 
