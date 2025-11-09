@@ -506,7 +506,7 @@ def layout_rotated_linear_effect(lane: float, shear: float) -> Quad:
 
 def layout_rotated2_linear_effect(lane: float, degree: float) -> Quad:
     w = Options.note_effect_size
-    p = 1 + 0.125 * w
+    p = 1 + 0.12 * w
     bl = transform_vec(Vec2(lane - w, 1))
     br = transform_vec(Vec2(lane + w, 1))
     tl = transform_vec(Vec2(lane * p - w, 1))
