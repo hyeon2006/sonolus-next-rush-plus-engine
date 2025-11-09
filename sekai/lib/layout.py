@@ -225,7 +225,7 @@ def layout_lane_by_edges(l: float, r: float) -> Quad:
 
 
 def layout_lane(lane: float, size: float) -> Quad:
-    return layout_lane_by_edges(lane - (size + 0.1), lane + (size + 0.1))
+    return layout_lane_by_edges(lane - (size + 0.01), lane + (size + 0.01))
 
 
 def layout_stage_cover() -> Quad:
