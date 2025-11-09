@@ -328,7 +328,6 @@ class BaseNote(PlayArchetype):
                 self.size,
                 self.direction,
                 self.result.judgment,
-                self.result.accuracy,
             )
             if Options.lane_effect_enabled:
                 particles = get_note_particles(self.kind)
