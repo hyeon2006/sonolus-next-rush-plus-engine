@@ -973,12 +973,15 @@ def play_note_hit_effects(
                 layout = layout_linear_effect(slot_lane, shear=0)
                 particles.slot_linear.spawn(layout, duration=0.5 * Options.note_effect_duration)
     if Options.lane_effect_enabled:
-        layout = layout_lane(lane, size)
         if particles.lane.is_available:
             if particles.lane.id != Particles.critical_flick_note_lane_linear.id:
-                particles.lane.spawn(layout, duration=1 * Options.note_effect_duration)
+                for slot_lane in iter_slot_lanes(lane, size):
+                    layout = layout_lane(slot_lane, 0.5)
+                    particles.lane.spawn(layout, duration=1 * Options.note_effect_duration)
         elif particles.lane_basic.is_available:
-            particles.lane_basic.spawn(layout, duration=0.3 * Options.note_effect_duration)
+            for slot_lane in iter_slot_lanes(lane, size):
+                layout = layout_lane(slot_lane, 0.5)
+                particles.lane_basic.spawn(layout, duration=0.3 * Options.note_effect_duration)
     if Options.slot_effect_enabled and not is_watch():
         schedule_note_slot_effects(kind, lane, size, time())
 
