@@ -29,11 +29,13 @@ from sekai.lib.connector import ActiveConnectorInfo, ConnectorKind
 from sekai.lib.ease import EaseType
 from sekai.lib.layout import FlickDirection, Layout, layout_hitbox, progress_to
 from sekai.lib.note import (
+    NoteEffectKind,
     NoteKind,
     draw_note,
     get_attach_params,
     get_leniency,
     get_note_bucket,
+    get_note_effect_kind,
     get_note_window,
     get_visual_spawn_time,
     has_release_input,
@@ -65,6 +67,7 @@ class BaseNote(PlayArchetype):
     attach_head_ref: EntityRef[BaseNote] = imported(name="attachHead")
     attach_tail_ref: EntityRef[BaseNote] = imported(name="attachTail")
     next_ref: EntityRef[BaseNote] = imported(name="next")  # Only for level data; not used in-game.
+    effect_kind: NoteEffectKind = imported(name="effectKind")
 
     kind: NoteKind = entity_data()
     data_init_done: bool = entity_data()
@@ -97,6 +100,7 @@ class BaseNote(PlayArchetype):
             return
 
         self.kind = map_note_kind(cast(NoteKind, self.key))
+        self.effect_kind = get_note_effect_kind(self.kind, self.effect_kind)
 
         self.data_init_done = True
 
@@ -146,7 +150,7 @@ class BaseNote(PlayArchetype):
             self.active_connector_info.input_lane = self.lane
             self.active_connector_info.input_size = self.size
 
-        schedule_note_auto_sfx(self.kind, self.target_time)
+        schedule_note_auto_sfx(self.effect_kind, self.target_time)
 
     def spawn_order(self) -> float:
         if self.kind == NoteKind.ANCHOR:
@@ -287,7 +291,9 @@ class BaseNote(PlayArchetype):
     def terminate(self):
         if self.should_play_hit_effects:
             # We do this here for parallelism, and to reduce compilation time.
-            play_note_hit_effects(self.kind, self.lane, self.size, self.direction, self.result.judgment)
+            play_note_hit_effects(
+                self.kind, self.effect_kind, self.lane, self.size, self.direction, self.result.judgment
+            )
         self.end_time = offset_adjusted_time()
         self.played_hit_effects = self.should_play_hit_effects
 

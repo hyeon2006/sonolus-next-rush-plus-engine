@@ -38,6 +38,7 @@ from sekai.lib.note import (
     draw_note,
     draw_slide_note_head,
     draw_tutorial_note_slot_effects,
+    get_note_effect_kind,
     play_note_hit_effects,
 )
 from sekai.lib.stage import draw_stage
@@ -272,6 +273,7 @@ class QueuedTutorialNotePlayHitEffects(Record):
     def act(self):
         play_note_hit_effects(
             kind=self.note.kind,
+            effect_kind=get_note_effect_kind(self.note.kind),
             lane=self.note.lane,
             size=self.note.size,
             direction=self.note.direction,
