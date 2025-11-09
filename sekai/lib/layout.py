@@ -447,8 +447,8 @@ def layout_flick_arrow_fallback(
 
 def layout_slot_effect(lane: float) -> Quad:
     return perspective_rect(
-        l=lane - 0.5,
-        r=lane + 0.5,
+        l=lane - 0.485,
+        r=lane + 0.485,
         b=1 + NOTE_H,
         t=1 - NOTE_H,
     )
