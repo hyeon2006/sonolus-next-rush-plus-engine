@@ -388,67 +388,41 @@ def draw_connector(
     end_size = max(1e-3, lerp(head_size, tail_size, end_interp_frac))  # Lightweight rendering needs >0 size.
     start_alpha = lerp(head_alpha, tail_alpha, start_frac)
     end_alpha = lerp(head_alpha, tail_alpha, end_frac)
+
+    max_segment = get_max_quality_option(kind) if get_max_quality_option(kind) > 0 else 256
+    quality = get_connector_quality_option(kind)
+
     start_pos_y = transformed_vec_at(start_lane, start_travel).y
     end_pos_y = transformed_vec_at(end_lane, end_travel).y
 
-    match ease_type:
-        case EaseType.NONE:
-            curve_change_scale = 0.0
-        case EaseType.LINEAR:
-            x_diff = (
-                max(
-                    abs((start_lane - start_size) - (end_lane - end_size)),
-                    abs((start_lane + start_size) - (end_lane + end_size)),
-                )
-                * Layout.w_scale
-            )
-            y_diff = abs(start_pos_y - end_pos_y)
-            travel_adj = clamp(2 - max(start_travel, end_travel), 1, 2)
-            curve_change_scale = (min(x_diff, y_diff) * travel_adj) * 0.8
-        case _:
-            left_start_lane = start_lane - start_size
-            left_end_lane = end_lane - end_size
-            right_start_lane = start_lane + start_size
-            right_end_lane = end_lane + end_size
-            if abs(start_size - end_size) < 0.1:
-                ref_start_lane = start_lane
-                ref_end_lane = end_lane
-                ref_head_lane = head_lane
-                ref_tail_lane = tail_lane
-            elif abs(left_start_lane - left_end_lane) > abs(right_start_lane - right_end_lane):
-                ref_start_lane = left_start_lane
-                ref_end_lane = left_end_lane
-                ref_head_lane = head_lane - head_size
-                ref_tail_lane = tail_lane - tail_size
-            else:
-                ref_start_lane = right_start_lane
-                ref_end_lane = right_end_lane
-                ref_head_lane = head_lane + head_size
-                ref_tail_lane = tail_lane + tail_size
-            start_ref = transformed_vec_at(ref_start_lane, start_travel)
-            end_ref = transformed_vec_at(ref_end_lane, end_travel)
-            last_pos_offset = 0
-            total_pos_offsets = 0
-            for r in (0.25, 0.75):
-                ease_frac = lerp(start_ease_frac, end_ease_frac, r)
-                interp_frac = unlerp_clamped(eased_head_ease_frac, eased_tail_ease_frac, ease(ease_type, ease_frac))
-                progress = lerp(start_progress, end_progress, r)
-                travel = approach(progress)
-                lane = lerp(ref_head_lane, ref_tail_lane, interp_frac)
-                pos = transformed_vec_at(lane, travel)
-                ref_pos = lerp(start_ref, end_ref, unlerp_clamped(start_travel, end_travel, travel))
-                current_pos_offset = pos.x - ref_pos.x
-                total_pos_offsets += abs(current_pos_offset - last_pos_offset) ** 0.6
-                last_pos_offset = current_pos_offset
-            total_pos_offsets += abs(last_pos_offset) ** 0.6
-            curve_change_scale = total_pos_offsets * 1.5
     alpha_change_scale = max(
         (abs(start_alpha - end_alpha) * get_connector_alpha_option(kind)) ** 0.8 * 3,
         (abs(start_alpha - end_alpha) * get_connector_alpha_option(kind)) ** 0.5 * abs(start_pos_y - end_pos_y) * 3,
     )
-    quality = get_connector_quality_option(kind)
-    max_segment = get_max_quality_option(kind) if get_max_quality_option(kind) > 0 else 256
-    segment_count = int(clamp(ceil(max(curve_change_scale, alpha_change_scale) * quality * 10), 1, max_segment))
+
+    if alpha_change_scale > (max_segment * 0.75) / (quality * 8):
+        curve_change_scale = 0
+    else:
+        pos_offset = 0
+        for sl, el, hl, tl in (
+            (start_lane - start_size, end_lane - end_size, head_lane - head_size, tail_lane - tail_size),
+            (start_lane + start_size, end_lane + end_size, head_lane + head_size, tail_lane + tail_size),
+        ):
+            start_ref = transformed_vec_at(sl, start_travel)
+            end_ref = transformed_vec_at(el, end_travel)
+            pos_offset_this_side = 0
+            for r in (0.25, 0.5, 0.75):
+                ease_frac = lerp(start_ease_frac, end_ease_frac, r)
+                interp_frac = unlerp_clamped(eased_head_ease_frac, eased_tail_ease_frac, ease(ease_type, ease_frac))
+                progress = lerp(start_progress, end_progress, r)
+                travel = approach(progress)
+                lane = lerp(hl, tl, interp_frac)
+                pos = transformed_vec_at(lane, travel)
+                ref_pos = lerp(start_ref, end_ref, unlerp_clamped(start_travel, end_travel, travel))
+                pos_offset_this_side += abs(pos.x - ref_pos.x)
+            pos_offset = max(pos_offset, pos_offset_this_side)
+            curve_change_scale = pos_offset**0.4 * 1.6
+    segment_count = int(clamp(ceil(max(curve_change_scale, alpha_change_scale) * quality * 8), 1, max_segment))
 
     z_normal = get_connector_z(kind, segment_head_target_time, segment_head_lane, active=False, layer=layer)
     if visual_state == ConnectorVisualState.ACTIVE and active_sprite.is_available:
