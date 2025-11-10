@@ -455,7 +455,6 @@ def layout_slot_effect(lane: float) -> Quad:
 
 
 def layout_slot_glow_effect(lane: float, size: float, height: float) -> Quad:
-    size = 0.5
     s = 1 + 0.25 * Options.slot_effect_size
     h = 4.75 * Layout.w_scale * Options.slot_effect_size
     l_min = transform_vec(Vec2(lane - size, 1))
