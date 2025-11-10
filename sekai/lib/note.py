@@ -934,20 +934,47 @@ def play_note_hit_effects(
     if Options.sfx_enabled and not Options.auto_sfx and not is_watch() and sfx.is_available:
         sfx.play(SFX_DISTANCE)
     if Options.note_effect_enabled:
+        linear = +particles.linear
+        circular = +particles.circular
+        slot_linear = +particles.slot_linear
+        if kind == NoteKind.NORM_TAP:
+            match judgment:
+                case Judgment.PERFECT:
+                    linear @= particles.linear
+                    circular @= particles.circular
+                    slot_linear @= particles.slot_linear
+                case Judgment.GREAT:
+                    linear @= particles.linear_great
+                    circular @= particles.circular_great
+                    slot_linear @= particles.slot_linear_great
+                case Judgment.GOOD | Judgment.MISS:
+                    linear @= particles.linear_good
+                    circular @= particles.circular_good
+                    slot_linear @= particles.slot_linear_good
         linear_particle = first_available_particle(
-            particles.linear,
+            linear,
             particles.linear_fallback,
         )
         if linear_particle.is_available:
-            layout = layout_linear_effect(lane, shear=0)
-            linear_particle.spawn(layout, duration=0.5 * Options.note_effect_duration)
+            layout = +layout_linear_effect(lane, shear=0)
+            if linear_particle.id == Particles.normal_note_linear_good.id:
+                for slot_lane in iter_slot_lanes(lane, size):
+                    layout @= layout_linear_effect(slot_lane, shear=0)
+                    linear_particle.spawn(layout, duration=0.5 * Options.note_effect_duration)
+            else:
+                linear_particle.spawn(layout, duration=0.5 * Options.note_effect_duration)
         circular_particle = first_available_particle(
-            particles.circular,
+            circular,
             particles.circular_fallback,
         )
         if circular_particle.is_available:
-            layout = layout_circular_effect(lane, w=1.75, h=1.05)
-            circular_particle.spawn(layout, duration=0.6 * Options.note_effect_duration)
+            layout = +layout_circular_effect(lane, w=1.75, h=1.05)
+            if linear_particle.id == Particles.normal_note_circular_good.id:
+                for slot_lane in iter_slot_lanes(lane, size):
+                    layout @= layout_circular_effect(slot_lane, w=1.75, h=1.05)
+                circular_particle.spawn(layout, duration=0.6 * Options.note_effect_duration)
+            else:
+                circular_particle.spawn(layout, duration=0.6 * Options.note_effect_duration)
         if particles.directional.is_available:
             degree = (
                 45
@@ -976,10 +1003,10 @@ def play_note_hit_effects(
         if particles.tick.is_available:
             layout = layout_tick_effect(lane)
             particles.tick.spawn(layout, duration=0.6 * Options.note_effect_duration)
-        if particles.slot_linear.is_available:
+        if slot_linear.is_available:
             for slot_lane in iter_slot_lanes(lane, size):
                 layout = layout_linear_effect(slot_lane, shear=0)
-                particles.slot_linear.spawn(layout, duration=0.5 * Options.note_effect_duration)
+                slot_linear.spawn(layout, duration=0.5 * Options.note_effect_duration)
     if Options.lane_effect_enabled:
         if particles.lane.is_available:
             if particles.lane.id != Particles.critical_flick_note_lane_linear.id:

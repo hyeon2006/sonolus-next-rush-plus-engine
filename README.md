@@ -48,6 +48,8 @@ Editor: https://next-sekai-editor.sonolus.com/
 | `Sekai Slot Yellow Flick`                     |
 | `Sekai Slot Yellow Slider`                    |
 | `Sekai Slot Glow Cyan`                        |
+| `Sekai Slot Glow Cyan Great`                  |
+| `Sekai Slot Glow Cyan Good`                   |
 | `Sekai Slot Glow Green`                       |
 | `Sekai Slot Glow Red`                         |
 | `Sekai Slot Glow Yellow`                      |
@@ -122,9 +124,15 @@ Editor: https://next-sekai-editor.sonolus.com/
 | Name                                   |
 | -------------------------------------- |
 | `Sekai Note Lane Linear`               |
+| `Sekai Circular Tap Cyan Great`        |
+| `Sekai Circular Tap Cyan Good`         |
+| `Sekai Linear Tap Cyan Great`          |
+| `Sekai Linear Tap Cyan Good`           |
 | `Sekai Critical Lane Linear`           |
 | `Sekai Critical Flick Lane Linear`     |
 | `Sekai Slot Linear Tap Cyan`           |
+| `Sekai Slot Linear Tap Cyan Great`     |
+| `Sekai Slot Linear Tap Cyan Good`      |
 | `Sekai Slot Linear Slide Tap Green`    |
 | `Sekai Slot Linear Alternative Red`    |
 | `Sekai Slot Linear Tap Yellow`         |
