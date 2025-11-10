@@ -804,11 +804,19 @@ def get_note_slot_sprite(kind: NoteKind) -> Sprite:
     return result
 
 
-def get_note_slot_glow_sprite(kind: NoteKind) -> Sprite:
+def get_note_slot_glow_sprite(kind: NoteKind, judgment: Judgment = Judgment.PERFECT) -> Sprite:
     result = Sprite(-1)
     match kind:
         case NoteKind.NORM_TAP:
-            result @= Skin.normal_slot_glow
+            match judgment:
+                case Judgment.PERFECT:
+                    result @= Skin.normal_slot_glow
+                case Judgment.GREAT:
+                    result @= Skin.normal_slot_glow_great
+                case Judgment.GOOD | Judgment.MISS:
+                    result @= Skin.normal_slot_glow_good
+                case _:
+                    assert_never(kind)
         case NoteKind.NORM_FLICK | NoteKind.NORM_HEAD_FLICK | NoteKind.NORM_TAIL_FLICK:
             result @= Skin.flick_slot_glow
         case (
@@ -924,7 +932,7 @@ def play_note_hit_effects(
                 layout = layout_lane(slot_lane, 0.5)
                 particles.lane_basic.spawn(layout, duration=0.3 * Options.note_effect_duration)
     if Options.slot_effect_enabled and not is_watch():
-        schedule_note_slot_effects(kind, lane, size, time(), direction)
+        schedule_note_slot_effects(kind, lane, size, time(), judgment)
 
 
 def schedule_note_auto_sfx(kind: NoteKind, target_time: float, accuracy: float = 0):
@@ -945,7 +953,9 @@ def schedule_note_sfx(kind: NoteEffectKind, judgment: Judgment, target_time: flo
         sfx.schedule(target_time, SFX_DISTANCE)
 
 
-def schedule_note_slot_effects(kind: NoteKind, lane: float, size: float, target_time: float, direction: FlickDirection):
+def schedule_note_slot_effects(
+    kind: NoteKind, lane: float, size: float, target_time: float, judgment: Judgment = Judgment.PERFECT
+):
     if is_tutorial():
         return
     if not Options.slot_effect_enabled:
@@ -957,11 +967,12 @@ def schedule_note_slot_effects(kind: NoteKind, lane: float, size: float, target_
             get_archetype_by_name(archetype_names.SLOT_EFFECT).spawn(
                 sprite=slot_sprite, start_time=target_time, lane=slot_lane
             )
-    slot_glow_sprite = sprite_set.slot_glow
+    slot_glow_sprite = get_note_slot_glow_sprite(kind, judgment)
     if slot_glow_sprite.is_available:
-        get_archetype_by_name(archetype_names.SLOT_GLOW_EFFECT).spawn(
-            sprite=slot_glow_sprite, start_time=target_time, lane=lane, size=size
-        )
+        for slot_lane in iter_slot_lanes(lane, size):
+            get_archetype_by_name(archetype_names.SLOT_GLOW_EFFECT).spawn(
+                sprite=slot_glow_sprite, start_time=target_time, lane=slot_lane, size=size
+            )
 
 
 def draw_tutorial_note_slot_effects(kind: NoteKind, lane: float, size: float, start_time: float):

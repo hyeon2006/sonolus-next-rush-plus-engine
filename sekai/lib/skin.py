@@ -69,10 +69,14 @@ class BaseSkin:
     critical_note_right: Sprite = sprite("Sekai Critical Note Right")
     critical_note_basic: Sprite = sprite("Sekai Critical Note Basic")
 
-    critical_slide_note_left: Sprite = sprite("Sekai Critical Slide Note Left")
-    critical_slide_note_middle: Sprite = sprite("Sekai Critical Slide Note Middle")
-    critical_slide_note_right: Sprite = sprite("Sekai Critical Slide Note Right")
-    critical_slide_note_basic: Sprite = sprite("Sekai Critical Slide Note Basic")
+    normal_slot_glow: Sprite = sprite("Sekai Slot Glow Cyan")
+    normal_slot_glow_great: Sprite = sprite("Sekai Slot Glow Cyan Great")
+    normal_slot_glow_good: Sprite = sprite("Sekai Slot Glow Cyan Good")
+    slide_slot_glow: Sprite = sprite("Sekai Slot Glow Green")
+    flick_slot_glow: Sprite = sprite("Sekai Slot Glow Red")
+    critical_slot_glow: Sprite = sprite("Sekai Slot Glow Yellow")
+    critical_flick_slot_glow: Sprite = sprite("Sekai Slot Glow Yellow Flick")
+    critical_slide_slot_glow: Sprite = sprite("Sekai Slot Glow Yellow Slider Tap")
 
     critical_flick_note_left: Sprite = sprite("Sekai Critical Flick Note Left")
     critical_flick_note_middle: Sprite = sprite("Sekai Critical Flick Note Middle")
