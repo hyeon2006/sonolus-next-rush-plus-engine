@@ -884,10 +884,6 @@ def play_note_hit_effects(
         slot_linear = +particles.slot_linear
         if kind == NoteKind.NORM_TAP:
             match judgment:
-                case Judgment.PERFECT:
-                    linear @= particles.linear
-                    circular @= particles.circular
-                    slot_linear @= particles.slot_linear
                 case Judgment.GREAT:
                     linear @= particles.linear_great
                     circular @= particles.circular_great
@@ -898,6 +894,7 @@ def play_note_hit_effects(
                     slot_linear @= particles.slot_linear_good
         linear_particle = first_available_particle(
             linear,
+            particles.linear,
             particles.linear_fallback,
         )
         if linear_particle.is_available:
@@ -910,6 +907,7 @@ def play_note_hit_effects(
                 linear_particle.spawn(layout, duration=0.5 * Options.note_effect_duration)
         circular_particle = first_available_particle(
             circular,
+            particles.circular,
             particles.circular_fallback,
         )
         if circular_particle.is_available:
@@ -948,10 +946,14 @@ def play_note_hit_effects(
         if particles.tick.is_available:
             layout = layout_tick_effect(lane)
             particles.tick.spawn(layout, duration=0.6 * Options.note_effect_duration)
-        if slot_linear.is_available:
+        slot_linear_particle = first_available_particle(
+            slot_linear,
+            particles.slot_linear,
+        )
+        if slot_linear_particle.is_available:
             for slot_lane in iter_slot_lanes(lane, size):
                 layout = layout_linear_effect(slot_lane, shear=0)
-                slot_linear.spawn(layout, duration=0.5 * Options.note_effect_duration)
+                slot_linear_particle.spawn(layout, duration=0.5 * Options.note_effect_duration)
     if Options.lane_effect_enabled:
         if particles.lane.is_available:
             if particles.lane.id != Particles.critical_flick_note_lane_linear.id:
