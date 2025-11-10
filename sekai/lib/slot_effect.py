@@ -20,7 +20,7 @@ def draw_slot_glow_effect(
     progress = unlerp_clamped(start_time, end_time, time())
     height = unlerp_clamped(1, 0.8, progress) if Options.version == 0 else 1 - lerp(1, 0, progress) ** 3
     layout = layout_slot_glow_effect(lane, size, height)
-    z = get_z(LAYER_SLOT_GLOW_EFFECT, start_time, lane, invert_time=True)
+    z = get_z(LAYER_SLOT_GLOW_EFFECT, -start_time, lane, lane)
     a = lerp(1, 0, progress)
     sprite.draw(layout, z=z, a=a)
 
@@ -33,6 +33,6 @@ def draw_slot_effect(
 ):
     progress = unlerp_clamped(start_time, end_time, time())
     layout = layout_slot_effect(lane)
-    z = get_z(LAYER_SLOT_EFFECT, start_time, lane, invert_time=True)
+    z = get_z(LAYER_SLOT_EFFECT, -start_time, lane, lane)
     a = lerp(1, 0, progress)
     sprite.draw(layout, z=z, a=a)
