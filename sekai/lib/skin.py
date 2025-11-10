@@ -70,6 +70,8 @@ class Skin:
     critical_slide_slot: Sprite = sprite("Sekai Slot Yellow Slider")
 
     normal_slot_glow: Sprite = sprite("Sekai Slot Glow Cyan")
+    normal_slot_glow_great: Sprite = sprite("Sekai Slot Glow Cyan Great")
+    normal_slot_glow_good: Sprite = sprite("Sekai Slot Glow Cyan Good")
     slide_slot_glow: Sprite = sprite("Sekai Slot Glow Green")
     flick_slot_glow: Sprite = sprite("Sekai Slot Glow Red")
     critical_slot_glow: Sprite = sprite("Sekai Slot Glow Yellow")
