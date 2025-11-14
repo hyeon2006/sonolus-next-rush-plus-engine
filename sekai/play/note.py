@@ -89,6 +89,7 @@ class BaseNote(PlayArchetype):
     # This is set by the input manager rather than the note itself.
     captured_touch_id: int = shared_memory()
     captured_touch_time: float = shared_memory()
+    tick_head_ref: EntityRef[BaseNote] = shared_memory()
     tick_tail_ref: EntityRef[BaseNote] = shared_memory()
 
     active_connector_info: ActiveConnectorInfo = shared_memory()
@@ -243,7 +244,7 @@ class BaseNote(PlayArchetype):
                 | NoteKind.CRIT_TAIL_RELEASE
             ):
                 self.handle_release_input()
-            case NoteKind.NORM_TICK | NoteKind.CRIT_TICK | NoteKind.HIDE_TICK:
+            case NoteKind.NORM_TICK | NoteKind.CRIT_TICK:
                 self.handle_tick_input()
             case NoteKind.DAMAGE:
                 self.handle_damage_input()
@@ -255,19 +256,6 @@ class BaseNote(PlayArchetype):
     def update_parallel(self):
         if self.despawn:
             return
-        if (
-            self.attach_head_ref.index > 0
-            and self.kind == NoteKind.HIDE_TICK
-            and self.attach_head_ref.get().tick_tail_ref.index > 0
-            and (
-                self.attach_head_ref.get().tick_tail_ref.get().is_despawned
-                or (
-                    self.attach_head_ref.get().tick_tail_ref.get().kind == NoteKind.ANCHOR
-                    and time() >= self.attach_head_ref.get().tick_tail_ref.get().target_time
-                )
-            )
-        ):
-            self.complete()
         if not self.is_scored and time() >= self.target_time:
             self.despawn = True
             return
@@ -282,11 +270,63 @@ class BaseNote(PlayArchetype):
         if time() > self.input_interval.end:
             self.handle_late_miss()
             return
+        if self.tick_trigger():
+            self.complete()
+            return
         if is_head(self.kind) and time() > self.target_time:
             return
         if group_hide_notes(self.timescale_group):
             return
         draw_note(self.kind, self.lane, self.size, self.progress, self.direction, self.target_time)
+
+    def tick_trigger(self) -> bool:
+        return bool(
+            (
+                self.kind in (NoteKind.NORM_TICK, NoteKind.CRIT_TICK)
+                and (
+                    (
+                        (
+                            not self.is_attached
+                            and self.tick_head_ref.index > 0
+                            and (
+                                self.tick_head_ref.get().active_connector_info.is_active and time() >= self.target_time
+                            )
+                        )
+                        or (self.tick_tail_ref.index > 0 and self.tick_tail_ref.get().is_despawned)
+                    )
+                    or (
+                        (
+                            self.is_attached
+                            and self.attach_head_ref.get().tick_head_ref.index > 0
+                            and (
+                                self.attach_head_ref.get().tick_head_ref.get().active_connector_info.is_active
+                                and time() >= self.target_time
+                            )
+                        )
+                        or (
+                            self.attach_head_ref.get().tick_tail_ref.index > 0
+                            and self.attach_head_ref.get().tick_tail_ref.get().is_despawned
+                        )
+                    )
+                )
+            )
+            or (
+                self.kind == NoteKind.HIDE_TICK
+                and self.attach_head_ref.index > 0
+                and self.attach_head_ref.get().tick_tail_ref.index > 0
+                and (
+                    self.attach_head_ref.get().tick_tail_ref.get().is_despawned
+                    or (
+                        self.attach_head_ref.get().tick_tail_ref.get().kind == NoteKind.ANCHOR
+                        and time() >= self.attach_head_ref.get().tick_tail_ref.get().target_time
+                    )
+                    or (
+                        self.attach_head_ref.get().tick_head_ref.get().active_connector_info.is_active
+                        and time() >= self.target_time
+                    )
+                )
+            )
+        )
 
     def should_do_delayed_trigger(self) -> bool:
         # Don't trigger if the previous frame was before the target time.
@@ -457,6 +497,8 @@ class BaseNote(PlayArchetype):
             self.best_touch_matches_direction = has_correct_direction_touch
 
     def handle_tick_input(self):
+        if self.tick_head_ref == 0 and not self.is_attached:
+            return
         hitbox = self.get_full_hitbox()
         has_touch = False
         for touch in touches():
