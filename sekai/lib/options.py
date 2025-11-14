@@ -280,7 +280,7 @@ class Options:
         name="Max Guide Quality",
         description="Max Guide Quality. 0 is disable",
         scope="Sekai",
-        default=24,
+        default=40,
         min=0,
         max=50,
         step=1,

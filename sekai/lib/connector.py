@@ -383,7 +383,7 @@ def draw_connector(
         (abs(start_alpha - end_alpha) * get_connector_alpha_option(kind)) ** 0.5 * abs(start_pos_y - end_pos_y) * 3,
     )
 
-    if alpha_change_scale > (max_segment * 0.75) / (quality * 8):
+    if alpha_change_scale >= 0.8:
         curve_change_scale = 0
     else:
         pos_offset = 0
@@ -405,7 +405,7 @@ def draw_connector(
                 pos_offset_this_side += abs(pos.x - ref_pos.x)
             pos_offset = max(pos_offset, pos_offset_this_side)
             curve_change_scale = pos_offset**0.4 * 1.6
-    segment_count = int(clamp(ceil(max(curve_change_scale, alpha_change_scale) * quality * 8), 1, max_segment))
+    segment_count = int(clamp(ceil(max(curve_change_scale, alpha_change_scale) * quality * 10), 1, max_segment))
 
     z = get_connector_z(kind, segment_head_target_time, segment_head_lane)
 
