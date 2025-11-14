@@ -282,27 +282,32 @@ class BaseNote(PlayArchetype):
                 self.kind in (NoteKind.NORM_TICK, NoteKind.CRIT_TICK)
                 and (
                     (
-                        (
-                            not self.is_attached
-                            and self.tick_head_ref.index > 0
-                            and (
-                                self.tick_head_ref.get().active_connector_info.is_active and time() >= self.target_time
+                        not self.is_attached
+                        and (
+                            (
+                                self.tick_head_ref.index > 0
+                                and (
+                                    self.tick_head_ref.get().active_connector_info.is_active
+                                    and time() >= self.input_interval.start
+                                )
                             )
+                            or (self.tick_tail_ref.index > 0 and self.tick_tail_ref.get().is_despawned)
                         )
-                        or (self.tick_tail_ref.index > 0 and self.tick_tail_ref.get().is_despawned)
                     )
                     or (
-                        (
-                            self.is_attached
-                            and self.attach_head_ref.get().tick_head_ref.index > 0
-                            and (
-                                self.attach_head_ref.get().tick_head_ref.get().active_connector_info.is_active
-                                and time() >= self.target_time
+                        self.is_attached
+                        and (
+                            (
+                                self.attach_head_ref.get().tick_head_ref.index > 0
+                                and (
+                                    self.attach_head_ref.get().tick_head_ref.get().active_connector_info.is_active
+                                    and time() >= self.input_interval.start
+                                )
                             )
-                        )
-                        or (
-                            self.attach_head_ref.get().tick_tail_ref.index > 0
-                            and self.attach_head_ref.get().tick_tail_ref.get().is_despawned
+                            or (
+                                self.attach_head_ref.get().tick_tail_ref.index > 0
+                                and self.attach_head_ref.get().tick_tail_ref.get().is_despawned
+                            )
                         )
                     )
                 )
@@ -319,7 +324,7 @@ class BaseNote(PlayArchetype):
                     )
                     or (
                         self.attach_head_ref.get().tick_head_ref.get().active_connector_info.is_active
-                        and time() >= self.target_time
+                        and time() >= self.input_interval.start
                     )
                 )
             )
