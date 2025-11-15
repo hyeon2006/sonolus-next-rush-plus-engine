@@ -20,6 +20,7 @@ from sekai.lib.buckets import (
     SLIDE_END_NORMAL_WINDOW,
     SLIDE_END_TRACE_CRITICAL_WINDOW,
     SLIDE_END_TRACE_NORMAL_WINDOW,
+    SLIDE_TICK_JUDGMENT_WINDOW,
     TAP_CRITICAL_WINDOW,
     TAP_NORMAL_WINDOW,
     TRACE_CRITICAL_WINDOW,
@@ -1047,7 +1048,9 @@ def get_note_window(kind: NoteKind) -> JudgmentWindow:
             result @= TRACE_FLICK_NORMAL_WINDOW
         case NoteKind.CRIT_TAIL_TRACE_FLICK:
             result @= TRACE_FLICK_CRITICAL_WINDOW
-        case NoteKind.NORM_TICK | NoteKind.CRIT_TICK | NoteKind.HIDE_TICK | NoteKind.ANCHOR | NoteKind.DAMAGE:
+        case NoteKind.NORM_TICK | NoteKind.CRIT_TICK | NoteKind.HIDE_TICK:
+            result @= SLIDE_TICK_JUDGMENT_WINDOW
+        case NoteKind.ANCHOR | NoteKind.DAMAGE:
             result @= EMPTY_JUDGMENT_WINDOW
         case _:
             assert_never(kind)

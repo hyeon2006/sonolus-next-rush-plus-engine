@@ -133,10 +133,8 @@ class Connector(PlayArchetype):
                         input_manager.disallow_empty(touch)
                         if not self.active_connector_info.is_active:
                             self.active_connector_info.active_start_time = time()
-                        self.active_connector_info.is_active = True
+                        self.active_connector_info.last_active_time = time()
                         break
-                else:
-                    self.active_connector_info.is_active = False
             if time() in self.visual_active_interval:
                 visual_lane, visual_size = self.get_attached_params(time())
                 self.active_connector_info.visual_lane = visual_lane
