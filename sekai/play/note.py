@@ -498,7 +498,7 @@ class BaseNote(PlayArchetype):
             self.best_touch_matches_direction = has_correct_direction_touch
 
     def handle_tick_input(self):
-        if self.tick_head_ref == 0 and not self.is_attached:
+        if self.tick_head_ref.index > 0 or self.is_attached:
             return
         hitbox = self.get_full_hitbox()
         has_touch = False
