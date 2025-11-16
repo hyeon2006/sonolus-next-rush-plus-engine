@@ -953,7 +953,7 @@ def play_note_hit_effects(
             particles.linear_fallback,
         )
         if linear_particle.is_available:
-            layout = +layout_linear_effect(lane, shear=0)
+            layout = layout_linear_effect(lane, shear=0)
             if linear_particle.id == Particles.normal_note_linear_good.id:
                 for slot_lane in iter_slot_lanes(lane, size):
                     layout @= layout_linear_effect(slot_lane, shear=0)
@@ -966,7 +966,7 @@ def play_note_hit_effects(
             particles.circular_fallback,
         )
         if circular_particle.is_available:
-            layout = +layout_circular_effect(lane, w=1.75, h=1.05)
+            layout = layout_circular_effect(lane, w=1.75, h=1.05)
             if linear_particle.id == Particles.normal_note_circular_good.id:
                 for slot_lane in iter_slot_lanes(lane, size):
                     layout @= layout_circular_effect(slot_lane, w=1.75, h=1.05)
