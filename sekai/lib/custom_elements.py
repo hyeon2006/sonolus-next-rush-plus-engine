@@ -44,8 +44,8 @@ def draw_combo_label(draw_time: float, ap: bool):
     h, w = transform_fixed_size(base_h, base_w)
     a = ui.combo_config.alpha * 0.8 * (cos(time() * pi) + 1) / 2
     layout = layout_combo_label(screen_center, w=w / 2, h=h / 2)
-    z = get_z(layer=LAYER_JUDGMENT, time=-draw_time, etc=1)
-    glow_z = get_z(layer=LAYER_JUDGMENT, time=-draw_time)
+    z = get_z(layer=LAYER_JUDGMENT, time=0, etc=1)
+    glow_z = get_z(layer=LAYER_JUDGMENT, time=0)
     if ap:
         combo_label.get_sprite(ComboType.NORMAL).draw(quad=layout, z=z, a=ui.combo_config.alpha)
     else:
@@ -120,9 +120,9 @@ def draw_combo_number(
             start_x=start_x2,
         ),
     )
-    z = get_z(layer=LAYER_JUDGMENT, time=-draw_time, etc=1)
-    z2 = get_z(layer=LAYER_JUDGMENT, time=-draw_time, etc=0)
-    z3 = get_z(layer=LAYER_JUDGMENT, time=-draw_time, etc=2)
+    z = get_z(layer=LAYER_JUDGMENT, time=0, etc=1)
+    z2 = get_z(layer=LAYER_JUDGMENT, time=0)
+    z3 = get_z(layer=LAYER_JUDGMENT, time=0, etc=2)
     drawing_combo.draw_number(z=z, z2=z2, z3=z3)
 
 
