@@ -186,7 +186,7 @@ def get_connector_z(kind: ConnectorKind, target_time: float, lane: float, active
 def get_active_connector_z_offset(kind: ActiveConnectorKind, active: bool) -> int:
     match kind:
         case ConnectorKind.ACTIVE_NORMAL | ConnectorKind.ACTIVE_FAKE_NORMAL:
-            return 3 - active
+            return 1
         case ConnectorKind.ACTIVE_CRITICAL | ConnectorKind.ACTIVE_FAKE_CRITICAL:
             return 1 - active
         case _:
