@@ -12,7 +12,6 @@ from sonolus.script.runtime import time
 from sonolus.script.sprite import Sprite
 from sonolus.script.timing import beat_to_time
 
-from sekai.lib.buckets import SLIDE_TICK_JUDGMENT_WINDOW
 from sekai.lib.ease import EaseType, ease
 from sekai.lib.effect import Effects
 from sekai.lib.layer import (
@@ -483,8 +482,8 @@ class ActiveConnectorInfo(Record):
     visual_size: float
     input_lane: float
     input_size: float
+    is_active: bool
     active_start_time: float
-    last_active_time: float
     connector_kind: ConnectorKind
 
     def get_hitbox(self, leniency: float) -> Rect:
@@ -492,10 +491,6 @@ class ActiveConnectorInfo(Record):
             self.input_lane - self.input_size - leniency,
             self.input_lane + self.input_size + leniency,
         )
-
-    @property
-    def is_active(self) -> bool:
-        return self.last_active_time >= (SLIDE_TICK_JUDGMENT_WINDOW.perfect + time()).start
 
 
 def update_circular_connector_particle(

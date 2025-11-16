@@ -382,8 +382,6 @@ SLIDE_END_TRACE_CRITICAL_WINDOW = frames_to_window((6.5, 8), None, None, None)
 SLIDE_END_FLICK_NORMAL_WINDOW = frames_to_window((3.5, 4), (6.5, 8), (7.5, 8.5), None)
 SLIDE_END_FLICK_CRITICAL_WINDOW = frames_to_window((3.5, 4), (6.5, 8), (7.5, 8.5), None)
 
-SLIDE_TICK_JUDGMENT_WINDOW = frames_to_window((7.5, 0), None, None, None)
-
 EMPTY_JUDGMENT_WINDOW = frames_to_window(0, None, None, None)
 
 SLIDE_END_LOCKOUT_DURATION = 0.25
