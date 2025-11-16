@@ -26,6 +26,7 @@ from sekai.lib.note import (
     draw_note,
     get_attach_params,
     get_note_bucket,
+    get_note_effect_kind,
     get_note_particles,
     get_note_window,
     get_note_window_bad,
@@ -62,6 +63,7 @@ class WatchBaseNote(WatchArchetype):
     segment_layer: ConnectorLayer = imported(name="segmentLayer")
     attach_head_ref: EntityRef[WatchBaseNote] = imported(name="attachHead")
     attach_tail_ref: EntityRef[WatchBaseNote] = imported(name="attachTail")
+    effect_kind: NoteEffectKind = imported(name="effectKind")
     next_ref: EntityRef[WatchBaseNote] = imported(name="next")
 
     kind: NoteKind = entity_data()
