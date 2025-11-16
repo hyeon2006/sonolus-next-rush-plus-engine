@@ -29,4 +29,4 @@ LAYER_JUDGMENT = 51
 def get_z(layer: int | float, time: float = 0.0, lane: float = 0.0, etc: int | float = 0.0) -> float:
     time = round(time, 3)
     lane = round(lane, 2)
-    return ((1 / 1000) * etc) + abs(lane) - (1000 * time) + (3000000 * layer)
+    return ((1 / 100) * etc) + abs(lane) - (10000 * time) + (65540000 * layer)
