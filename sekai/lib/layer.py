@@ -26,7 +26,5 @@ LAYER_DAMAGE = 50
 LAYER_JUDGMENT = 51
 
 
-def get_z(layer: int | float, time: float = 0.0, lane: float = 0.0, etc: int | float = 0.0) -> float:
-    time = round(time, 3)
-    lane = round(lane, 2)
-    return ((1 / 100) * etc) + abs(lane) - (10000 * time) + (65540000 * layer)
+def get_z(layer: int | float, time: float = 0.0, lane: int | float = 0.0, etc: int | float = 0.0) -> float:
+    return (1 / 512) * etc + (1 / 512) * abs(lane) - 5 * time + 512 * layer
