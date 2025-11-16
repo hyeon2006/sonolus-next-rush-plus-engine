@@ -47,7 +47,7 @@ from sekai.lib.note import (
     schedule_note_auto_sfx,
 )
 from sekai.lib.options import Options
-from sekai.lib.timescale import group_hide_notes, group_scaled_time, group_time_to_scaled_time
+from sekai.lib.timescale import CompositeTime, group_hide_notes, group_scaled_time, group_time_to_scaled_time
 from sekai.play import input_manager
 
 DEFAULT_BEST_TOUCH_TIME = -1e8
@@ -75,7 +75,7 @@ class BaseNote(PlayArchetype):
     target_time: float = entity_data()
     visual_start_time: float = entity_data()
     start_time: float = entity_data()
-    target_scaled_time: float = entity_data()
+    target_scaled_time: CompositeTime = entity_data()
     judgment_window: JudgmentWindow = entity_data()
     input_interval: Interval = entity_data()
     unadjusted_input_interval: Interval = entity_data()

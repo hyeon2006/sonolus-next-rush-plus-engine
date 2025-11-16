@@ -16,6 +16,15 @@ from sekai.lib.options import Options
 MIN_START_TIME = -2.0
 
 
+class CompositeTime(Record):
+    base: float
+    delta: float
+
+    @property
+    def total(self) -> float:
+        return self.base + self.delta
+
+
 class TimescaleChangeLike(Protocol):
     beat: float
     timescale: float
@@ -37,7 +46,7 @@ class TimescaleGroupLike(Protocol):
     time_to_last_change_index: TimeToLastChangeIndex
     scaled_time_to_first_time: ScaledTimeToFirstTime
     scaled_time_to_first_time_2: ScaledTimeToFirstTime
-    current_scaled_time: float
+    current_scaled_time: CompositeTime
     hide_notes: bool
 
     @classmethod
@@ -63,9 +72,11 @@ class TimeToScaledTime(Record):
         self.last_ease = TimescaleEase.NONE
         self.next_change_index = self.first_change_index
 
-    def get(self, time: float) -> float:
+    def get(self, time: float) -> CompositeTime:
+        result = +CompositeTime
         if time <= MIN_START_TIME or Options.disable_timescale:
-            return time
+            result.base = time
+            return result
         if time < self.last_time:
             self.reset()
         for change in iter_timescale_changes(self.next_change_index):
@@ -83,19 +94,25 @@ class TimeToScaledTime(Record):
                     assert_never(self.last_ease)
             skip_scaled_time = change.timescale_skip * 60 / beat_to_bpm(change.beat)
             if time == next_time:
-                return next_scaled_time + skip_scaled_time
+                result.base = next_scaled_time + skip_scaled_time
+                return result
             if time < next_time:
                 if abs(next_time - self.last_time) < 1e-6:
-                    return self.last_scaled_time
+                    result.base = self.last_scaled_time
+                    return result
                 match self.last_ease:
                     case TimescaleEase.NONE:
-                        return remap(self.last_time, next_time, self.last_scaled_time, next_scaled_time, time)
+                        result.base = self.last_scaled_time
+                        result.delta = (time - self.last_time) * self.last_timescale
+                        return result
                     case TimescaleEase.LINEAR:
                         avg_timescale = (
                             self.last_timescale
                             + remap(self.last_time, next_time, self.last_timescale, next_timescale, time)
                         ) / 2
-                        return self.last_scaled_time + (time - self.last_time) * avg_timescale
+                        result.base = self.last_scaled_time
+                        result.delta = (time - self.last_time) * avg_timescale
+                        return result
                     case _:
                         assert_never(self.last_ease)
             self.last_timescale = next_timescale
@@ -103,7 +120,9 @@ class TimeToScaledTime(Record):
             self.last_scaled_time = next_scaled_time + skip_scaled_time
             self.last_ease = change.timescale_ease
             self.next_change_index = change.next_ref.index
-        return self.last_scaled_time + (time - self.last_time) * self.last_timescale
+        result.base = self.last_scaled_time
+        result.delta = (time - self.last_time) * self.last_timescale
+        return result
 
 
 class TimeToLastChangeIndex(Record):
@@ -245,12 +264,15 @@ def iter_timescale_changes(index: int) -> Iterator[TimescaleChangeLike]:
         index = change.next_ref.index
 
 
-def group_scaled_time(group: int | EntityRef):
+def group_scaled_time(group: int | EntityRef) -> CompositeTime:
     if isinstance(group, EntityRef):
         group = group.index
+    result = +CompositeTime
     if group <= 0 or Options.disable_timescale:
-        return runtime.time()
-    return timescale_group_archetype().at(group).current_scaled_time
+        result.base = runtime.time()
+    else:
+        result @= timescale_group_archetype().at(group).current_scaled_time
+    return result
 
 
 def group_hide_notes(group: int | EntityRef) -> bool:
@@ -283,7 +305,7 @@ def iter_timescale_changes_in_group_after_time_inclusive(
 def group_time_to_scaled_time(
     group: int | EntityRef,
     time: float,
-) -> float:
+) -> CompositeTime:
     if isinstance(group, EntityRef):
         group = group.index
     return timescale_group_archetype().at(group).time_to_scaled_time.get(time)

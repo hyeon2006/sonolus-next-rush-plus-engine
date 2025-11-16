@@ -2,14 +2,17 @@ from enum import IntEnum
 from math import atan, ceil, floor, log, pi
 from typing import assert_never
 
+from sonolus.script.debug import static_error
 from sonolus.script.globals import level_data
 from sonolus.script.interval import clamp, lerp, remap, unlerp
+from sonolus.script.num import Num
 from sonolus.script.quad import Quad, QuadLike, Rect
 from sonolus.script.runtime import aspect_ratio, screen
 from sonolus.script.values import swap
 from sonolus.script.vec import Vec2
 
 from sekai.lib.options import Options
+from sekai.lib.timescale import CompositeTime
 
 LANE_T = 47 / 850
 LANE_B = 1176 / 850
@@ -117,8 +120,14 @@ def inverse_approach(approach_value: float) -> float:
         return 1 - log(approach_value) / log(APPROACH_SCALE)
 
 
-def progress_to(to_time: float, now: float) -> float:
-    return unlerp(to_time - preempt_time(), to_time, now)
+def progress_to(to_time: float | CompositeTime, now: float | CompositeTime) -> float:
+    match (to_time, now):
+        case (CompositeTime(), CompositeTime()):
+            return ((now.base - to_time.base) + now.delta - to_time.delta + preempt_time()) / preempt_time()
+        case (Num(), Num()):
+            return unlerp(to_time - preempt_time(), to_time, now)
+        case _:
+            static_error("Unexpected types for progress_to")
 
 
 def preempt_time() -> float:
