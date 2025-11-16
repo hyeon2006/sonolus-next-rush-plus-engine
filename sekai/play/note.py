@@ -244,7 +244,7 @@ class BaseNote(PlayArchetype):
                 | NoteKind.CRIT_TAIL_RELEASE
             ):
                 self.handle_release_input()
-            case NoteKind.NORM_TICK | NoteKind.CRIT_TICK:
+            case NoteKind.NORM_TICK | NoteKind.CRIT_TICK | NoteKind.HIDE_TICK:
                 self.handle_tick_input()
             case NoteKind.DAMAGE:
                 self.handle_damage_input()
@@ -502,19 +502,14 @@ class BaseNote(PlayArchetype):
             self.best_touch_matches_direction = has_correct_direction_touch
 
     def handle_tick_input(self):
-        if self.tick_head_ref.index > 0 or self.is_attached:
-            return
         hitbox = self.get_full_hitbox()
-        has_touch = False
         for touch in touches():
             if not hitbox.contains_point(touch.position):
                 continue
             input_manager.disallow_empty(touch)
-            has_touch = True
-        if has_touch:
+            if self.tick_head_ref.index > 0 or self.is_attached:
+                return
             self.complete()
-        else:
-            self.fail_late(0.125)
 
     def handle_damage_input(self):
         hitbox = self.get_full_hitbox()
