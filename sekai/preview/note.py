@@ -42,6 +42,7 @@ from sekai.lib.skin import (
 )
 from sekai.play.note import derive_note_archetypes
 from sekai.preview.layout import (
+    PREVIEW_COLUMN_SECS,
     PreviewData,
     layout_preview_flick_arrow,
     layout_preview_flick_arrow_fallback,
@@ -298,7 +299,7 @@ def draw_note_tick(kind: NoteKind, lane: float, target_time: float, col: int, y:
 
 
 def _draw_regular_body(sprites: BodySprites, lane: float, size: float, target_time: float, col: int, y: float):
-    z = get_z(LAYER_NOTE_BODY, time=target_time, lane=lane)
+    z = get_z(LAYER_NOTE_BODY, time=target_time, lane=lane, current_time=col * PREVIEW_COLUMN_SECS)
     if sprites.custom_available:
         left_layout, middle_layout, right_layout = layout_preview_regular_note_body(lane, size, col, y)
         sprites.left.draw(left_layout, z=z)
@@ -310,7 +311,7 @@ def _draw_regular_body(sprites: BodySprites, lane: float, size: float, target_ti
 
 
 def _draw_flick_body(sprites: BodySprites, lane: float, size: float, target_time: float, col: int, y: float):
-    z = get_z(LAYER_NOTE_FLICK_BODY, time=target_time, lane=lane)
+    z = get_z(LAYER_NOTE_FLICK_BODY, time=target_time, lane=lane, current_time=col * PREVIEW_COLUMN_SECS)
     if sprites.custom_available:
         left_layout, middle_layout, right_layout = layout_preview_regular_note_body(lane, size, col, y)
         sprites.left.draw(left_layout, z=z)
@@ -322,7 +323,7 @@ def _draw_flick_body(sprites: BodySprites, lane: float, size: float, target_time
 
 
 def _draw_slim_body(sprites: BodySprites, lane: float, size: float, target_time: float, col: int, y: float):
-    z = get_z(LAYER_NOTE_SLIM_BODY, time=target_time, lane=lane)
+    z = get_z(LAYER_NOTE_SLIM_BODY, time=target_time, lane=lane, current_time=col * PREVIEW_COLUMN_SECS)
     if sprites.custom_available:
         left_layout, middle_layout, right_layout = layout_preview_slim_note_body(lane, size, col, y)
         sprites.left.draw(left_layout, z=z)
@@ -334,7 +335,7 @@ def _draw_slim_body(sprites: BodySprites, lane: float, size: float, target_time:
 
 
 def _draw_tick(sprites: TickSprites, lane: float, target_time: float, col: int, y: float):
-    z = get_z(LAYER_NOTE_TICK, time=target_time, lane=lane)
+    z = get_z(LAYER_NOTE_TICK, time=target_time, lane=lane, current_time=col * PREVIEW_COLUMN_SECS)
     layout = layout_preview_tick(lane, col, y)
     if sprites.custom_available:
         sprites.normal.draw(layout, z=z)
@@ -345,7 +346,7 @@ def _draw_tick(sprites: TickSprites, lane: float, target_time: float, col: int, 
 def _draw_arrow(
     sprites: ArrowSprites, lane: float, size: float, target_time: float, direction: FlickDirection, col: int, y: float
 ):
-    z = get_z(LAYER_NOTE_ARROW, time=target_time, lane=lane)
+    z = get_z(LAYER_NOTE_ARROW, time=target_time, lane=lane, current_time=col * PREVIEW_COLUMN_SECS)
     if sprites.custom_available:
         layout = layout_preview_flick_arrow(lane, size, direction, col, y)
         sprites.get_sprite(size, direction).draw(layout, z=z)

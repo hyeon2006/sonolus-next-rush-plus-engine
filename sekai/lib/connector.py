@@ -143,7 +143,11 @@ def get_connector_z(kind: ConnectorKind, target_time: float, lane: float) -> flo
             | ConnectorKind.ACTIVE_FAKE_CRITICAL
         ):
             return get_z(
-                LAYER_ACTIVE_SIDE_CONNECTOR, time=-target_time, lane=lane, etc=get_active_connector_z_offset(kind)
+                LAYER_ACTIVE_SIDE_CONNECTOR,
+                time=-target_time,
+                lane=lane,
+                etc=get_active_connector_z_offset(kind),
+                current_time=time(),
             )
         case (
             ConnectorKind.GUIDE_NEUTRAL
@@ -155,7 +159,13 @@ def get_connector_z(kind: ConnectorKind, target_time: float, lane: float) -> flo
             | ConnectorKind.GUIDE_CYAN
             | ConnectorKind.GUIDE_BLACK
         ):
-            return get_z(LAYER_GUIDE_CONNECTOR, time=-target_time, lane=lane, etc=kind - ConnectorKind.GUIDE_NEUTRAL)
+            return get_z(
+                LAYER_GUIDE_CONNECTOR,
+                time=-target_time,
+                lane=lane,
+                etc=kind - ConnectorKind.GUIDE_NEUTRAL,
+                current_time=time(),
+            )
         case ConnectorKind.NONE:
             return 0.0
         case _:
@@ -598,7 +608,7 @@ def draw_connector_slot_glow_effect(
     )
     ex = 0.035 * abs(2 * size) + 0.08 if Options.version == 0 else 0
     layout = layout_slot_glow_effect(lane, size + ex, height)
-    z = get_z(LAYER_SLOT_GLOW_EFFECT, -start_time, lane)
+    z = get_z(LAYER_SLOT_GLOW_EFFECT, -start_time, lane, current_time=time())
     a = remap_clamped(start_time, start_time + 0.25, 0.0, 0.35, time())
     sprite.draw(layout, z=z, a=a)
 
