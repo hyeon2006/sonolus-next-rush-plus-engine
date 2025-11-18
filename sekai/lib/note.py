@@ -569,29 +569,46 @@ def get_note_body_layer(kind: NoteKind) -> int:
 def draw_note_body(sprites: BodySpriteSet, kind: NoteKind, lane: float, size: float, travel: float, target_time: float):
     layer = get_note_body_layer(kind)
     a = get_alpha(target_time)
-    z = get_z(layer, time=target_time, lane=lane)
-    match sprites.render_type:
-        case BodyRenderType.NORMAL:
-            left_layout, middle_layout, right_layout = layout_regular_note_body(lane, size, travel)
-            sprites.left.draw(left_layout, z=z, a=a)
-            sprites.middle.draw(middle_layout, z=z, a=a)
-            sprites.right.draw(right_layout, z=z, a=a)
-        case BodyRenderType.SLIM:
-            left_layout, middle_layout, right_layout = layout_slim_note_body(lane, size, travel)
-            sprites.left.draw(left_layout, z=z, a=a)
-            sprites.middle.draw(middle_layout, z=z, a=a)
-            sprites.right.draw(right_layout, z=z, a=a)
-        case BodyRenderType.NORMAL_FALLBACK:
-            layout = layout_regular_note_body_fallback(lane, size, travel)
-            sprites.middle.draw(layout, z=z, a=a)
-        case BodyRenderType.SLIM_FALLBACK:
-            layout = layout_slim_note_body_fallback(lane, size, travel)
-            sprites.middle.draw(layout, z=z, a=a)
+    z = get_z(LAYER_NOTE_BODY, time=target_time, lane=lane, current_time=time())
+    if sprites.custom_available:
+        left_layout, middle_layout, right_layout = layout_regular_note_body(lane, size, travel)
+        sprites.left.draw(left_layout, z=z, a=a)
+        sprites.middle.draw(middle_layout, z=z, a=a)
+        sprites.right.draw(right_layout, z=z, a=a)
+    else:
+        layout = layout_regular_note_body_fallback(lane, size, travel)
+        sprites.fallback.draw(layout, z=z, a=a)
 
 
-def draw_note_tick(sprite: Sprite, lane: float, travel: float, target_time: float):
+def _draw_flick_body(sprites: BodySprites, lane: float, size: float, travel: float, target_time: float):
     a = get_alpha(target_time)
-    z = get_z(LAYER_NOTE_TICK, time=target_time, lane=lane)
+    z = get_z(LAYER_NOTE_FLICK_BODY, time=target_time, lane=lane, current_time=time())
+    if sprites.custom_available:
+        left_layout, middle_layout, right_layout = layout_regular_note_body(lane, size, travel)
+        sprites.left.draw(left_layout, z=z, a=a)
+        sprites.middle.draw(middle_layout, z=z, a=a)
+        sprites.right.draw(right_layout, z=z, a=a)
+    else:
+        layout = layout_regular_note_body_fallback(lane, size, travel)
+        sprites.fallback.draw(layout, z=z, a=a)
+
+
+def _draw_slim_body(sprites: BodySprites, lane: float, size: float, travel: float, target_time: float):
+    a = get_alpha(target_time)
+    z = get_z(LAYER_NOTE_SLIM_BODY, time=target_time, lane=lane, current_time=time())
+    if sprites.custom_available:
+        left_layout, middle_layout, right_layout = layout_slim_note_body(lane, size, travel)
+        sprites.left.draw(left_layout, z=z, a=a)
+        sprites.middle.draw(middle_layout, z=z, a=a)
+        sprites.right.draw(right_layout, z=z, a=a)
+    else:
+        layout = layout_slim_note_body_fallback(lane, size, travel)
+        sprites.fallback.draw(layout, z=z, a=a)
+
+
+def _draw_tick(sprites: TickSprites, lane: float, travel: float, target_time: float):
+    a = get_alpha(target_time)
+    z = get_z(LAYER_NOTE_TICK, time=target_time, lane=lane, current_time=time())
     layout = layout_tick(lane, travel)
     sprite.draw(layout, z=z, a=a)
 
@@ -611,14 +628,13 @@ def draw_note_arrow(
             assert_never(direction)
     animation_alpha = (1 - ease_in_cubic(animation_progress)) if Options.marker_animation else 1
     a = get_alpha(target_time) * animation_alpha
-    z = get_z(LAYER_NOTE_ARROW, time=target_time, lane=lane)
-    match sprites.render_type:
-        case ArrowRenderType.NORMAL:
-            layout = layout_flick_arrow(lane, size, direction, travel, animation_progress)
-            sprites.get_sprite(size, direction).draw(layout, z=z, a=a)
-        case ArrowRenderType.FALLBACK:
-            layout = layout_flick_arrow_fallback(lane, size, direction, travel, animation_progress)
-            sprites.get_sprite(size, direction).draw(layout, z=z, a=a)
+    z = get_z(LAYER_NOTE_ARROW, time=target_time, lane=lane, current_time=time())
+    if sprites.custom_available:
+        layout = layout_flick_arrow(lane, size, direction, travel, animation_progress)
+        sprites.get_sprite(size, direction).draw(layout, z=z, a=a)
+    else:
+        layout = layout_flick_arrow_fallback(lane, size, direction, travel, animation_progress)
+        sprites.fallback.draw(layout, z=z, a=a)
 
 
 def get_note_particles(kind: NoteKind, direction: FlickDirection) -> NoteParticleSet:
