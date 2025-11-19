@@ -225,7 +225,7 @@ def draw_judgment_text(draw_time: float, judgment: Judgment, windows_bad: Interv
     a = ui.judgment_config.alpha * unlerp_clamped(draw_time, draw_time + 0.064, time())
     s = unlerp_clamped(draw_time, draw_time + 0.064, time())
     layout = layout_combo_label(screen_center, w=w * s / 2, h=h * s / 2)
-    z = get_z(layer=LAYER_JUDGMENT, time=-draw_time, current_time=time())
+    z = get_z(layer=LAYER_JUDGMENT, time=draw_time, current_time=time())
     judgment_text.get_sprite(
         judgment_type=judgment, windows_bad=windows_bad, accuracy=accuracy, check_pass=check_pass
     ).draw(quad=layout, z=z, a=a)
@@ -247,7 +247,7 @@ def draw_judgment_accuracy(
     h, w = transform_fixed_size(base_h, base_w)
     a = ui.judgment_config.alpha
     layout = layout_combo_label(screen_center, w=w / 2, h=h / 2)
-    z = get_z(layer=LAYER_JUDGMENT, time=-draw_time, current_time=time())
+    z = get_z(layer=LAYER_JUDGMENT, time=draw_time, current_time=time())
     accuracy_text.get_sprite(
         judgment=judgment,
         windows=windows.perfect,
@@ -261,7 +261,7 @@ def draw_damage_flash(
 ):
     t = unlerp_clamped(draw_time, draw_time + 0.35, time())
     a = 0.768 * t**0.1 * (1 - t) ** 1.35
-    z = get_z(layer=LAYER_DAMAGE, time=-draw_time, current_time=time())
+    z = get_z(layer=LAYER_DAMAGE, time=draw_time, current_time=time())
 
     for i in range(2):
         for j in range(2):
@@ -276,4 +276,4 @@ def draw_damage_flash(
                 tl=Vec2(l_val, t_val),
                 tr=Vec2(0, t_val),
             )
-            damage_flash.get_sprite().draw(quad=layout, z=z, a=a)
+            damage_flash.get_sprite().draw(quad=layout, z=z, a=a * 0.8)

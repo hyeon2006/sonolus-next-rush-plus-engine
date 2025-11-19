@@ -33,12 +33,12 @@ LAYER_JUDGMENT = 32
 
 
 def get_z(layer: int, time: float = 0.0, lane: float = 0.0, etc: int | float = 0.0, current_time: float = 0.0) -> float:
-    # Layer - <6 bits (-1 - 63)
+    # Layer - <6 bits (-1 - 45)
     # Time - 14 bits (-8192 - 8191) / 256
     # Lane - 8 bits (0 - 255) / 16
     # Etc - 3 bits (0 - 7)
 
-    b_0_6 = int(clamp(layer + 1, 0, 63))
+    b_0_6 = int(clamp(layer + 1, 0, 45))
     b_6_20 = int(clamp((time - current_time) * 256 + 8192, 0, 16383))
     b_20_28 = int(clamp(abs(lane) * 16, 0, 255))
     b_28_31 = int(clamp(etc, 0, 7))
@@ -48,7 +48,7 @@ def get_z(layer: int, time: float = 0.0, lane: float = 0.0, etc: int | float = 0
     b_8_27 = concat_bits(b_8_19, b_20_28, 8)
     b_8_31 = concat_bits(b_8_27, b_28_31, 3)
 
-    exponent = b_0_8 - 126
+    exponent = b_0_8 - 60
     mantissa = (b_8_31 + 2**23) / (2**23)
     return mantissa * (2**exponent)
 
