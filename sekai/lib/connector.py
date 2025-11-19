@@ -457,7 +457,7 @@ def draw_connector(
         if visual_state == ConnectorVisualState.ACTIVE and active_sprite.is_available:
             if Options.connector_animation:
                 a1, a2 = get_cross_fate_opacities(base_a, time() - segment_head_target_time, 0.5)
-                normal_sprite.draw(layout, z=z + 1 / 128, a=a1)
+                normal_sprite.draw(layout, z=z, a=a1)
                 active_sprite.draw(layout, z=z, a=a2)
             else:
                 normal_sprite.draw(layout, z=z, a=base_a)
