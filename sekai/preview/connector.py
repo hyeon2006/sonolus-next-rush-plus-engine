@@ -63,7 +63,7 @@ class PreviewConnector(PreviewArchetype):
             segment_head_alpha=self.segment_head.segment_alpha,
             segment_tail_target_time=self.segment_tail.target_time,
             segment_tail_alpha=self.segment_tail.segment_alpha,
-            layer=self.segment_head.segment_layer,
+            head_col=self.segment_head.col,
         )
 
     @property
@@ -99,7 +99,7 @@ def draw_connector(
     segment_head_alpha: float,
     segment_tail_target_time: float,
     segment_tail_alpha: float,
-    layer: ConnectorLayer,
+    head_col: int,
 ):
     if head_target_time == tail_target_time:
         return
@@ -169,6 +169,8 @@ def draw_connector(
             quality_dist_scale = 100 / PREVIEW_COLUMN_SECS * (tail_target_time - head_target_time)
     quality_alpha_scale = 30 * abs(head_alpha - tail_alpha)
     segment_count = max(1, ceil(get_connector_quality_option(kind) * max(quality_dist_scale, quality_alpha_scale)))
+
+    z = get_connector_z(kind, segment_head_target_time, segment_head_lane, head_col * PREVIEW_COLUMN_SECS)
 
     eased_head_ease_frac = ease(ease_type, head_ease_frac)
     eased_tail_ease_frac = ease(ease_type, tail_ease_frac)

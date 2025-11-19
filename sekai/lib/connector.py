@@ -127,7 +127,7 @@ def get_guide_connector_sprite(kind: GuideConnectorKind) -> Sprite:
     return result
 
 
-def get_connector_z(kind: ConnectorKind, target_time: float, lane: float, active: bool, layer: ConnectorLayer) -> float:
+def get_connector_z(kind: ConnectorKind, target_time: float, lane: float, current_time: float) -> float:
     match kind:
         case (
             ConnectorKind.ACTIVE_NORMAL
@@ -137,10 +137,10 @@ def get_connector_z(kind: ConnectorKind, target_time: float, lane: float, active
         ):
             return get_z(
                 LAYER_ACTIVE_SIDE_CONNECTOR,
-                time=-target_time,
+                time=target_time,
                 lane=lane,
                 etc=get_active_connector_z_offset(kind),
-                current_time=time(),
+                current_time=current_time,
             )
         case (
             ConnectorKind.GUIDE_NEUTRAL
@@ -154,10 +154,10 @@ def get_connector_z(kind: ConnectorKind, target_time: float, lane: float, active
         ):
             return get_z(
                 LAYER_GUIDE_CONNECTOR,
-                time=-target_time,
+                time=(current_time * 2) - target_time,
                 lane=lane,
                 etc=kind - ConnectorKind.GUIDE_NEUTRAL,
-                current_time=time(),
+                current_time=current_time,
             )
         case ConnectorKind.NONE:
             return 0.0
@@ -405,12 +405,7 @@ def draw_connector(
             curve_change_scale = pos_offset**0.4 * 1.6
     segment_count = int(clamp(ceil(max(curve_change_scale, alpha_change_scale) * quality * 10), 1, max_segment))
 
-    z_normal = get_connector_z(kind, segment_head_target_time, segment_head_lane, active=False, layer=layer)
-    if visual_state == ConnectorVisualState.ACTIVE and active_sprite.is_available:
-        z_active = get_connector_z(kind, segment_head_target_time, segment_head_lane, active=True, layer=layer)
-    else:
-        z_active = z_normal
-
+    z = get_connector_z(kind, segment_head_target_time, segment_head_lane, time())
     last_travel = start_travel
     last_lane = start_lane
     last_size = start_size
@@ -602,7 +597,7 @@ def draw_connector_slot_glow_effect(
     )
     ex = 0.035 * abs(2 * size) + 0.08 if Options.version == 0 else 0
     layout = layout_slot_glow_effect(lane, size + ex, height)
-    z = get_z(LAYER_SLOT_GLOW_EFFECT, -start_time, lane, current_time=time())
+    z = get_z(LAYER_SLOT_GLOW_EFFECT, start_time, lane, current_time=time())
     a = remap_clamped(start_time, start_time + 0.25, 0.0, 0.35, time())
     sprite.draw(layout, z=z, a=a)
 
