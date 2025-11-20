@@ -1,5 +1,4 @@
 from sonolus.script.interval import clamp, lerp, unlerp, unlerp_clamped
-from sonolus.script.runtime import time
 
 from sekai.lib.layer import LAYER_SIM_LINE, get_z
 from sekai.lib.layout import Layout, approach, get_alpha, layout_sim_line
@@ -48,7 +47,9 @@ def draw_sim_line(
     progress_diff = abs(left_progress - right_progress)
     fade_alpha = unlerp_clamped(1, 0.5, progress_diff)
     z = get_z(
-        LAYER_SIM_LINE, (left_target_time + right_target_time) / 2, (left_lane + right_lane) / 2, current_time=time()
+        LAYER_SIM_LINE,
+        (left_target_time + right_target_time) / 2,
+        (left_lane + right_lane) / 2,
     )
     a = (
         min(

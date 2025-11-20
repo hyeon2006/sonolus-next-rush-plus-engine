@@ -44,7 +44,7 @@ def draw_combo_label(draw_time: float, ap: bool):
     h, w = transform_fixed_size(base_h, base_w)
     a = ui.combo_config.alpha * 0.8 * (cos(time() * pi) + 1) / 2
     layout = layout_combo_label(screen_center, w=w / 2, h=h / 2)
-    z = get_z(layer=LAYER_JUDGMENT, time=1)
+    z = get_z(layer=LAYER_JUDGMENT, etc=1)
     glow_z = get_z(layer=LAYER_JUDGMENT)
     if ap:
         combo_label.get_sprite(ComboType.NORMAL).draw(quad=layout, z=z, a=ui.combo_config.alpha)
@@ -120,9 +120,9 @@ def draw_combo_number(
             start_x=start_x2,
         ),
     )
-    z = get_z(layer=LAYER_JUDGMENT, time=1)
+    z = get_z(layer=LAYER_JUDGMENT, etc=1)
     z2 = get_z(layer=LAYER_JUDGMENT)
-    z3 = get_z(layer=LAYER_JUDGMENT, time=2)
+    z3 = get_z(layer=LAYER_JUDGMENT, etc=2)
     drawing_combo.draw_number(z=z, z2=z2, z3=z3)
 
 
@@ -225,7 +225,7 @@ def draw_judgment_text(draw_time: float, judgment: Judgment, windows_bad: Interv
     a = ui.judgment_config.alpha * unlerp_clamped(draw_time, draw_time + 0.064, time())
     s = unlerp_clamped(draw_time, draw_time + 0.064, time())
     layout = layout_combo_label(screen_center, w=w * s / 2, h=h * s / 2)
-    z = get_z(layer=LAYER_JUDGMENT, time=draw_time, current_time=time())
+    z = get_z(layer=LAYER_JUDGMENT, time=draw_time)
     judgment_text.get_sprite(
         judgment_type=judgment, windows_bad=windows_bad, accuracy=accuracy, check_pass=check_pass
     ).draw(quad=layout, z=z, a=a)
@@ -247,7 +247,7 @@ def draw_judgment_accuracy(
     h, w = transform_fixed_size(base_h, base_w)
     a = ui.judgment_config.alpha
     layout = layout_combo_label(screen_center, w=w / 2, h=h / 2)
-    z = get_z(layer=LAYER_JUDGMENT, time=draw_time, current_time=time())
+    z = get_z(layer=LAYER_JUDGMENT, time=draw_time)
     accuracy_text.get_sprite(
         judgment=judgment,
         windows=windows.perfect,
@@ -261,7 +261,7 @@ def draw_damage_flash(
 ):
     t = unlerp_clamped(draw_time, draw_time + 0.35, time())
     a = 0.768 * t**0.1 * (1 - t) ** 1.35
-    z = get_z(layer=LAYER_DAMAGE, time=draw_time, current_time=time())
+    z = get_z(layer=LAYER_DAMAGE, time=draw_time)
 
     for i in range(2):
         for j in range(2):

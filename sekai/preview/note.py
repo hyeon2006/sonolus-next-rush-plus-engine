@@ -72,7 +72,6 @@ class PreviewBaseNote(PreviewArchetype):
     kind: NoteKind = entity_data()
     data_init_done: bool = entity_data()
     target_time: float = entity_data()
-    col: int = entity_data()
 
     def init_data(self):
         if self.data_init_done:
@@ -115,7 +114,6 @@ class PreviewBaseNote(PreviewArchetype):
 
         if self.is_scored:
             col = max(time_to_preview_col(self.target_time), 0)
-            self.col = col
             if col < len(PreviewData.note_counts_by_col):
                 PreviewData.note_counts_by_col[col] += 1
 

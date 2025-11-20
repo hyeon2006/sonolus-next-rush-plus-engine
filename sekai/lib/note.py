@@ -548,7 +548,7 @@ def draw_note_tick(kind: NoteKind, lane: float, travel: float, target_time: floa
 
 def _draw_regular_body(sprites: BodySprites, lane: float, size: float, travel: float, target_time: float):
     a = get_alpha(target_time)
-    z = get_z(LAYER_NOTE_BODY, time=(time() * 2) - target_time, lane=lane, current_time=time())
+    z = get_z(LAYER_NOTE_BODY, time=target_time, lane=lane)
     if sprites.custom_available:
         left_layout, middle_layout, right_layout = layout_regular_note_body(lane, size, travel)
         sprites.left.draw(left_layout, z=z, a=a)
@@ -561,7 +561,7 @@ def _draw_regular_body(sprites: BodySprites, lane: float, size: float, travel: f
 
 def _draw_flick_body(sprites: BodySprites, lane: float, size: float, travel: float, target_time: float):
     a = get_alpha(target_time)
-    z = get_z(LAYER_NOTE_FLICK_BODY, time=(time() * 2) - target_time, lane=lane, current_time=time())
+    z = get_z(LAYER_NOTE_FLICK_BODY, time=target_time, lane=lane)
     if sprites.custom_available:
         left_layout, middle_layout, right_layout = layout_regular_note_body(lane, size, travel)
         sprites.left.draw(left_layout, z=z, a=a)
@@ -574,7 +574,7 @@ def _draw_flick_body(sprites: BodySprites, lane: float, size: float, travel: flo
 
 def _draw_slim_body(sprites: BodySprites, lane: float, size: float, travel: float, target_time: float):
     a = get_alpha(target_time)
-    z = get_z(LAYER_NOTE_SLIM_BODY, time=(time() * 2) - target_time, lane=lane, current_time=time())
+    z = get_z(LAYER_NOTE_SLIM_BODY, time=target_time, lane=lane)
     if sprites.custom_available:
         left_layout, middle_layout, right_layout = layout_slim_note_body(lane, size, travel)
         sprites.left.draw(left_layout, z=z, a=a)
@@ -587,7 +587,7 @@ def _draw_slim_body(sprites: BodySprites, lane: float, size: float, travel: floa
 
 def _draw_tick(sprites: TickSprites, lane: float, travel: float, target_time: float):
     a = get_alpha(target_time)
-    z = get_z(LAYER_NOTE_TICK, time=(time() * 2) - target_time, lane=lane, current_time=time())
+    z = get_z(LAYER_NOTE_TICK, time=target_time, lane=lane)
     layout = layout_tick(lane, travel)
     if sprites.custom_available:
         sprites.normal.draw(layout, z=z, a=a)
@@ -610,7 +610,7 @@ def _draw_arrow(
             assert_never(direction)
     animation_alpha = (1 - ease_in_cubic(animation_progress)) if Options.marker_animation else 1
     a = get_alpha(target_time) * animation_alpha
-    z = get_z(LAYER_NOTE_ARROW, time=(time() * 2) - target_time, lane=lane, current_time=time())
+    z = get_z(LAYER_NOTE_ARROW, time=target_time, lane=lane)
     if sprites.custom_available:
         layout = layout_flick_arrow(lane, size, direction, travel, animation_progress)
         sprites.get_sprite(size, direction).draw(layout, z=z, a=a)
