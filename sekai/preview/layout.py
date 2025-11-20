@@ -77,6 +77,11 @@ def lane_to_preview_x(lane: float, col: int) -> float:
     return (col + 0.5) * PreviewLayout.column_width + lane * PREVIEW_LANE_W - screen().w / 2
 
 
+def get_adjusted_time(time: float, col: int) -> float:
+    # get_z only supports time within +/- 30s accurately, so we adjust time to be relative to the column's time
+    return time - col * PREVIEW_COLUMN_SECS
+
+
 def layout_preview_lane_by_edges(l: float, r: float, col: int) -> Rect:
     return Rect(
         l=lane_to_preview_x(l, col),
