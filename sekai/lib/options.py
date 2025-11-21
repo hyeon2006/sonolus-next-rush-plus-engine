@@ -261,27 +261,3 @@ class Options:
         step=0.1,
         unit=StandardText.PERCENTAGE_UNIT,
     )
-    using_damage_tick: bool = toggle_option(
-        name="Using Damage Note Tick",
-        description="The damage note have a tick",
-        scope="Rush",
-        default=False,
-    )
-    max_slide_quality: float = slider_option(
-        name="Max Slide Quality",
-        description="Max Slide Quality. 0 is disable",
-        scope="Sekai",
-        default=8,
-        min=0,
-        max=50,
-        step=1,
-    )
-    max_guide_quality: float = slider_option(
-        name="Max Guide Quality",
-        description="Max Guide Quality. 0 is disable",
-        scope="Sekai",
-        default=40,
-        min=0,
-        max=50,
-        step=1,
-    )
