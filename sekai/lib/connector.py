@@ -385,8 +385,8 @@ def draw_connector(
                 )
                 * Layout.w_scale
             )
-            y_diff = abs(start_pos_y - end_pos_y)
-            curve_change_scale = min(x_diff, y_diff) * 0.8
+            y_diff = abs(start_travel - end_travel)
+            curve_change_scale = min(x_diff, y_diff) ** 0.8
         case _:
             pos_offset = 0
             left_start_lane = start_lane - start_size
@@ -414,10 +414,21 @@ def draw_connector(
                 lane = lerp(hl, tl, interp_frac)
                 pos = transformed_vec_at(lane, travel)
                 ref_pos = lerp(start_ref, end_ref, unlerp_clamped(start_travel, end_travel, travel))
-                pos_offset_this_side += abs(pos.x - ref_pos.x)
+                pos_offset_this_side += abs(pos.x - ref_pos.x) / max(1e-5, travel)
             pos_offset = max(pos_offset, pos_offset_this_side)
-            curve_change_scale = pos_offset**0.4 * 1.6
-    segment_count = int(clamp(ceil(max(curve_change_scale, alpha_change_scale) * quality * 10), 1, max_segment))
+            curve_change_scale = pos_offset**0.4 * 1.25
+    alpha_change_scale = max(
+        (abs(start_alpha - end_alpha) * get_connector_alpha_option(kind)) ** 0.8 * 3,
+        (abs(start_alpha - end_alpha) * get_connector_alpha_option(kind)) ** 0.5 * abs(start_pos_y - end_pos_y) * 3,
+    )
+    quality = get_connector_quality_option(kind)
+    segment_count = max(1, ceil(max(curve_change_scale, alpha_change_scale) * quality * 10))
+
+    z_normal = get_connector_z(kind, segment_head_target_time, segment_head_lane, active=False)
+    if visual_state == ConnectorVisualState.ACTIVE and active_sprite.is_available:
+        z_active = get_connector_z(kind, segment_head_target_time, segment_head_lane, active=True)
+    else:
+        z_active = z_normal
 
     z = get_connector_z(kind, segment_head_target_time, segment_head_lane)
     last_travel = start_travel
