@@ -392,7 +392,7 @@ def draw_connector(
             start_ref = transformed_vec_at(ref_start_lane, start_travel)
             end_ref = transformed_vec_at(ref_end_lane, end_travel)
             pos_offset_this_side = 0
-            for r in (0.25, 0.5, 0.75):
+            for r in (0.25, 0.75):
                 ease_frac = lerp(start_ease_frac, end_ease_frac, r)
                 interp_frac = unlerp_clamped(eased_head_ease_frac, eased_tail_ease_frac, ease(ease_type, ease_frac))
                 progress = lerp(start_progress, end_progress, r)
@@ -402,7 +402,7 @@ def draw_connector(
                 ref_pos = lerp(start_ref, end_ref, unlerp_clamped(start_travel, end_travel, travel))
                 pos_offset_this_side += abs(pos.x - ref_pos.x)
             pos_offset = max(pos_offset, pos_offset_this_side)
-            curve_change_scale = pos_offset**0.4 * 1.6
+            curve_change_scale = pos_offset**0.4 * 2
     alpha_change_scale = max(
         (abs(start_alpha - end_alpha) * get_connector_alpha_option(kind)) ** 0.8 * 3,
         (abs(start_alpha - end_alpha) * get_connector_alpha_option(kind)) ** 0.5 * abs(start_pos_y - end_pos_y) * 3,
