@@ -372,7 +372,7 @@ def draw_connector(
                 * Layout.w_scale
             )
             y_diff = abs(start_pos_y - end_pos_y)
-            curve_change_scale = min(x_diff, y_diff) * 0.5
+            curve_change_scale = min(x_diff, y_diff) ** 0.8
         case _:
             pos_offset = 0
             left_start_lane = start_lane - start_size
