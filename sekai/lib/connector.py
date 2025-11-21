@@ -395,7 +395,7 @@ def draw_connector(
                 )
                 * Layout.w_scale
             )
-            y_diff = abs(start_pos_y - end_pos_y)
+            y_diff = abs(start_travel - end_travel)
             curve_change_scale = min(x_diff, y_diff) ** 0.8
         case _:
             pos_offset = 0
@@ -424,9 +424,9 @@ def draw_connector(
                 lane = lerp(ref_head_lane, ref_tail_lane, interp_frac)
                 pos = transformed_vec_at(lane, travel)
                 ref_pos = lerp(start_ref, end_ref, unlerp_clamped(start_travel, end_travel, travel))
-                pos_offset_this_side += abs(pos.x - ref_pos.x)
+                pos_offset_this_side += abs(pos.x - ref_pos.x) / max(1e-5, travel)
             pos_offset = max(pos_offset, pos_offset_this_side)
-            curve_change_scale = pos_offset**0.4 * 2
+            curve_change_scale = pos_offset**0.4 * 1.25
     alpha_change_scale = max(
         (abs(start_alpha - end_alpha) * get_connector_alpha_option(kind)) ** 0.8 * 3,
         (abs(start_alpha - end_alpha) * get_connector_alpha_option(kind)) ** 0.5 * abs(start_pos_y - end_pos_y) * 3,
