@@ -136,7 +136,7 @@ def get_guide_connector_sprites(kind: GuideConnectorKind) -> GuideSprites:
     return result
 
 
-def get_connector_z(kind: ConnectorKind, target_time: float, lane: float) -> float:
+def get_connector_z(kind: ConnectorKind, target_time: float, lane: float, active: bool) -> float:
     match kind:
         case (
             ConnectorKind.ACTIVE_NORMAL
@@ -145,7 +145,11 @@ def get_connector_z(kind: ConnectorKind, target_time: float, lane: float) -> flo
             | ConnectorKind.ACTIVE_FAKE_CRITICAL
         ):
             return get_z(
-                LAYER_ACTIVE_SIDE_CONNECTOR, time=-target_time, lane=lane, etc=get_active_connector_z_offset(kind)
+                LAYER_ACTIVE_SIDE_CONNECTOR,
+                time=target_time,
+                lane=lane,
+                etc=get_active_connector_z_offset(kind, active),
+                invert_time=True,
             )
         case (
             ConnectorKind.GUIDE_NEUTRAL
@@ -157,19 +161,25 @@ def get_connector_z(kind: ConnectorKind, target_time: float, lane: float) -> flo
             | ConnectorKind.GUIDE_CYAN
             | ConnectorKind.GUIDE_BLACK
         ):
-            return get_z(LAYER_GUIDE_CONNECTOR, time=-target_time, lane=lane, etc=kind - ConnectorKind.GUIDE_NEUTRAL)
+            return get_z(
+                LAYER_GUIDE_CONNECTOR,
+                time=target_time,
+                lane=lane,
+                etc=kind - ConnectorKind.GUIDE_NEUTRAL,
+                invert_time=True,
+            )
         case ConnectorKind.NONE:
             return 0.0
         case _:
             assert_never(kind)
 
 
-def get_active_connector_z_offset(kind: ActiveConnectorKind) -> int:
+def get_active_connector_z_offset(kind: ActiveConnectorKind, active: bool) -> int:
     match kind:
         case ConnectorKind.ACTIVE_NORMAL | ConnectorKind.ACTIVE_FAKE_NORMAL:
-            return 1
+            return 3 - active
         case ConnectorKind.ACTIVE_CRITICAL | ConnectorKind.ACTIVE_FAKE_CRITICAL:
-            return 0
+            return 1 - active
         case _:
             assert_never(kind)
 
@@ -400,7 +410,11 @@ def draw_connector(
     quality = get_connector_quality_option(kind)
     segment_count = max(1, ceil(max(curve_change_scale, alpha_change_scale) * quality * 10))
 
-    z = get_connector_z(kind, segment_head_target_time, segment_head_lane)
+    z_normal = get_connector_z(kind, segment_head_target_time, segment_head_lane, active=False)
+    if visual_state == ConnectorVisualState.ACTIVE and active_sprite.is_available:
+        z_active = get_connector_z(kind, segment_head_target_time, segment_head_lane, active=True)
+    else:
+        z_active = z_normal
 
     last_travel = start_travel
     last_lane = start_lane
@@ -441,12 +455,14 @@ def draw_connector(
         if visual_state == ConnectorVisualState.ACTIVE and active_sprite.is_available:
             if Options.connector_animation:
                 a_modifier = (cos(2 * pi * time()) + 1) / 2
-                normal_sprite.draw(layout, z=z + 1 / 128, a=base_a * ease_out_cubic(a_modifier))
-                active_sprite.draw(layout, z=z, a=base_a * ease_out_cubic(1 - a_modifier))
+                normal_sprite.draw(layout, z=z_normal, a=base_a * ease_out_cubic(a_modifier))
+                active_sprite.draw(layout, z=z_active, a=base_a * ease_out_cubic(1 - a_modifier))
             else:
-                active_sprite.draw(layout, z=z, a=base_a)
+                active_sprite.draw(layout, z=z_active, a=base_a)
         else:
-            normal_sprite.draw(layout, z=z, a=base_a * (1 if visual_state != ConnectorVisualState.INACTIVE else 0.5))
+            normal_sprite.draw(
+                layout, z=z_normal, a=base_a * (1 if visual_state != ConnectorVisualState.INACTIVE else 0.5)
+            )
 
         last_travel = next_travel
         last_lane = next_lane

@@ -19,6 +19,7 @@ from sekai.lib.layout import get_alpha
 from sekai.preview import note
 from sekai.preview.layout import (
     PREVIEW_COLUMN_SECS,
+    get_adjusted_time,
     layout_preview_slide_connector_segment,
     time_to_preview_col,
     time_to_preview_y,
@@ -173,8 +174,6 @@ def draw_connector(
     quality_alpha_scale = 30 * abs(head_alpha - tail_alpha)
     segment_count = max(1, ceil(get_connector_quality_option(kind) * max(quality_dist_scale, quality_alpha_scale)))
 
-    z = get_connector_z(kind, segment_head_target_time, segment_head_lane)
-
     eased_head_ease_frac = ease(ease_type, head_ease_frac)
     eased_tail_ease_frac = ease(ease_type, tail_ease_frac)
     last_lane = head_lane
@@ -203,6 +202,7 @@ def draw_connector(
         )
 
         for col in range(last_col, next_col + 1):
+            z = get_connector_z(kind, get_adjusted_time(segment_head_target_time, col), segment_head_lane, active=False)
             start_y = time_to_preview_y(last_target_time, col)
             end_y = time_to_preview_y(next_target_time, col)
             for layout in layout_preview_slide_connector_segment(
