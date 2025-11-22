@@ -372,14 +372,18 @@ def draw_connector(
                 * Layout.w_scale
             )
             y_diff = abs(start_pos_y - end_pos_y)
-            curve_change_scale = min(x_diff, y_diff) ** 0.8
+            curve_change_scale = min(x_diff, y_diff) ** 1.2
         case _:
-            pos_offset = 0
             left_start_lane = start_lane - start_size
             left_end_lane = end_lane - end_size
-            right_start_lane = start_lane + end_size
+            right_start_lane = start_lane + start_size
             right_end_lane = end_lane + end_size
-            if abs(left_start_lane - left_end_lane) > abs(right_start_lane - right_end_lane):
+            if abs(start_size - end_size) < 0.1:
+                ref_start_lane = start_lane
+                ref_end_lane = end_lane
+                ref_head_lane = head_lane
+                ref_tail_lane = tail_lane
+            elif abs(left_start_lane - left_end_lane) > abs(right_start_lane - right_end_lane):
                 ref_start_lane = left_start_lane
                 ref_end_lane = left_end_lane
                 ref_head_lane = head_lane - head_size
@@ -391,7 +395,8 @@ def draw_connector(
                 ref_tail_lane = tail_lane + tail_size
             start_ref = transformed_vec_at(ref_start_lane, start_travel)
             end_ref = transformed_vec_at(ref_end_lane, end_travel)
-            pos_offset_this_side = 0
+            last_pos_offset = 0
+            total_pos_offsets = 0
             for r in (0.25, 0.75):
                 ease_frac = lerp(start_ease_frac, end_ease_frac, r)
                 interp_frac = unlerp_clamped(eased_head_ease_frac, eased_tail_ease_frac, ease(ease_type, ease_frac))
@@ -400,9 +405,11 @@ def draw_connector(
                 lane = lerp(ref_head_lane, ref_tail_lane, interp_frac)
                 pos = transformed_vec_at(lane, travel)
                 ref_pos = lerp(start_ref, end_ref, unlerp_clamped(start_travel, end_travel, travel))
-                pos_offset_this_side += abs(pos.x - ref_pos.x)
-            pos_offset = max(pos_offset, pos_offset_this_side)
-            curve_change_scale = pos_offset**0.4 * 2
+                current_pos_offset = pos.x - ref_pos.x
+                total_pos_offsets += abs(current_pos_offset - last_pos_offset) ** 0.6
+                last_pos_offset = current_pos_offset
+            total_pos_offsets += abs(last_pos_offset) ** 0.6
+            curve_change_scale = total_pos_offsets * 1.5
     alpha_change_scale = max(
         (abs(start_alpha - end_alpha) * get_connector_alpha_option(kind)) ** 0.8 * 3,
         (abs(start_alpha - end_alpha) * get_connector_alpha_option(kind)) ** 0.5 * abs(start_pos_y - end_pos_y) * 3,
@@ -591,7 +598,7 @@ def draw_connector_slot_glow_effect(
             assert_never(kind)
     height = (3.25 + (cos((time() - start_time) * 8 * pi) + 1) / 2) / 4.25
     layout = layout_slot_glow_effect(lane, size, height)
-    z = get_z(LAYER_SLOT_GLOW_EFFECT, -start_time, lane)
+    z = get_z(LAYER_SLOT_GLOW_EFFECT, start_time, lane, invert_time=True)
     a = remap_clamped(start_time, start_time + 0.25, 0.0, 0.3, time())
     sprite.draw(layout, z=z, a=a)
 
