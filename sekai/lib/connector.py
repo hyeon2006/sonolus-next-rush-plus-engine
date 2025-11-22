@@ -378,15 +378,18 @@ def draw_connector(
         case EaseType.NONE:
             curve_change_scale = 0.0
         case EaseType.LINEAR:
+            mid_travel = (start_travel + end_travel) / 2
+            perspective_factor = max(1e-5, mid_travel) ** 0.8
+
             x_diff = (
                 max(
                     abs((start_lane - start_size) - (end_lane - end_size)),
                     abs((start_lane + start_size) - (end_lane + end_size)),
                 )
                 * Layout.w_scale
-            )
-            y_diff = abs(start_travel - end_travel)
-            curve_change_scale = min(x_diff, y_diff) ** 0.8
+                / perspective_factor
+            ) * abs(start_travel - end_travel)
+            curve_change_scale = x_diff**0.8
         case _:
             pos_offset = 0
             left_start_lane = start_lane - start_size
@@ -414,9 +417,11 @@ def draw_connector(
                 lane = lerp(hl, tl, interp_frac)
                 pos = transformed_vec_at(lane, travel)
                 ref_pos = lerp(start_ref, end_ref, unlerp_clamped(start_travel, end_travel, travel))
-                pos_offset_this_side += abs(pos.x - ref_pos.x) / max(1e-5, travel)
+                screen_offset = abs(pos.x - ref_pos.x)
+                compensation_factor = max(1e-5, travel) ** 0.8
+                pos_offset_this_side += screen_offset / compensation_factor
             pos_offset = max(pos_offset, pos_offset_this_side)
-            curve_change_scale = pos_offset**0.4 * 1.25
+            curve_change_scale = pos_offset**0.65 * 1.75
     alpha_change_scale = max(
         (abs(start_alpha - end_alpha) * get_connector_alpha_option(kind)) ** 0.8 * 3,
         (abs(start_alpha - end_alpha) * get_connector_alpha_option(kind)) ** 0.5 * abs(start_pos_y - end_pos_y) * 3,
