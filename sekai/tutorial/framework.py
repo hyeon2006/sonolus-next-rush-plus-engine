@@ -291,6 +291,7 @@ class QueuedTutorialNoteDrawSlotEffects(Record):
             lane=self.note.lane,
             size=self.note.size,
             start_time=phase_time_to_time(self.end_range.start),
+            direction=self.note.direction,
         )
 
 

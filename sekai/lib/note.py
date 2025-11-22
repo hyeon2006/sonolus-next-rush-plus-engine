@@ -81,26 +81,13 @@ from sekai.lib.particle import (
     trace_note_particles,
 )
 from sekai.lib.skin import (
-    ArrowSprites,
-    BodySprites,
-    Skin,
-    TickSprites,
-    critical_arrow_sprites,
-    critical_note_body_sprites,
-    critical_tick_sprites,
-    critical_trace_note_body_sprites,
-    critical_trace_tick_sprites,
-    damage_note_body_sprites,
-    flick_note_body_sprites,
-    normal_arrow_sprites,
-    normal_note_body_sprites,
-    normal_tick_sprites,
-    normal_trace_note_body_sprites,
-    normal_trace_tick_sprites,
-    slide_note_body_sprites,
-    trace_flick_note_body_sprites,
-    trace_flick_tick_sprites,
-    trace_slide_note_body_sprites,
+    EMPTY_NOTE_SPRITE_SET,
+    ActiveSkin,
+    ArrowRenderType,
+    ArrowSpriteSet,
+    BodyRenderType,
+    BodySpriteSet,
+    NoteSpriteSet,
 )
 from sekai.lib.slot_effect import (
     SLOT_EFFECT_DURATION,
@@ -294,9 +281,10 @@ def draw_note(kind: NoteKind, lane: float, size: float, progress: float, directi
     if not Layout.progress_start <= progress <= Layout.progress_cutoff:
         return
     travel = approach(progress)
-    draw_note_body(kind, lane, size, travel, target_time)
-    draw_note_arrow(kind, lane, size, travel, target_time, direction)
-    draw_note_tick(kind, lane, travel, target_time)
+    sprite_set = get_note_sprite_set(kind, direction)
+    draw_note_body(sprite_set.body, kind, lane, size, travel, target_time)
+    draw_note_arrow(sprite_set.arrow, lane, size, travel, target_time, direction)
+    draw_note_tick(sprite_set.tick, lane, travel, target_time)
 
 
 def draw_slide_note_head(
@@ -311,8 +299,9 @@ def draw_slide_note_head(
             kind = note_kind_as_critical(kind)
         case _:
             assert_never(connector_kind)
-    draw_note_body(kind, lane, size, 1.0, target_time)
-    draw_note_tick(kind, lane, 1.0, target_time)
+    sprite_set = get_note_sprite_set(kind, FlickDirection.UP_OMNI)
+    draw_note_body(sprite_set.body, kind, lane, size, 1.0, target_time)
+    draw_note_tick(sprite_set.tick, lane, 1.0, target_time)
 
 
 def note_kind_as_normal(kind: NoteKind) -> NoteKind:
@@ -391,16 +380,37 @@ def note_kind_as_critical(kind: NoteKind) -> NoteKind:
             return kind
 
 
-def draw_note_body(kind: NoteKind, lane: float, size: float, travel: float, target_time: float):
+def get_note_sprite_set(kind: NoteKind, direction: FlickDirection) -> NoteSpriteSet:
+    result = +NoteSpriteSet
     match kind:
         case NoteKind.NORM_TAP:
-            _draw_regular_body(normal_note_body_sprites, lane, size, travel, target_time)
+            result @= ActiveSkin.normal_note
+        case NoteKind.CRIT_TAP:
+            result @= ActiveSkin.critical_note
         case NoteKind.NORM_FLICK | NoteKind.NORM_HEAD_FLICK | NoteKind.NORM_TAIL_FLICK:
-            _draw_flick_body(flick_note_body_sprites, lane, size, travel, target_time)
+            if direction in {FlickDirection.UP_OMNI, FlickDirection.UP_LEFT, FlickDirection.UP_RIGHT}:
+                result @= ActiveSkin.flick_note
+            else:
+                result @= ActiveSkin.down_flick_note
+        case NoteKind.CRIT_FLICK | NoteKind.CRIT_HEAD_FLICK | NoteKind.CRIT_TAIL_FLICK:
+            if direction in {FlickDirection.UP_OMNI, FlickDirection.UP_LEFT, FlickDirection.UP_RIGHT}:
+                result @= ActiveSkin.critical_flick_note
+            else:
+                result @= ActiveSkin.critical_down_flick_note
         case NoteKind.NORM_TRACE | NoteKind.NORM_HEAD_TRACE | NoteKind.NORM_TAIL_TRACE:
-            _draw_slim_body(normal_trace_note_body_sprites, lane, size, travel, target_time)
+            result @= ActiveSkin.trace_note
+        case NoteKind.CRIT_TRACE | NoteKind.CRIT_HEAD_TRACE | NoteKind.CRIT_TAIL_TRACE:
+            result @= ActiveSkin.critical_trace_note
         case NoteKind.NORM_TRACE_FLICK | NoteKind.NORM_HEAD_TRACE_FLICK | NoteKind.NORM_TAIL_TRACE_FLICK:
-            _draw_slim_body(trace_flick_note_body_sprites, lane, size, travel, target_time)
+            if direction in {FlickDirection.UP_OMNI, FlickDirection.UP_LEFT, FlickDirection.UP_RIGHT}:
+                result @= ActiveSkin.trace_flick_note
+            else:
+                result @= ActiveSkin.trace_down_flick_note
+        case NoteKind.CRIT_TRACE_FLICK | NoteKind.CRIT_HEAD_TRACE_FLICK | NoteKind.CRIT_TAIL_TRACE_FLICK:
+            if direction in {FlickDirection.UP_OMNI, FlickDirection.UP_LEFT, FlickDirection.UP_RIGHT}:
+                result @= ActiveSkin.critical_trace_flick_note
+            else:
+                result @= ActiveSkin.critical_trace_down_flick_note
         case (
             NoteKind.NORM_RELEASE
             | NoteKind.NORM_HEAD_TAP
@@ -408,187 +418,90 @@ def draw_note_body(kind: NoteKind, lane: float, size: float, travel: float, targ
             | NoteKind.NORM_TAIL_TAP
             | NoteKind.NORM_TAIL_RELEASE
         ):
-            _draw_regular_body(slide_note_body_sprites, lane, size, travel, target_time)
+            result @= ActiveSkin.slide_note
         case (
-            NoteKind.CRIT_TAP
-            | NoteKind.CRIT_RELEASE
+            NoteKind.CRIT_RELEASE
             | NoteKind.CRIT_HEAD_TAP
             | NoteKind.CRIT_HEAD_RELEASE
             | NoteKind.CRIT_TAIL_TAP
             | NoteKind.CRIT_TAIL_RELEASE
         ):
-            _draw_regular_body(critical_note_body_sprites, lane, size, travel, target_time)
-        case NoteKind.CRIT_FLICK | NoteKind.CRIT_HEAD_FLICK | NoteKind.CRIT_TAIL_FLICK:
-            _draw_flick_body(critical_note_body_sprites, lane, size, travel, target_time)
-        case (
-            NoteKind.CRIT_TRACE
-            | NoteKind.CRIT_HEAD_TRACE
-            | NoteKind.CRIT_TAIL_TRACE
-            | NoteKind.CRIT_TRACE_FLICK
-            | NoteKind.CRIT_HEAD_TRACE_FLICK
-            | NoteKind.CRIT_TAIL_TRACE_FLICK
-        ):
-            _draw_slim_body(critical_trace_note_body_sprites, lane, size, travel, target_time)
-        case NoteKind.NORM_HEAD_TRACE | NoteKind.NORM_TAIL_TRACE:
-            _draw_slim_body(trace_slide_note_body_sprites, lane, size, travel, target_time)
+            result @= ActiveSkin.critical_slide_note
+        case NoteKind.NORM_TICK:
+            result @= ActiveSkin.normal_slide_tick_note
+        case NoteKind.CRIT_TICK:
+            result @= ActiveSkin.critical_slide_tick_note
+        case NoteKind.HIDE_TICK | NoteKind.ANCHOR:
+            result @= EMPTY_NOTE_SPRITE_SET
         case NoteKind.DAMAGE:
-            _draw_slim_body(damage_note_body_sprites, lane, size, travel, target_time)
-        case NoteKind.NORM_TICK | NoteKind.CRIT_TICK | NoteKind.HIDE_TICK | NoteKind.ANCHOR:
-            pass
+            result @= ActiveSkin.damage_note
         case _:
             assert_never(kind)
+    return result
 
 
-def draw_note_arrow(
-    kind: NoteKind, lane: float, size: float, travel: float, target_time: float, direction: FlickDirection
-):
+def get_note_body_layer(kind: NoteKind) -> int:
     match kind:
         case (
             NoteKind.NORM_FLICK
-            | NoteKind.NORM_TRACE_FLICK
+            | NoteKind.CRIT_FLICK
             | NoteKind.NORM_HEAD_FLICK
-            | NoteKind.NORM_HEAD_TRACE_FLICK
-            | NoteKind.NORM_TAIL_FLICK
-            | NoteKind.NORM_TAIL_TRACE_FLICK
-        ):
-            _draw_arrow(normal_arrow_sprites, lane, size, travel, target_time, direction)
-        case (
-            NoteKind.CRIT_FLICK
-            | NoteKind.CRIT_TRACE_FLICK
             | NoteKind.CRIT_HEAD_FLICK
-            | NoteKind.CRIT_HEAD_TRACE_FLICK
+            | NoteKind.NORM_TAIL_FLICK
             | NoteKind.CRIT_TAIL_FLICK
-            | NoteKind.CRIT_TAIL_TRACE_FLICK
         ):
-            _draw_arrow(critical_arrow_sprites, lane, size, travel, target_time, direction)
+            return LAYER_NOTE_FLICK_BODY
         case (
-            NoteKind.NORM_TAP
-            | NoteKind.CRIT_TAP
-            | NoteKind.NORM_TRACE
+            NoteKind.NORM_TRACE
             | NoteKind.CRIT_TRACE
-            | NoteKind.NORM_RELEASE
-            | NoteKind.CRIT_RELEASE
-            | NoteKind.NORM_HEAD_TAP
-            | NoteKind.CRIT_HEAD_TAP
+            | NoteKind.NORM_TRACE_FLICK
+            | NoteKind.CRIT_TRACE_FLICK
             | NoteKind.NORM_HEAD_TRACE
             | NoteKind.CRIT_HEAD_TRACE
-            | NoteKind.NORM_TAIL_TAP
-            | NoteKind.CRIT_TAIL_TAP
+            | NoteKind.NORM_HEAD_TRACE_FLICK
+            | NoteKind.CRIT_HEAD_TRACE_FLICK
             | NoteKind.NORM_TAIL_TRACE
             | NoteKind.CRIT_TAIL_TRACE
-            | NoteKind.NORM_HEAD_RELEASE
-            | NoteKind.CRIT_HEAD_RELEASE
-            | NoteKind.NORM_TAIL_RELEASE
-            | NoteKind.CRIT_TAIL_RELEASE
-            | NoteKind.NORM_TICK
-            | NoteKind.CRIT_TICK
-            | NoteKind.HIDE_TICK
-            | NoteKind.ANCHOR
-            | NoteKind.DAMAGE
-        ):
-            pass
-        case _:
-            assert_never(kind)
-
-
-def draw_note_tick(kind: NoteKind, lane: float, travel: float, target_time: float):
-    match kind:
-        case NoteKind.NORM_TICK:
-            _draw_tick(normal_tick_sprites, lane, travel, target_time)
-        case NoteKind.CRIT_TICK:
-            _draw_tick(critical_tick_sprites, lane, travel, target_time)
-        case NoteKind.NORM_TRACE | NoteKind.NORM_HEAD_TRACE | NoteKind.NORM_TAIL_TRACE:
-            _draw_tick(normal_trace_tick_sprites, lane, travel, target_time)
-        case (
-            NoteKind.CRIT_TRACE
-            | NoteKind.CRIT_HEAD_TRACE
-            | NoteKind.CRIT_TAIL_TRACE
-            | NoteKind.CRIT_TRACE_FLICK
-            | NoteKind.CRIT_HEAD_TRACE_FLICK
+            | NoteKind.NORM_TAIL_TRACE_FLICK
             | NoteKind.CRIT_TAIL_TRACE_FLICK
         ):
-            _draw_tick(critical_trace_tick_sprites, lane, travel, target_time)
-        case NoteKind.NORM_TRACE_FLICK | NoteKind.NORM_HEAD_TRACE_FLICK | NoteKind.NORM_TAIL_TRACE_FLICK:
-            _draw_tick(trace_flick_tick_sprites, lane, travel, target_time)
-        case (
-            NoteKind.NORM_TAP
-            | NoteKind.CRIT_TAP
-            | NoteKind.NORM_FLICK
-            | NoteKind.CRIT_FLICK
-            | NoteKind.NORM_RELEASE
-            | NoteKind.CRIT_RELEASE
-            | NoteKind.NORM_HEAD_TAP
-            | NoteKind.CRIT_HEAD_TAP
-            | NoteKind.NORM_HEAD_FLICK
-            | NoteKind.CRIT_HEAD_FLICK
-            | NoteKind.NORM_TAIL_TAP
-            | NoteKind.CRIT_TAIL_TAP
-            | NoteKind.NORM_TAIL_FLICK
-            | NoteKind.CRIT_TAIL_FLICK
-            | NoteKind.NORM_HEAD_RELEASE
-            | NoteKind.CRIT_HEAD_RELEASE
-            | NoteKind.NORM_TAIL_RELEASE
-            | NoteKind.CRIT_TAIL_RELEASE
-            | NoteKind.HIDE_TICK
-            | NoteKind.ANCHOR
-            | NoteKind.DAMAGE
-        ):
-            pass
+            return LAYER_NOTE_SLIM_BODY
         case _:
-            assert_never(kind)
+            return LAYER_NOTE_BODY
 
 
-def _draw_regular_body(sprites: BodySprites, lane: float, size: float, travel: float, target_time: float):
+def draw_note_body(sprites: BodySpriteSet, kind: NoteKind, lane: float, size: float, travel: float, target_time: float):
+    layer = get_note_body_layer(kind)
     a = get_alpha(target_time)
-    z = get_z(LAYER_NOTE_BODY, time=target_time, lane=lane)
-    if sprites.custom_available:
-        left_layout, middle_layout, right_layout = layout_regular_note_body(lane, size, travel)
-        sprites.left.draw(left_layout, z=z, a=a)
-        sprites.middle.draw(middle_layout, z=z, a=a)
-        sprites.right.draw(right_layout, z=z, a=a)
-    else:
-        layout = layout_regular_note_body_fallback(lane, size, travel)
-        sprites.fallback.draw(layout, z=z, a=a)
+    z = get_z(layer, time=target_time, lane=lane)
+    match sprites.render_type:
+        case BodyRenderType.NORMAL:
+            left_layout, middle_layout, right_layout = layout_regular_note_body(lane, size, travel)
+            sprites.left.draw(left_layout, z=z, a=a)
+            sprites.middle.draw(middle_layout, z=z, a=a)
+            sprites.right.draw(right_layout, z=z, a=a)
+        case BodyRenderType.SLIM:
+            left_layout, middle_layout, right_layout = layout_slim_note_body(lane, size, travel)
+            sprites.left.draw(left_layout, z=z, a=a)
+            sprites.middle.draw(middle_layout, z=z, a=a)
+            sprites.right.draw(right_layout, z=z, a=a)
+        case BodyRenderType.NORMAL_FALLBACK:
+            layout = layout_regular_note_body_fallback(lane, size, travel)
+            sprites.middle.draw(layout, z=z, a=a)
+        case BodyRenderType.SLIM_FALLBACK:
+            layout = layout_slim_note_body_fallback(lane, size, travel)
+            sprites.middle.draw(layout, z=z, a=a)
 
 
-def _draw_flick_body(sprites: BodySprites, lane: float, size: float, travel: float, target_time: float):
-    a = get_alpha(target_time)
-    z = get_z(LAYER_NOTE_FLICK_BODY, time=target_time, lane=lane)
-    if sprites.custom_available:
-        left_layout, middle_layout, right_layout = layout_regular_note_body(lane, size, travel)
-        sprites.left.draw(left_layout, z=z, a=a)
-        sprites.middle.draw(middle_layout, z=z, a=a)
-        sprites.right.draw(right_layout, z=z, a=a)
-    else:
-        layout = layout_regular_note_body_fallback(lane, size, travel)
-        sprites.fallback.draw(layout, z=z, a=a)
-
-
-def _draw_slim_body(sprites: BodySprites, lane: float, size: float, travel: float, target_time: float):
-    a = get_alpha(target_time)
-    z = get_z(LAYER_NOTE_SLIM_BODY, time=target_time, lane=lane)
-    if sprites.custom_available:
-        left_layout, middle_layout, right_layout = layout_slim_note_body(lane, size, travel)
-        sprites.left.draw(left_layout, z=z, a=a)
-        sprites.middle.draw(middle_layout, z=z, a=a)
-        sprites.right.draw(right_layout, z=z, a=a)
-    else:
-        layout = layout_slim_note_body_fallback(lane, size, travel)
-        sprites.fallback.draw(layout, z=z, a=a)
-
-
-def _draw_tick(sprites: TickSprites, lane: float, travel: float, target_time: float):
+def draw_note_tick(sprite: Sprite, lane: float, travel: float, target_time: float):
     a = get_alpha(target_time)
     z = get_z(LAYER_NOTE_TICK, time=target_time, lane=lane)
     layout = layout_tick(lane, travel)
-    if sprites.custom_available:
-        sprites.normal.draw(layout, z=z, a=a)
-    else:
-        sprites.fallback.draw(layout, z=z, a=a)
+    sprite.draw(layout, z=z, a=a)
 
 
-def _draw_arrow(
-    sprites: ArrowSprites, lane: float, size: float, travel: float, target_time: float, direction: FlickDirection
+def draw_note_arrow(
+    sprites: ArrowSpriteSet, lane: float, size: float, travel: float, target_time: float, direction: FlickDirection
 ):
     match direction:
         case _ if Options.marker_animation:
@@ -603,12 +516,13 @@ def _draw_arrow(
     animation_alpha = (1 - ease_in_cubic(animation_progress)) if Options.marker_animation else 1
     a = get_alpha(target_time) * animation_alpha
     z = get_z(LAYER_NOTE_ARROW, time=target_time, lane=lane)
-    if sprites.custom_available:
-        layout = layout_flick_arrow(lane, size, direction, travel, animation_progress)
-        sprites.get_sprite(size, direction).draw(layout, z=z, a=a)
-    else:
-        layout = layout_flick_arrow_fallback(lane, size, direction, travel, animation_progress)
-        sprites.fallback.draw(layout, z=z, a=a)
+    match sprites.render_type:
+        case ArrowRenderType.NORMAL:
+            layout = layout_flick_arrow(lane, size, direction, travel, animation_progress)
+            sprites.get_sprite(size, direction).draw(layout, z=z, a=a)
+        case ArrowRenderType.FALLBACK:
+            layout = layout_flick_arrow_fallback(lane, size, direction, travel, animation_progress)
+            sprites.get_sprite(size, direction).draw(layout, z=z, a=a)
 
 
 def get_note_particles(kind: NoteKind) -> NoteParticleSet:
@@ -799,110 +713,6 @@ def get_note_effect(kind: NoteEffectKind, judgment: Judgment):
     return result
 
 
-def get_note_slot_sprite(kind: NoteKind) -> Sprite:
-    result = Sprite(-1)
-    match kind:
-        case NoteKind.NORM_TAP:
-            result @= Skin.normal_slot
-        case NoteKind.NORM_FLICK | NoteKind.NORM_HEAD_FLICK | NoteKind.NORM_TAIL_FLICK:
-            result @= Skin.flick_slot
-        case (
-            NoteKind.NORM_RELEASE
-            | NoteKind.NORM_HEAD_TAP
-            | NoteKind.NORM_HEAD_RELEASE
-            | NoteKind.NORM_TAIL_TAP
-            | NoteKind.NORM_TAIL_RELEASE
-        ):
-            result @= Skin.slide_slot
-        case NoteKind.CRIT_TAP:
-            result @= Skin.critical_slot
-        case NoteKind.CRIT_FLICK | NoteKind.CRIT_HEAD_FLICK | NoteKind.CRIT_TAIL_FLICK:
-            result @= Skin.critical_flick_slot
-        case (
-            NoteKind.CRIT_RELEASE
-            | NoteKind.CRIT_HEAD_TAP
-            | NoteKind.CRIT_HEAD_RELEASE
-            | NoteKind.CRIT_TAIL_TAP
-            | NoteKind.CRIT_TAIL_RELEASE
-        ):
-            result @= Skin.critical_slide_slot
-        case (
-            NoteKind.NORM_TRACE
-            | NoteKind.CRIT_TRACE
-            | NoteKind.NORM_TRACE_FLICK
-            | NoteKind.CRIT_TRACE_FLICK
-            | NoteKind.NORM_HEAD_TRACE
-            | NoteKind.CRIT_HEAD_TRACE
-            | NoteKind.NORM_HEAD_TRACE_FLICK
-            | NoteKind.CRIT_HEAD_TRACE_FLICK
-            | NoteKind.NORM_TAIL_TRACE
-            | NoteKind.CRIT_TAIL_TRACE
-            | NoteKind.NORM_TAIL_TRACE_FLICK
-            | NoteKind.CRIT_TAIL_TRACE_FLICK
-            | NoteKind.NORM_TICK
-            | NoteKind.CRIT_TICK
-            | NoteKind.HIDE_TICK
-            | NoteKind.DAMAGE
-            | NoteKind.ANCHOR
-        ):
-            result @= Sprite(-1)
-        case _:
-            assert_never(kind)
-    return result
-
-
-def get_note_slot_glow_sprite(kind: NoteKind) -> Sprite:
-    result = Sprite(-1)
-    match kind:
-        case NoteKind.NORM_TAP:
-            result @= Skin.normal_slot_glow
-        case NoteKind.NORM_FLICK | NoteKind.NORM_HEAD_FLICK | NoteKind.NORM_TAIL_FLICK:
-            result @= Skin.flick_slot_glow
-        case (
-            NoteKind.NORM_RELEASE
-            | NoteKind.NORM_HEAD_TAP
-            | NoteKind.NORM_HEAD_RELEASE
-            | NoteKind.NORM_TAIL_TAP
-            | NoteKind.NORM_TAIL_RELEASE
-        ):
-            result @= Skin.slide_slot_glow
-        case NoteKind.CRIT_TAP:
-            result @= Skin.critical_slot_glow
-        case NoteKind.CRIT_FLICK | NoteKind.CRIT_HEAD_FLICK | NoteKind.CRIT_TAIL_FLICK:
-            result @= Skin.critical_flick_slot_glow
-        case (
-            NoteKind.CRIT_RELEASE
-            | NoteKind.CRIT_HEAD_TAP
-            | NoteKind.CRIT_HEAD_RELEASE
-            | NoteKind.CRIT_TAIL_TAP
-            | NoteKind.CRIT_TAIL_RELEASE
-        ):
-            result @= Skin.critical_slide_slot_glow
-        case (
-            NoteKind.NORM_TRACE
-            | NoteKind.CRIT_TRACE
-            | NoteKind.NORM_TRACE_FLICK
-            | NoteKind.CRIT_TRACE_FLICK
-            | NoteKind.NORM_HEAD_TRACE
-            | NoteKind.CRIT_HEAD_TRACE
-            | NoteKind.NORM_HEAD_TRACE_FLICK
-            | NoteKind.CRIT_HEAD_TRACE_FLICK
-            | NoteKind.NORM_TAIL_TRACE
-            | NoteKind.CRIT_TAIL_TRACE
-            | NoteKind.NORM_TAIL_TRACE_FLICK
-            | NoteKind.CRIT_TAIL_TRACE_FLICK
-            | NoteKind.NORM_TICK
-            | NoteKind.CRIT_TICK
-            | NoteKind.HIDE_TICK
-            | NoteKind.DAMAGE
-            | NoteKind.ANCHOR
-        ):
-            result @= Sprite(-1)
-        case _:
-            assert_never(kind)
-    return result
-
-
 def play_note_hit_effects(
     kind: NoteKind, effect_kind: NoteEffectKind, lane: float, size: float, direction: FlickDirection, judgment: Judgment
 ):
@@ -953,7 +763,7 @@ def play_note_hit_effects(
         elif particles.lane_basic.is_available:
             particles.lane_basic.spawn(layout, duration=0.3)
     if Options.slot_effect_enabled and not is_watch():
-        schedule_note_slot_effects(kind, lane, size, time())
+        schedule_note_slot_effects(kind, lane, size, time(), direction)
 
 
 def schedule_note_auto_sfx(kind: NoteEffectKind, target_time: float):
@@ -974,26 +784,30 @@ def schedule_note_sfx(kind: NoteEffectKind, judgment: Judgment, target_time: flo
         sfx.schedule(target_time, SFX_DISTANCE)
 
 
-def schedule_note_slot_effects(kind: NoteKind, lane: float, size: float, target_time: float):
+def schedule_note_slot_effects(kind: NoteKind, lane: float, size: float, target_time: float, direction: FlickDirection):
     if is_tutorial():
         return
     if not Options.slot_effect_enabled:
         return
-    slot_sprite = get_note_slot_sprite(kind)
+    sprite_set = get_note_sprite_set(kind, direction)
+    slot_sprite = sprite_set.slot
     if slot_sprite.is_available:
         for slot_lane in iter_slot_lanes(lane, size):
             get_archetype_by_name(archetype_names.SLOT_EFFECT).spawn(
                 sprite=slot_sprite, start_time=target_time, lane=slot_lane
             )
-    slot_glow_sprite = get_note_slot_glow_sprite(kind)
+    slot_glow_sprite = sprite_set.slot_glow
     if slot_glow_sprite.is_available:
         get_archetype_by_name(archetype_names.SLOT_GLOW_EFFECT).spawn(
             sprite=slot_glow_sprite, start_time=target_time, lane=lane, size=size
         )
 
 
-def draw_tutorial_note_slot_effects(kind: NoteKind, lane: float, size: float, start_time: float):
-    slot_sprite = get_note_slot_sprite(kind)
+def draw_tutorial_note_slot_effects(
+    kind: NoteKind, lane: float, size: float, start_time: float, direction: FlickDirection
+):
+    sprite_set = get_note_sprite_set(kind, direction)
+    slot_sprite = sprite_set.slot
     if slot_sprite.is_available and time() < start_time + SLOT_EFFECT_DURATION:
         for slot_lane in iter_slot_lanes(lane, size):
             draw_slot_effect(
@@ -1002,7 +816,7 @@ def draw_tutorial_note_slot_effects(kind: NoteKind, lane: float, size: float, st
                 end_time=start_time + SLOT_EFFECT_DURATION,
                 lane=slot_lane,
             )
-    slot_glow_sprite = get_note_slot_glow_sprite(kind)
+    slot_glow_sprite = sprite_set.slot_glow
     if slot_glow_sprite.is_available and time() < start_time + SLOT_GLOW_EFFECT_DURATION:
         draw_slot_glow_effect(
             sprite=slot_glow_sprite,

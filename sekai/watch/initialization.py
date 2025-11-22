@@ -4,6 +4,7 @@ from sekai.lib import archetype_names
 from sekai.lib.buckets import init_buckets
 from sekai.lib.layout import init_layout
 from sekai.lib.note import init_note_life, init_score
+from sekai.lib.skin import init_skin
 from sekai.lib.stage import schedule_lane_sfx
 from sekai.lib.streams import Streams
 from sekai.lib.ui import init_ui
@@ -18,6 +19,7 @@ class WatchInitialization(WatchArchetype):
     def preprocess(self):
         init_layout()
         init_ui()
+        init_skin()
         init_buckets()
         init_score()
 

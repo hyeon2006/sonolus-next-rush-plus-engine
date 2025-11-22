@@ -10,7 +10,7 @@ from sekai.lib.layout import (
 )
 from sekai.lib.options import Options
 from sekai.lib.particle import Particles
-from sekai.lib.skin import Skin
+from sekai.lib.skin import ActiveSkin
 
 
 def draw_stage_and_accessories():
@@ -21,7 +21,7 @@ def draw_stage_and_accessories():
 def draw_stage():
     if not Options.show_lane:
         return
-    if Skin.sekai_stage.is_available:
+    if ActiveSkin.sekai_stage.is_available:
         draw_sekai_stage()
     else:
         draw_fallback_stage()
@@ -29,30 +29,30 @@ def draw_stage():
 
 def draw_sekai_stage():
     layout = layout_sekai_stage()
-    Skin.sekai_stage.draw(layout, z=get_z(LAYER_STAGE))
+    ActiveSkin.sekai_stage.draw(layout, z=get_z(LAYER_STAGE))
 
 
 def draw_fallback_stage():
     layout = layout_lane_by_edges(-6.5, -6)
-    Skin.stage_left_border.draw(layout, z=get_z(LAYER_STAGE))
+    ActiveSkin.stage_left_border.draw(layout, z=get_z(LAYER_STAGE))
     layout = layout_lane_by_edges(6, 6.5)
-    Skin.stage_right_border.draw(layout, z=get_z(LAYER_STAGE))
+    ActiveSkin.stage_right_border.draw(layout, z=get_z(LAYER_STAGE))
 
     for lane in (-5, -3, -1, 1, 3, 5):
         layout = layout_lane(lane, 1)
-        Skin.lane.draw(layout, z=get_z(LAYER_STAGE))
+        ActiveSkin.lane.draw(layout, z=get_z(LAYER_STAGE))
 
     layout = layout_fallback_judge_line()
-    Skin.judgment_line.draw(layout, z=get_z(LAYER_JUDGMENT_LINE))
+    ActiveSkin.judgment_line.draw(layout, z=get_z(LAYER_JUDGMENT_LINE))
 
 
 def draw_stage_cover():
     if Options.stage_cover > 0:
         layout = layout_stage_cover()
-        Skin.cover.draw(layout, z=get_z(LAYER_COVER), a=1)
+        ActiveSkin.cover.draw(layout, z=get_z(LAYER_COVER), a=1)
     if Options.hidden > 0:
         layout = layout_hidden_cover()
-        Skin.cover.draw(layout, z=get_z(LAYER_COVER), a=1)
+        ActiveSkin.cover.draw(layout, z=get_z(LAYER_COVER), a=1)
 
 
 def play_lane_hit_effects(lane: float):

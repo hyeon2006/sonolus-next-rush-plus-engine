@@ -3,7 +3,7 @@ from sonolus.script.engine import WatchMode
 from sekai.lib.buckets import Buckets
 from sekai.lib.effect import Effects
 from sekai.lib.particle import Particles
-from sekai.lib.skin import Skin
+from sekai.lib.skin import BaseSkin
 from sekai.watch.bpm_change import WatchBpmChange
 from sekai.watch.connector import WATCH_CONNECTOR_ARCHETYPES
 from sekai.watch.initialization import WatchInitialization
@@ -27,7 +27,7 @@ watch_mode = WatchMode(
         *WATCH_SLOT_EFFECT_ARCHETYPES,
         WatchSimLine,
     ],
-    skin=Skin,
+    skin=BaseSkin,
     effects=Effects,
     particles=Particles,
     buckets=Buckets,
