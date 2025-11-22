@@ -2,7 +2,7 @@ from sonolus.script.engine import PlayMode
 
 from sekai.lib.buckets import Buckets
 from sekai.lib.effect import Effects
-from sekai.lib.particle import Particles
+from sekai.lib.particle import BaseParticles
 from sekai.lib.skin import BaseSkin
 from sekai.play.bpm_change import BpmChange
 from sekai.play.connector import CONNECTOR_ARCHETYPES
@@ -29,6 +29,6 @@ play_mode = PlayMode(
     ],
     skin=BaseSkin,
     effects=Effects,
-    particles=Particles,
+    particles=BaseParticles,
     buckets=Buckets,
 )

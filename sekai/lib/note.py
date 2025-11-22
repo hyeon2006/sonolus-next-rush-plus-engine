@@ -63,22 +63,9 @@ from sekai.lib.layout import (
 )
 from sekai.lib.options import Options
 from sekai.lib.particle import (
+    EMPTY_NOTE_PARTICLE_SET,
+    ActiveParticles,
     NoteParticleSet,
-    critical_flick_note_particles,
-    critical_note_particles,
-    critical_slide_note_particles,
-    critical_tick_particles,
-    critical_trace_flick_note_particles,
-    critical_trace_note_particles,
-    damage_note_particles,
-    empty_note_particles,
-    first_available_particle,
-    flick_note_particles,
-    normal_note_particles,
-    normal_tick_particles,
-    slide_note_particles,
-    trace_flick_note_particles,
-    trace_note_particles,
 )
 from sekai.lib.skin import (
     EMPTY_NOTE_SPRITE_SET,
@@ -525,11 +512,11 @@ def draw_note_arrow(
             sprites.get_sprite(size, direction).draw(layout, z=z, a=a)
 
 
-def get_note_particles(kind: NoteKind) -> NoteParticleSet:
+def get_note_particles(kind: NoteKind, direction: FlickDirection) -> NoteParticleSet:
     result = +NoteParticleSet
     match kind:
         case NoteKind.NORM_TAP:
-            result @= normal_note_particles
+            result @= ActiveParticles.normal_note
         case (
             NoteKind.NORM_RELEASE
             | NoteKind.NORM_HEAD_TAP
@@ -537,15 +524,21 @@ def get_note_particles(kind: NoteKind) -> NoteParticleSet:
             | NoteKind.NORM_TAIL_TAP
             | NoteKind.NORM_TAIL_RELEASE
         ):
-            result @= slide_note_particles
+            result @= ActiveParticles.slide_note
         case NoteKind.NORM_FLICK | NoteKind.NORM_HEAD_FLICK | NoteKind.NORM_TAIL_FLICK:
-            result @= flick_note_particles
+            if direction in {FlickDirection.UP_OMNI, FlickDirection.UP_LEFT, FlickDirection.UP_RIGHT}:
+                result @= ActiveParticles.flick_note
+            else:
+                result @= ActiveParticles.down_flick_note
         case NoteKind.NORM_TRACE | NoteKind.NORM_HEAD_TRACE | NoteKind.NORM_TAIL_TRACE:
-            result @= trace_note_particles
+            result @= ActiveParticles.trace_note
         case NoteKind.NORM_TRACE_FLICK | NoteKind.NORM_HEAD_TRACE_FLICK | NoteKind.NORM_TAIL_TRACE_FLICK:
-            result @= trace_flick_note_particles
+            if direction in {FlickDirection.UP_OMNI, FlickDirection.UP_LEFT, FlickDirection.UP_RIGHT}:
+                result @= ActiveParticles.trace_flick_note
+            else:
+                result @= ActiveParticles.trace_down_flick_note
         case NoteKind.CRIT_TAP:
-            result @= critical_note_particles
+            result @= ActiveParticles.critical_note
         case (
             NoteKind.CRIT_RELEASE
             | NoteKind.CRIT_HEAD_TAP
@@ -553,21 +546,27 @@ def get_note_particles(kind: NoteKind) -> NoteParticleSet:
             | NoteKind.CRIT_TAIL_TAP
             | NoteKind.CRIT_TAIL_RELEASE
         ):
-            result @= critical_slide_note_particles
+            result @= ActiveParticles.critical_slide_note
         case NoteKind.CRIT_FLICK | NoteKind.CRIT_HEAD_FLICK | NoteKind.CRIT_TAIL_FLICK:
-            result @= critical_flick_note_particles
+            if direction in {FlickDirection.UP_OMNI, FlickDirection.UP_LEFT, FlickDirection.UP_RIGHT}:
+                result @= ActiveParticles.critical_flick_note
+            else:
+                result @= ActiveParticles.critical_down_flick_note
         case NoteKind.CRIT_TRACE | NoteKind.CRIT_HEAD_TRACE | NoteKind.CRIT_TAIL_TRACE:
-            result @= critical_trace_note_particles
+            result @= ActiveParticles.critical_trace_note
         case NoteKind.CRIT_TRACE_FLICK | NoteKind.CRIT_HEAD_TRACE_FLICK | NoteKind.CRIT_TAIL_TRACE_FLICK:
-            result @= critical_trace_flick_note_particles
+            if direction in {FlickDirection.UP_OMNI, FlickDirection.UP_LEFT, FlickDirection.UP_RIGHT}:
+                result @= ActiveParticles.critical_trace_flick_note
+            else:
+                result @= ActiveParticles.critical_trace_down_flick_note
         case NoteKind.NORM_TICK:
-            result @= normal_tick_particles
+            result @= ActiveParticles.normal_slide_tick_note
         case NoteKind.CRIT_TICK:
-            result @= critical_tick_particles
+            result @= ActiveParticles.critical_slide_tick_note
         case NoteKind.HIDE_TICK | NoteKind.ANCHOR:
-            result @= empty_note_particles
+            result @= EMPTY_NOTE_PARTICLE_SET
         case NoteKind.DAMAGE:
-            result @= damage_note_particles
+            result @= ActiveParticles.damage_note
         case _:
             assert_never(kind)
     return result
@@ -719,21 +718,15 @@ def play_note_hit_effects(
     if kind == NoteKind.DAMAGE and judgment == Judgment.PERFECT:
         return
     sfx = get_note_effect(effect_kind, judgment)
-    particles = get_note_particles(kind)
+    particles = get_note_particles(kind, direction)
     if Options.sfx_enabled and not Options.auto_sfx and not is_watch() and sfx.is_available:
         sfx.play(SFX_DISTANCE)
     if Options.note_effect_enabled:
-        linear_particle = first_available_particle(
-            particles.linear,
-            particles.linear_fallback,
-        )
+        linear_particle = particles.lane
         if linear_particle.is_available:
             layout = layout_linear_effect(lane, shear=0)
             linear_particle.spawn(layout, duration=0.5)
-        circular_particle = first_available_particle(
-            particles.circular,
-            particles.circular_fallback,
-        )
+        circular_particle = particles.circular
         if circular_particle.is_available:
             layout = layout_circular_effect(lane, w=1.75, h=1.05)
             circular_particle.spawn(layout, duration=0.6)
