@@ -158,6 +158,8 @@ class BaseNote(PlayArchetype):
         return self.start_time
 
     def should_spawn(self) -> bool:
+        if self.kind == NoteKind.ANCHOR:
+            return False
         return time() >= self.start_time
 
     def update_sequential(self):
@@ -237,8 +239,6 @@ class BaseNote(PlayArchetype):
             return
         if not self.is_scored and time() >= self.target_time:
             self.despawn = True
-            return
-        if self.kind == NoteKind.ANCHOR:
             return
         if time() < self.visual_start_time:
             return
