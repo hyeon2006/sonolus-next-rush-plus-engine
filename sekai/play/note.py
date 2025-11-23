@@ -238,6 +238,8 @@ class BaseNote(PlayArchetype):
         if not self.is_scored and time() >= self.target_time:
             self.despawn = True
             return
+        if self.kind == NoteKind.ANCHOR:
+            return
         if time() < self.visual_start_time:
             return
         if self.should_do_delayed_trigger():

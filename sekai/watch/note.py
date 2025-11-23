@@ -148,6 +148,8 @@ class WatchBaseNote(WatchArchetype):
     def update_parallel(self):
         if time() < self.visual_start_time:
             return
+        if self.kind == NoteKind.ANCHOR:
+            return
         if is_head(self.kind) and time() > self.target_time:
             return
         if group_hide_notes(self.timescale_group):
