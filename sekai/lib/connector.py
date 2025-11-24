@@ -302,7 +302,9 @@ def draw_connector(
             else:
                 normal_sprite @= sprites.fallback
         case (
-            ConnectorKind.GUIDE_NEUTRAL
+            ConnectorKind.GUIDE_NORMAL
+            | ConnectorKind.GUIDE_CRITICAL
+            | ConnectorKind.GUIDE_NEUTRAL
             | ConnectorKind.GUIDE_RED
             | ConnectorKind.GUIDE_GREEN
             | ConnectorKind.GUIDE_BLUE
@@ -331,7 +333,9 @@ def draw_connector(
             if visual_state == ConnectorVisualState.INACTIVE:
                 visual_state = ConnectorVisualState.ACTIVE
         case (
-            ConnectorKind.GUIDE_NEUTRAL
+            ConnectorKind.GUIDE_NORMAL
+            | ConnectorKind.GUIDE_CRITICAL
+            | ConnectorKind.GUIDE_NEUTRAL
             | ConnectorKind.GUIDE_RED
             | ConnectorKind.GUIDE_GREEN
             | ConnectorKind.GUIDE_BLUE
@@ -384,7 +388,7 @@ def draw_connector(
             curve_change_scale = 0.0
         case EaseType.LINEAR:
             mid_travel = (start_travel + end_travel) / 2
-            perspective_factor = max(1e-5, mid_travel) ** 0.8
+            perspective_factor = max(0.1, mid_travel) ** 0.8
 
             x_diff = (
                 max(
@@ -393,7 +397,7 @@ def draw_connector(
                 )
                 * Layout.w_scale
                 / perspective_factor
-            ) * abs(start_travel - end_travel)
+            ) * abs(end_progress - start_progress)
             curve_change_scale = x_diff**0.8
         case _:
             pos_offset = 0
@@ -423,10 +427,10 @@ def draw_connector(
                 pos = transformed_vec_at(lane, travel)
                 ref_pos = lerp(start_ref, end_ref, unlerp_clamped(start_travel, end_travel, travel))
                 screen_offset = abs(pos.x - ref_pos.x)
-                compensation_factor = max(1e-5, travel) ** 0.8
-                pos_offset_this_side += screen_offset / compensation_factor
+                compensation_factor = max(0.1, travel) ** 0.8
+                pos_offset_this_side += (screen_offset / compensation_factor) * progress
             pos_offset = max(pos_offset, pos_offset_this_side)
-            curve_change_scale = pos_offset**0.65 * 1.75
+            curve_change_scale = pos_offset**0.4 * 2
     alpha_change_scale = max(
         (abs(start_alpha - end_alpha) * get_connector_alpha_option(kind)) ** 0.8 * 3,
         (abs(start_alpha - end_alpha) * get_connector_alpha_option(kind)) ** 0.5 * abs(start_pos_y - end_pos_y) * 3,
