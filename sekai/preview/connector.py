@@ -119,7 +119,9 @@ def draw_connector(
             else:
                 normal_sprite @= sprites.fallback
         case (
-            ConnectorKind.GUIDE_NEUTRAL
+            ConnectorKind.GUIDE_NORMAL
+            | ConnectorKind.GUIDE_CRITICAL
+            | ConnectorKind.GUIDE_NEUTRAL
             | ConnectorKind.GUIDE_RED
             | ConnectorKind.GUIDE_GREEN
             | ConnectorKind.GUIDE_BLUE
@@ -146,7 +148,9 @@ def draw_connector(
             segment_head_alpha = 1.0
             segment_tail_alpha = 1.0
         case (
-            ConnectorKind.GUIDE_NEUTRAL
+            ConnectorKind.GUIDE_NORMAL
+            | ConnectorKind.GUIDE_CRITICAL
+            | ConnectorKind.GUIDE_NEUTRAL
             | ConnectorKind.GUIDE_RED
             | ConnectorKind.GUIDE_GREEN
             | ConnectorKind.GUIDE_BLUE
