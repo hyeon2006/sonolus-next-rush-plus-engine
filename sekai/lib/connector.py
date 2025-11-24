@@ -428,8 +428,8 @@ def draw_connector(
                 ref_pos = lerp(start_ref, end_ref, unlerp_clamped(start_travel, end_travel, travel))
                 screen_offset = abs(pos.x - ref_pos.x)
                 compensation_factor = max(0.1, travel) ** 0.8
-                pos_offset_this_side += (screen_offset / compensation_factor) * progress
-            pos_offset = max(pos_offset, pos_offset_this_side)
+                pos_offset_this_side += screen_offset / compensation_factor
+            pos_offset = max(pos_offset, pos_offset_this_side) * abs(end_progress - start_progress) ** 0.7
             curve_change_scale = pos_offset**0.4 * 2
     alpha_change_scale = max(
         (abs(start_alpha - end_alpha) * get_connector_alpha_option(kind)) ** 0.8 * 3,
