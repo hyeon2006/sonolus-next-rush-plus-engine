@@ -403,7 +403,7 @@ def draw_connector(
             pos_offset = 0
             left_start_lane = start_lane - start_size
             left_end_lane = end_lane - end_size
-            right_start_lane = start_lane + end_size
+            right_start_lane = start_lane + start_size
             right_end_lane = end_lane + end_size
             if abs(left_start_lane - left_end_lane) > abs(right_start_lane - right_end_lane):
                 ref_start_lane = left_start_lane
@@ -636,7 +636,7 @@ def draw_connector_slot_glow_effect(
     ex = 0.035 * abs(2 * size) + 0.08 if Options.version == 0 else 0
     layout = layout_slot_glow_effect(lane, size + ex, height)
     z = get_z(LAYER_SLOT_GLOW_EFFECT, (2 * time()) - start_time, lane)
-    a = remap_clamped(start_time, start_time + 0.25, 0.0, 0.35, time())
+    a = remap_clamped(start_time, start_time, lane, invert_time=True)
     sprite.draw(layout, z=z, a=a)
 
 
