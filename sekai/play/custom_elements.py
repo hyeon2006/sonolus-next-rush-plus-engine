@@ -12,6 +12,7 @@ from sekai.lib.custom_elements import (
     draw_judgment_accuracy,
     draw_judgment_text,
 )
+from sekai.lib.layer import LAYER_DAMAGE, LAYER_JUDGMENT, get_z
 from sekai.lib.options import Options
 from sekai.lib.skin import accuracy_text, combo_label, combo_number, damage_flash, judgment_text
 
@@ -68,7 +69,13 @@ class ComboLabel(PlayArchetype):
     judgment: Judgment = entity_memory()
     check: bool = entity_memory()
     combo: int = entity_memory()
+    z: float = entity_memory()
+    glow_z: float = entity_memory()
     name = archetype_names.COMBO_LABEL
+
+    def initialize(self):
+        self.z = get_z(layer=LAYER_JUDGMENT, etc=1)
+        self.glow_z = get_z(layer=LAYER_JUDGMENT)
 
     def update_parallel(self):
         if self.combo != ComboLabelMemory.combo_check:
@@ -77,7 +84,7 @@ class ComboLabel(PlayArchetype):
         if self.combo == 0:
             self.despawn = True
             return
-        draw_combo_label(draw_time=self.spawn_time, ap=ComboLabelMemory.ap)
+        draw_combo_label(ap=ComboLabelMemory.ap, z=self.z, glow_z=self.glow_z)
 
     def update_sequential(self):
         if self.check:
@@ -104,7 +111,15 @@ class ComboNumber(PlayArchetype):
     judgment: Judgment = entity_memory()
     check: bool = entity_memory()
     combo: int = entity_memory()
+    z: float = entity_memory()
+    z2: float = entity_memory()
+    z3: float = entity_memory()
     name = archetype_names.COMBO_NUMBER
+
+    def initialize(self):
+        self.z = get_z(layer=LAYER_JUDGMENT, etc=1)
+        self.z2 = get_z(layer=LAYER_JUDGMENT)
+        self.z3 = get_z(layer=LAYER_JUDGMENT, etc=2)
 
     def update_parallel(self):
         if self.combo != ComboNumberMemory.combo_check:
@@ -113,7 +128,9 @@ class ComboNumber(PlayArchetype):
         if self.combo == 0:
             self.despawn = True
             return
-        draw_combo_number(draw_time=self.spawn_time, ap=ComboNumberMemory.ap, combo=self.combo)
+        draw_combo_number(
+            draw_time=self.spawn_time, ap=ComboNumberMemory.ap, combo=self.combo, z=self.z, z2=self.z2, z3=self.z3
+        )
 
     def update_sequential(self):
         if self.check:
@@ -140,9 +157,13 @@ class JudgmentText(PlayArchetype):
     accuracy: Judgment = entity_memory()
     windows_bad: Interval = entity_memory()
     check_pass: bool = entity_memory()
+    z: float = entity_memory()
     check: bool = entity_memory()
     combo: int = entity_memory()
     name = archetype_names.JUDGMENT_TEXT
+
+    def initialize(self):
+        self.z = get_z(layer=LAYER_JUDGMENT)
 
     def update_parallel(self):
         if self.combo != JudgmentTextMemory.combo_check:
@@ -157,6 +178,7 @@ class JudgmentText(PlayArchetype):
             windows_bad=self.windows_bad,
             accuracy=self.accuracy,
             check_pass=self.check_pass,
+            z=self.z,
         )
 
     def update_sequential(self):
@@ -178,9 +200,13 @@ class JudgmentAccuracy(PlayArchetype):
     accuracy: float = entity_memory()
     windows: JudgmentWindow = entity_memory()
     wrong_way: bool = entity_memory()
+    z: float = entity_memory()
     check: bool = entity_memory()
     combo: int = entity_memory()
     name = archetype_names.JUDGMENT_ACCURACY
+
+    def initialize(self):
+        self.z = get_z(layer=LAYER_JUDGMENT)
 
     def update_parallel(self):
         if self.combo != JudgmentAccuracyMemory.combo_check:
@@ -190,11 +216,11 @@ class JudgmentAccuracy(PlayArchetype):
             self.despawn = True
             return
         draw_judgment_accuracy(
-            draw_time=self.spawn_time,
             judgment=self.judgment,
             accuracy=self.accuracy,
             windows=self.windows,
             wrong_way=self.wrong_way,
+            z=self.z,
         )
 
     def update_sequential(self):
@@ -214,7 +240,11 @@ class DamageFlash(PlayArchetype):
     spawn_time: float = entity_memory()
     check: bool = entity_memory()
     combo: int = entity_memory()
+    z: float = entity_memory()
     name = archetype_names.DAMAGE_FLASH
+
+    def initialize(self):
+        self.z = get_z(layer=LAYER_DAMAGE)
 
     def update_parallel(self):
         if self.combo != DamageFlashMemory.combo_check:
@@ -223,9 +253,7 @@ class DamageFlash(PlayArchetype):
         if time() >= self.spawn_time + 0.35:
             self.despawn = True
             return
-        draw_damage_flash(
-            draw_time=self.spawn_time,
-        )
+        draw_damage_flash(draw_time=self.spawn_time, z=self.z)
 
     def update_sequential(self):
         if self.check:

@@ -227,6 +227,8 @@ class WatchBaseNote(WatchArchetype):
             return self.target_time
 
     def update_parallel(self):
+        if self.kind == NoteKind.ANCHOR:
+            return
         if time() < self.visual_start_time:
             return
         if is_head(self.kind) and time() > self.target_time:
