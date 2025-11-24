@@ -8,7 +8,8 @@ from sekai.lib.buckets import init_buckets
 from sekai.lib.layout import init_layout
 from sekai.lib.note import init_note_life, init_score
 from sekai.lib.options import Options
-from sekai.lib.skin import combo_label, combo_number, damage_flash, judgment_text
+from sekai.lib.particle import init_particles
+from sekai.lib.skin import combo_label, combo_number, damage_flash, init_skin, judgment_text
 from sekai.lib.stage import schedule_lane_sfx
 from sekai.lib.streams import Streams
 from sekai.lib.ui import init_ui
@@ -23,6 +24,8 @@ class WatchInitialization(WatchArchetype):
     def preprocess(self):
         init_layout()
         init_ui()
+        init_skin()
+        init_particles()
         init_buckets()
         init_score()
 

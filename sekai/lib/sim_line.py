@@ -3,7 +3,7 @@ from sonolus.script.interval import clamp, lerp, unlerp, unlerp_clamped
 from sekai.lib.layer import LAYER_SIM_LINE, get_z
 from sekai.lib.layout import Layout, approach, get_alpha, layout_sim_line
 from sekai.lib.options import Options
-from sekai.lib.skin import Skin
+from sekai.lib.skin import ActiveSkin
 
 
 def draw_sim_line(
@@ -58,4 +58,4 @@ def draw_sim_line(
         )
         * fade_alpha
     )
-    Skin.sim_line.draw(layout, z=z, a=a)
+    ActiveSkin.sim_line.draw(layout, z=z, a=a)

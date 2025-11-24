@@ -5,7 +5,7 @@ from sonolus.script.interval import Interval
 from sonolus.script.sprite import Sprite
 from sonolus.script.text import StandardText
 
-from sekai.lib.skin import Skin
+from sekai.lib.skin import BaseSkin
 
 WINDOW_SCALE = 1000  # Windows are in ms
 
@@ -15,7 +15,9 @@ def create_bucket_sprites(
     body_fallback: Sprite | None = None,
     arrow: Sprite | None = None,
     tick: Sprite | None = None,
+    tick_fallback: Sprite | None = None,
     connector: Sprite | None = None,
+    connector_fallback: Sprite | None = None,
     body_pos: Literal["left", "middle", "right"] = "middle",
 ):
     sprites = []
@@ -33,16 +35,17 @@ def create_bucket_sprites(
         assert_never(body_pos)
 
     if connector is not None:
-        sprites.append(
-            bucket_sprite(
-                sprite=connector,
-                x=connector_x,
-                y=0,
-                w=2,
-                h=5,
-                rotation=-90,
-            )
-        )
+        sprite_args = {
+            "sprite": connector,
+            "x": connector_x,
+            "y": 0,
+            "w": 2,
+            "h": 5,
+            "rotation": -90,
+        }
+        if connector_fallback is not None:
+            sprite_args["fallback_sprite"] = connector_fallback
+        sprites.append(bucket_sprite(**sprite_args))
 
     if body is not None:
         sprite_args = {
@@ -70,16 +73,17 @@ def create_bucket_sprites(
         )
 
     if tick is not None:
-        sprites.append(
-            bucket_sprite(
-                sprite=tick,
-                x=body_x,
-                y=0,
-                w=2,
-                h=2,
-                rotation=-90,
-            )
-        )
+        sprite_args = {
+            "sprite": tick,
+            "x": body_x,
+            "y": 0,
+            "w": 2,
+            "h": 2,
+            "rotation": -90,
+        }
+        if tick_fallback is not None:
+            sprite_args["fallback_sprite"] = tick_fallback
+        sprites.append(bucket_sprite(**sprite_args))
 
     return sprites
 
@@ -88,61 +92,67 @@ def create_bucket_sprites(
 class Buckets:
     # Normal buckets
     normal_tap: Bucket = bucket(
-        sprites=create_bucket_sprites(body=Skin.normal_note_fallback),
+        sprites=create_bucket_sprites(body=BaseSkin.normal_note_basic, body_fallback=BaseSkin.note_cyan_fallback),
         unit=StandardText.MILLISECOND_UNIT,
     )
     critical_tap: Bucket = bucket(
-        sprites=create_bucket_sprites(body=Skin.critical_note_fallback),
+        sprites=create_bucket_sprites(body=BaseSkin.critical_note_basic, body_fallback=BaseSkin.note_yellow_fallback),
         unit=StandardText.MILLISECOND_UNIT,
     )
 
     normal_flick: Bucket = bucket(
         sprites=create_bucket_sprites(
-            body=Skin.flick_note_fallback,
-            arrow=Skin.flick_arrow_fallback,
+            body=BaseSkin.flick_note_basic,
+            body_fallback=BaseSkin.note_red_fallback,
+            arrow=BaseSkin.flick_arrow_red_fallback,
         ),
         unit=StandardText.MILLISECOND_UNIT,
     )
     critical_flick: Bucket = bucket(
         sprites=create_bucket_sprites(
-            body=Skin.critical_note_fallback,
-            arrow=Skin.critical_arrow_fallback,
+            body=BaseSkin.critical_flick_note_basic,
+            body_fallback=BaseSkin.note_yellow_fallback,
+            arrow=BaseSkin.flick_arrow_yellow_fallback,
         ),
         unit=StandardText.MILLISECOND_UNIT,
     )
 
     normal_trace: Bucket = bucket(
         sprites=create_bucket_sprites(
-            body=Skin.normal_trace_note_left,
-            body_fallback=Skin.normal_trace_note_fallback,
-            tick=Skin.normal_trace_tick_note,
+            body=BaseSkin.normal_trace_note_basic,
+            body_fallback=BaseSkin.note_green_fallback,
+            tick=BaseSkin.normal_trace_note_tick,
+            tick_fallback=BaseSkin.trace_note_green_tick,
         ),
         unit=StandardText.MILLISECOND_UNIT,
     )
     critical_trace: Bucket = bucket(
         sprites=create_bucket_sprites(
-            body=Skin.critical_trace_note_left,
-            body_fallback=Skin.critical_trace_note_fallback,
-            tick=Skin.critical_trace_tick_note,
+            body=BaseSkin.critical_trace_note_basic,
+            body_fallback=BaseSkin.note_yellow_fallback,
+            tick=BaseSkin.critical_trace_note_tick,
+            tick_fallback=BaseSkin.trace_note_yellow_tick,
         ),
         unit=StandardText.MILLISECOND_UNIT,
     )
 
     normal_trace_flick: Bucket = bucket(
         sprites=create_bucket_sprites(
-            body=Skin.trace_flick_note_left,
-            body_fallback=Skin.trace_flick_tick_note_fallback,
-            tick=Skin.trace_flick_tick_note,
-            arrow=Skin.flick_arrow_fallback,
+            body=BaseSkin.trace_flick_note_basic,
+            body_fallback=BaseSkin.note_red_fallback,
+            tick=BaseSkin.trace_flick_note_tick,
+            tick_fallback=BaseSkin.trace_note_red_tick,
+            arrow=BaseSkin.flick_arrow_red_fallback,
         ),
         unit=StandardText.MILLISECOND_UNIT,
     )
     critical_trace_flick: Bucket = bucket(
         sprites=create_bucket_sprites(
-            body=Skin.critical_trace_note_left,
-            body_fallback=Skin.critical_trace_note_fallback,
-            tick=Skin.critical_trace_tick_note,
-            arrow=Skin.critical_arrow_fallback,
+            body=BaseSkin.critical_trace_flick_note_basic,
+            body_fallback=BaseSkin.note_yellow_fallback,
+            tick=BaseSkin.critical_trace_flick_note_tick,
+            tick_fallback=BaseSkin.trace_note_yellow_tick,
+            arrow=BaseSkin.flick_arrow_yellow_fallback,
         ),
         unit=StandardText.MILLISECOND_UNIT,
     )
@@ -150,80 +160,95 @@ class Buckets:
     # Head buckets
     normal_head_tap: Bucket = bucket(
         sprites=create_bucket_sprites(
-            connector=Skin.normal_slide_connector_active,
-            body=Skin.slide_note_fallback,
+            connector=BaseSkin.normal_active_slide_connection_normal,
+            connector_fallback=BaseSkin.active_slide_connection_green_fallback,
+            body=BaseSkin.normal_note_basic,
+            body_fallback=BaseSkin.note_cyan_fallback,
             body_pos="left",
         ),
         unit=StandardText.MILLISECOND_UNIT,
     )
     critical_head_tap: Bucket = bucket(
         sprites=create_bucket_sprites(
-            connector=Skin.critical_slide_connector_active,
-            body=Skin.critical_note_fallback,
+            connector=BaseSkin.critical_active_slide_connection_normal,
+            connector_fallback=BaseSkin.active_slide_connection_yellow_fallback,
+            body=BaseSkin.critical_note_basic,
+            body_fallback=BaseSkin.note_yellow_fallback,
             body_pos="left",
         ),
         unit=StandardText.MILLISECOND_UNIT,
     )
-
     normal_head_flick: Bucket = bucket(
         sprites=create_bucket_sprites(
-            connector=Skin.normal_slide_connector_active,
-            body=Skin.flick_note_fallback,
+            connector=BaseSkin.normal_active_slide_connection_normal,
+            connector_fallback=BaseSkin.active_slide_connection_green_fallback,
+            body=BaseSkin.flick_note_basic,
+            body_fallback=BaseSkin.note_red_fallback,
             body_pos="left",
-            arrow=Skin.flick_arrow_fallback,
+            arrow=BaseSkin.flick_arrow_red_fallback,
         ),
         unit=StandardText.MILLISECOND_UNIT,
     )
     critical_head_flick: Bucket = bucket(
         sprites=create_bucket_sprites(
-            connector=Skin.critical_slide_connector_active,
-            body=Skin.critical_note_fallback,
+            connector=BaseSkin.critical_active_slide_connection_normal,
+            connector_fallback=BaseSkin.active_slide_connection_yellow_fallback,
+            body=BaseSkin.critical_flick_note_basic,
+            body_fallback=BaseSkin.note_yellow_fallback,
             body_pos="left",
-            arrow=Skin.critical_arrow_fallback,
+            arrow=BaseSkin.flick_arrow_yellow_fallback,
         ),
         unit=StandardText.MILLISECOND_UNIT,
     )
 
     normal_head_trace: Bucket = bucket(
         sprites=create_bucket_sprites(
-            connector=Skin.normal_slide_connector_active,
-            body=Skin.normal_trace_note_left,
-            body_fallback=Skin.normal_trace_note_fallback,
+            connector=BaseSkin.normal_active_slide_connection_normal,
+            connector_fallback=BaseSkin.active_slide_connection_green_fallback,
+            body=BaseSkin.normal_trace_note_basic,
+            body_fallback=BaseSkin.note_green_fallback,
             body_pos="left",
-            tick=Skin.normal_trace_tick_note,
+            tick=BaseSkin.normal_trace_note_tick,
+            tick_fallback=BaseSkin.trace_note_green_tick,
         ),
         unit=StandardText.MILLISECOND_UNIT,
     )
     critical_head_trace: Bucket = bucket(
         sprites=create_bucket_sprites(
-            connector=Skin.critical_slide_connector_active,
-            body=Skin.critical_trace_note_left,
-            body_fallback=Skin.critical_trace_note_fallback,
+            connector=BaseSkin.critical_active_slide_connection_normal,
+            connector_fallback=BaseSkin.active_slide_connection_yellow_fallback,
+            body=BaseSkin.critical_trace_note_basic,
+            body_fallback=BaseSkin.note_yellow_fallback,
             body_pos="left",
-            tick=Skin.critical_trace_tick_note,
+            tick=BaseSkin.critical_trace_note_tick,
+            tick_fallback=BaseSkin.trace_note_yellow_tick,
         ),
         unit=StandardText.MILLISECOND_UNIT,
     )
 
     normal_head_trace_flick: Bucket = bucket(
         sprites=create_bucket_sprites(
-            connector=Skin.normal_slide_connector_active,
-            body=Skin.trace_flick_note_left,
-            body_fallback=Skin.trace_flick_tick_note_fallback,
+            connector=BaseSkin.normal_active_slide_connection_normal,
+            connector_fallback=BaseSkin.active_slide_connection_green_fallback,
+            body=BaseSkin.trace_flick_note_basic,
+            body_fallback=BaseSkin.note_red_fallback,
             body_pos="left",
-            tick=Skin.trace_flick_tick_note,
-            arrow=Skin.flick_arrow_fallback,
+            tick=BaseSkin.trace_flick_note_tick,
+            tick_fallback=BaseSkin.trace_note_red_tick,
+            arrow=BaseSkin.flick_arrow_red_fallback,
         ),
         unit=StandardText.MILLISECOND_UNIT,
     )
     critical_head_trace_flick: Bucket = bucket(
         sprites=create_bucket_sprites(
-            connector=Skin.critical_slide_connector_active,
-            body=Skin.critical_trace_note_left,
-            body_fallback=Skin.critical_trace_note_fallback,
+            connector=BaseSkin.critical_active_slide_connection_normal,
+            connector_fallback=BaseSkin.active_slide_connection_yellow_fallback,
+            body=BaseSkin.critical_trace_flick_note_basic,
+            body_fallback=BaseSkin.note_yellow_fallback,
             body_pos="left",
-            tick=Skin.critical_trace_tick_note,
-            arrow=Skin.critical_arrow_fallback,
+            tick=BaseSkin.critical_trace_flick_note_tick,
+            tick_fallback=BaseSkin.trace_note_yellow_tick,
+            arrow=BaseSkin.flick_arrow_yellow_fallback,
         ),
         unit=StandardText.MILLISECOND_UNIT,
     )
@@ -231,16 +256,20 @@ class Buckets:
     # Tail buckets
     normal_tail_release: Bucket = bucket(
         sprites=create_bucket_sprites(
-            connector=Skin.normal_slide_connector_active,
-            body=Skin.slide_note_end_fallback,
+            connector=BaseSkin.normal_active_slide_connection_normal,
+            connector_fallback=BaseSkin.active_slide_connection_green_fallback,
+            body=BaseSkin.normal_note_basic,
+            body_fallback=BaseSkin.note_cyan_fallback,
             body_pos="right",
         ),
         unit=StandardText.MILLISECOND_UNIT,
     )
     critical_tail_release: Bucket = bucket(
         sprites=create_bucket_sprites(
-            connector=Skin.critical_slide_connector_active,
-            body=Skin.critical_note_end_fallback,
+            connector=BaseSkin.critical_active_slide_connection_normal,
+            connector_fallback=BaseSkin.active_slide_connection_yellow_fallback,
+            body=BaseSkin.critical_note_basic,
+            body_fallback=BaseSkin.note_yellow_fallback,
             body_pos="right",
         ),
         unit=StandardText.MILLISECOND_UNIT,
@@ -248,63 +277,75 @@ class Buckets:
 
     normal_tail_flick: Bucket = bucket(
         sprites=create_bucket_sprites(
-            connector=Skin.normal_slide_connector_active,
-            body=Skin.flick_note_fallback,
+            connector=BaseSkin.normal_active_slide_connection_normal,
+            connector_fallback=BaseSkin.active_slide_connection_green_fallback,
+            body=BaseSkin.flick_note_basic,
+            body_fallback=BaseSkin.note_red_fallback,
             body_pos="right",
-            arrow=Skin.flick_arrow_fallback,
+            arrow=BaseSkin.flick_arrow_red_fallback,
         ),
         unit=StandardText.MILLISECOND_UNIT,
     )
     critical_tail_flick: Bucket = bucket(
         sprites=create_bucket_sprites(
-            connector=Skin.critical_slide_connector_active,
-            body=Skin.critical_note_end_fallback,
+            connector=BaseSkin.critical_active_slide_connection_normal,
+            connector_fallback=BaseSkin.active_slide_connection_yellow_fallback,
+            body=BaseSkin.critical_flick_note_basic,
+            body_fallback=BaseSkin.note_yellow_fallback,
             body_pos="right",
-            arrow=Skin.critical_arrow_fallback,
+            arrow=BaseSkin.flick_arrow_yellow_fallback,
         ),
         unit=StandardText.MILLISECOND_UNIT,
     )
 
     normal_tail_trace: Bucket = bucket(
         sprites=create_bucket_sprites(
-            connector=Skin.normal_slide_connector_active,
-            body=Skin.normal_trace_note_left,
-            body_fallback=Skin.normal_trace_note_fallback,
+            connector=BaseSkin.normal_active_slide_connection_normal,
+            connector_fallback=BaseSkin.active_slide_connection_green_fallback,
+            body=BaseSkin.normal_trace_note_basic,
+            body_fallback=BaseSkin.note_green_fallback,
             body_pos="right",
-            tick=Skin.normal_trace_tick_note,
+            tick=BaseSkin.normal_trace_note_tick,
+            tick_fallback=BaseSkin.trace_note_green_tick,
         ),
         unit=StandardText.MILLISECOND_UNIT,
     )
     critical_tail_trace: Bucket = bucket(
         sprites=create_bucket_sprites(
-            connector=Skin.critical_slide_connector_active,
-            body=Skin.critical_trace_note_left,
-            body_fallback=Skin.critical_trace_note_fallback,
+            connector=BaseSkin.critical_active_slide_connection_normal,
+            connector_fallback=BaseSkin.active_slide_connection_yellow_fallback,
+            body=BaseSkin.critical_trace_note_basic,
+            body_fallback=BaseSkin.note_yellow_fallback,
             body_pos="right",
-            tick=Skin.critical_trace_tick_note,
+            tick=BaseSkin.critical_trace_note_tick,
+            tick_fallback=BaseSkin.trace_note_yellow_tick,
         ),
         unit=StandardText.MILLISECOND_UNIT,
     )
 
     normal_tail_trace_flick: Bucket = bucket(
         sprites=create_bucket_sprites(
-            connector=Skin.normal_slide_connector_active,
-            body=Skin.trace_flick_note_left,
-            body_fallback=Skin.trace_flick_tick_note_fallback,
+            connector=BaseSkin.normal_active_slide_connection_normal,
+            connector_fallback=BaseSkin.active_slide_connection_green_fallback,
+            body=BaseSkin.trace_flick_note_basic,
+            body_fallback=BaseSkin.note_red_fallback,
             body_pos="right",
-            tick=Skin.trace_flick_tick_note,
-            arrow=Skin.flick_arrow_fallback,
+            tick=BaseSkin.trace_flick_note_tick,
+            tick_fallback=BaseSkin.trace_note_red_tick,
+            arrow=BaseSkin.flick_arrow_red_fallback,
         ),
         unit=StandardText.MILLISECOND_UNIT,
     )
     critical_tail_trace_flick: Bucket = bucket(
         sprites=create_bucket_sprites(
-            connector=Skin.critical_slide_connector_active,
-            body=Skin.critical_trace_note_left,
-            body_fallback=Skin.critical_trace_note_fallback,
+            connector=BaseSkin.critical_active_slide_connection_normal,
+            connector_fallback=BaseSkin.active_slide_connection_yellow_fallback,
+            body=BaseSkin.critical_trace_flick_note_basic,
+            body_fallback=BaseSkin.note_yellow_fallback,
             body_pos="right",
-            tick=Skin.critical_trace_tick_note,
-            arrow=Skin.critical_arrow_fallback,
+            tick=BaseSkin.critical_trace_flick_note_tick,
+            tick_fallback=BaseSkin.trace_note_yellow_tick,
+            arrow=BaseSkin.flick_arrow_yellow_fallback,
         ),
         unit=StandardText.MILLISECOND_UNIT,
     )

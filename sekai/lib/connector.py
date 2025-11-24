@@ -34,22 +34,8 @@ from sekai.lib.layout import (
     transformed_vec_at,
 )
 from sekai.lib.options import Options
-from sekai.lib.particle import Particles
-from sekai.lib.skin import (
-    ActiveConnectorSprites,
-    GuideSprites,
-    Skin,
-    black_guide_sprites,
-    blue_guide_sprites,
-    critical_slide_connector_sprites,
-    cyan_guide_sprites,
-    green_guide_sprites,
-    neutral_guide_sprites,
-    normal_slide_connector_sprites,
-    purple_guide_sprites,
-    red_guide_sprites,
-    yellow_guide_sprites,
-)
+from sekai.lib.particle import ActiveParticles
+from sekai.lib.skin import ActiveConnectorSpriteSet, ActiveSkin
 from sekai.lib.timescale import iter_timescale_changes_in_group_after_time_inclusive
 
 CONNECTOR_TRAIL_SPAWN_PERIOD = 0.1
@@ -103,41 +89,41 @@ class ConnectorVisualState(IntEnum):
     ACTIVE = 2
 
 
-def get_active_connector_sprites(kind: ActiveConnectorKind) -> ActiveConnectorSprites:
-    result = +ActiveConnectorSprites
+def get_active_connector_sprites(kind: ActiveConnectorKind) -> ActiveConnectorSpriteSet:
+    result = +ActiveConnectorSpriteSet
     match kind:
         case ConnectorKind.ACTIVE_NORMAL | ConnectorKind.ACTIVE_FAKE_NORMAL:
-            result @= normal_slide_connector_sprites
+            result @= ActiveSkin.active_slide_connector
         case ConnectorKind.ACTIVE_CRITICAL | ConnectorKind.ACTIVE_FAKE_CRITICAL:
-            result @= critical_slide_connector_sprites
+            result @= ActiveSkin.critical_active_slide_connector
         case _:
             assert_never(kind)
     return result
 
 
-def get_guide_connector_sprites(kind: GuideConnectorKind) -> GuideSprites:
-    result = +GuideSprites
+def get_guide_connector_sprite(kind: GuideConnectorKind) -> Sprite:
+    result = +Sprite
     match kind:
         case ConnectorKind.GUIDE_NORMAL:
             result @= green_guide_sprites
         case ConnectorKind.GUIDE_CRITICAL:
             result @= yellow_guide_sprites
         case ConnectorKind.GUIDE_NEUTRAL:
-            result @= neutral_guide_sprites
+            result @= ActiveSkin.guide_neutral
         case ConnectorKind.GUIDE_RED:
-            result @= red_guide_sprites
+            result @= ActiveSkin.guide_red
         case ConnectorKind.GUIDE_GREEN:
-            result @= green_guide_sprites
+            result @= ActiveSkin.guide_green
         case ConnectorKind.GUIDE_BLUE:
-            result @= blue_guide_sprites
+            result @= ActiveSkin.guide_blue
         case ConnectorKind.GUIDE_YELLOW:
-            result @= yellow_guide_sprites
+            result @= ActiveSkin.guide_yellow
         case ConnectorKind.GUIDE_PURPLE:
-            result @= purple_guide_sprites
+            result @= ActiveSkin.guide_purple
         case ConnectorKind.GUIDE_CYAN:
-            result @= cyan_guide_sprites
+            result @= ActiveSkin.guide_cyan
         case ConnectorKind.GUIDE_BLACK:
-            result @= black_guide_sprites
+            result @= ActiveSkin.guide_black
         case _:
             assert_never(kind)
     return result
@@ -296,11 +282,8 @@ def draw_connector(
             | ConnectorKind.ACTIVE_FAKE_CRITICAL
         ):
             sprites = get_active_connector_sprites(kind)
-            if sprites.custom_available:
-                normal_sprite @= sprites.normal
-                active_sprite @= sprites.active
-            else:
-                normal_sprite @= sprites.fallback
+            normal_sprite @= sprites.connection.normal
+            active_sprite @= sprites.connection.active
         case (
             ConnectorKind.GUIDE_NORMAL
             | ConnectorKind.GUIDE_CRITICAL
@@ -313,11 +296,8 @@ def draw_connector(
             | ConnectorKind.GUIDE_CYAN
             | ConnectorKind.GUIDE_BLACK
         ):
-            sprites = get_guide_connector_sprites(kind)
-            if sprites.custom_available:
-                normal_sprite @= sprites.normal
-            else:
-                normal_sprite @= sprites.fallback
+            sprites = get_guide_connector_sprite(kind)
+            normal_sprite @= sprites
         case ConnectorKind.NONE:
             return
         case _:
@@ -400,12 +380,16 @@ def draw_connector(
             ) * abs(end_progress - start_progress)
             curve_change_scale = x_diff**0.8
         case _:
-            pos_offset = 0
             left_start_lane = start_lane - start_size
             left_end_lane = end_lane - end_size
-            right_start_lane = start_lane + end_size
+            right_start_lane = start_lane + start_size
             right_end_lane = end_lane + end_size
-            if abs(left_start_lane - left_end_lane) > abs(right_start_lane - right_end_lane):
+            if abs(start_size - end_size) < 0.1:
+                ref_start_lane = start_lane
+                ref_end_lane = end_lane
+                ref_head_lane = head_lane
+                ref_tail_lane = tail_lane
+            elif abs(left_start_lane - left_end_lane) > abs(right_start_lane - right_end_lane):
                 ref_start_lane = left_start_lane
                 ref_end_lane = left_end_lane
                 ref_head_lane = head_lane - head_size
@@ -417,7 +401,8 @@ def draw_connector(
                 ref_tail_lane = tail_lane + tail_size
             start_ref = transformed_vec_at(ref_start_lane, start_travel)
             end_ref = transformed_vec_at(ref_end_lane, end_travel)
-            pos_offset_this_side = 0
+            last_pos_offset = 0
+            total_pos_offsets = 0
             for r in (0.25, 0.75):
                 ease_frac = lerp(start_ease_frac, end_ease_frac, r)
                 interp_frac = unlerp_clamped(eased_head_ease_frac, eased_tail_ease_frac, ease(ease_type, ease_frac))
@@ -543,9 +528,9 @@ def update_circular_connector_particle(
         particle = +Particle(-1)
         match kind:
             case ConnectorKind.ACTIVE_NORMAL | ConnectorKind.ACTIVE_FAKE_NORMAL:
-                particle @= Particles.normal_slide_connector_circular
+                particle @= ActiveParticles.normal_slide_connector.circular
             case ConnectorKind.ACTIVE_CRITICAL | ConnectorKind.ACTIVE_FAKE_CRITICAL:
-                particle @= Particles.critical_slide_connector_circular
+                particle @= ActiveParticles.critical_slide_connector.circular
             case _:
                 assert_never(kind)
         replace_looped_particle(handle, particle, layout, duration=1 * Options.note_effect_duration)
@@ -566,9 +551,9 @@ def update_linear_connector_particle(
     if replace or handle.id == 0:
         match kind:
             case ConnectorKind.ACTIVE_NORMAL | ConnectorKind.ACTIVE_FAKE_NORMAL:
-                particle @= Particles.normal_slide_connector_linear
+                particle @= ActiveParticles.normal_slide_connector.linear
             case ConnectorKind.ACTIVE_CRITICAL | ConnectorKind.ACTIVE_FAKE_CRITICAL:
-                particle @= Particles.critical_slide_connector_linear
+                particle @= ActiveParticles.critical_slide_connector.linear
             case _:
                 assert_never(kind)
         replace_looped_particle(handle, particle, layout, duration=1 * Options.note_effect_duration)
@@ -586,9 +571,9 @@ def spawn_linear_connector_trail_particle(
     particle = +Particle
     match kind:
         case ConnectorKind.ACTIVE_NORMAL | ConnectorKind.ACTIVE_FAKE_NORMAL:
-            particle @= Particles.normal_slide_connector_trail_linear
+            particle @= ActiveParticles.normal_slide_connector.trail_linear
         case ConnectorKind.ACTIVE_CRITICAL | ConnectorKind.ACTIVE_FAKE_CRITICAL:
-            particle @= Particles.critical_slide_connector_trail_linear
+            particle @= ActiveParticles.critical_slide_connector.trail_linear
         case _:
             assert_never(kind)
     particle.spawn(layout, duration=0.5 * Options.note_effect_duration)
@@ -604,9 +589,9 @@ def spawn_connector_slot_particles(
     particle = +Particle
     match kind:
         case ConnectorKind.ACTIVE_NORMAL | ConnectorKind.ACTIVE_FAKE_NORMAL:
-            particle @= Particles.normal_slide_connector_slot_linear
+            particle @= ActiveParticles.normal_slide_connector.slot_linear
         case ConnectorKind.ACTIVE_CRITICAL | ConnectorKind.ACTIVE_FAKE_CRITICAL:
-            particle @= Particles.critical_slide_connector_slot_linear
+            particle @= ActiveParticles.critical_slide_connector.slot_linear
         case _:
             assert_never(kind)
     for slot_lane in iter_slot_lanes(lane, size):
@@ -623,9 +608,9 @@ def draw_connector_slot_glow_effect(
     sprite = +Sprite
     match kind:
         case ConnectorKind.ACTIVE_NORMAL | ConnectorKind.ACTIVE_FAKE_NORMAL:
-            sprite @= Skin.normal_slide_connector_slot_glow
+            sprite @= ActiveSkin.active_slide_connector.slot_glow
         case ConnectorKind.ACTIVE_CRITICAL | ConnectorKind.ACTIVE_FAKE_CRITICAL:
-            sprite @= Skin.critical_slide_connector_slot_glow
+            sprite @= ActiveSkin.critical_active_slide_connector.slot_glow
         case _:
             assert_never(kind)
     height = (
@@ -635,7 +620,7 @@ def draw_connector_slot_glow_effect(
     )
     ex = 0.035 * abs(2 * size) + 0.08 if Options.version == 0 else 0
     layout = layout_slot_glow_effect(lane, size + ex, height)
-    z = get_z(LAYER_SLOT_GLOW_EFFECT, (2 * time()) - start_time, lane)
+    z = get_z(LAYER_SLOT_GLOW_EFFECT, start_time, lane, invert_time=True)
     a = remap_clamped(start_time, start_time + 0.25, 0.0, 0.35, time())
     sprite.draw(layout, z=z, a=a)
 

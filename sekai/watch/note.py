@@ -144,13 +144,13 @@ class WatchBaseNote(WatchArchetype):
                     schedule_note_auto_sfx(self.effect_kind, self.target_time)
                 else:
                     schedule_note_sfx(self.effect_kind, self.judgment, self.end_time)
-                schedule_note_slot_effects(self.kind, self.lane, self.size, self.end_time, self.judgment)
+                schedule_note_slot_effects(self.kind, self.lane, self.size, self.end_time, self.direction)
             self.result.bucket_value = self.accuracy * 1000
         else:
             self.judgment = Judgment.PERFECT
             if self.is_scored:
                 schedule_note_sfx(self.effect_kind, Judgment.PERFECT, self.target_time)
-                schedule_note_slot_effects(self.kind, self.lane, self.size, self.target_time)
+                schedule_note_slot_effects(self.kind, self.lane, self.size, self.target_time, self.direction)
 
         self.result.target_time = self.target_time
 
