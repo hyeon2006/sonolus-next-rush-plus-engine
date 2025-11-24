@@ -13,6 +13,7 @@ from sekai.lib.options import Options
 @skin
 class BaseSkin:
     cover: StandardSprite.STAGE_COVER
+    background: Sprite = sprite("Sekai Black Background")
 
     lane: StandardSprite.LANE
     judgment_line: StandardSprite.JUDGMENT_LINE

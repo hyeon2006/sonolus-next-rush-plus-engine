@@ -78,7 +78,7 @@ def draw_stage_cover(z_cover, z_cover_line):
 def draw_background_cover(z_background_cover):
     if Options.background_alpha != 1:
         layout = layout_background_cover()
-        Skin.guide_black.draw(layout, z=z_background_cover, a=1 - Options.background_alpha)
+        Skin.background.draw(layout, z=z_background_cover, a=1 - Options.background_alpha)
 
 
 def draw_auto_play(z_judgment):
