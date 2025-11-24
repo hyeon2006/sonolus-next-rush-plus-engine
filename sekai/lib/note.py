@@ -94,7 +94,6 @@ from sekai.lib.skin import (
     critical_trace_note_body_sprites,
     critical_trace_tick_sprites,
     damage_note_body_sprites,
-    damage_tick_sprites,
     flick_note_body_sprites,
     normal_arrow_sprites,
     normal_note_body_sprites,
@@ -455,7 +454,7 @@ def draw_note_arrow(
             | NoteKind.NORM_TAIL_FLICK
             | NoteKind.NORM_TAIL_TRACE_FLICK
         ):
-            _draw_arrow(normal_arrow_sprites, lane, size, travel, target_time, direction)
+            _draw_arrow(normal_arrow_sprites, lane, size, travel, target_time, direction, kind)
         case (
             NoteKind.CRIT_FLICK
             | NoteKind.CRIT_TRACE_FLICK
@@ -464,7 +463,7 @@ def draw_note_arrow(
             | NoteKind.CRIT_TAIL_FLICK
             | NoteKind.CRIT_TAIL_TRACE_FLICK
         ):
-            _draw_arrow(critical_arrow_sprites, lane, size, travel, target_time, direction)
+            _draw_arrow(critical_arrow_sprites, lane, size, travel, target_time, direction, kind)
         case (
             NoteKind.NORM_TAP
             | NoteKind.CRIT_TAP
@@ -514,11 +513,6 @@ def draw_note_tick(kind: NoteKind, lane: float, travel: float, target_time: floa
             _draw_tick(critical_trace_tick_sprites, lane, travel, target_time)
         case NoteKind.NORM_TRACE_FLICK | NoteKind.NORM_HEAD_TRACE_FLICK | NoteKind.NORM_TAIL_TRACE_FLICK:
             _draw_tick(trace_flick_tick_sprites, lane, travel, target_time)
-        case NoteKind.DAMAGE:
-            if Options.using_damage_tick:
-                _draw_tick(damage_tick_sprites, lane, travel, target_time)
-            else:
-                pass
         case (
             NoteKind.NORM_TAP
             | NoteKind.CRIT_TAP
@@ -540,6 +534,7 @@ def draw_note_tick(kind: NoteKind, lane: float, travel: float, target_time: floa
             | NoteKind.CRIT_TAIL_RELEASE
             | NoteKind.HIDE_TICK
             | NoteKind.ANCHOR
+            | NoteKind.DAMAGE
         ):
             pass
         case _:
@@ -548,7 +543,7 @@ def draw_note_tick(kind: NoteKind, lane: float, travel: float, target_time: floa
 
 def _draw_regular_body(sprites: BodySprites, lane: float, size: float, travel: float, target_time: float):
     a = get_alpha(target_time)
-    z = get_z(LAYER_NOTE_BODY, time=(time() * 2) - target_time, lane=lane, current_time=time())
+    z = get_z(LAYER_NOTE_BODY, time=target_time, lane=lane)
     if sprites.custom_available:
         left_layout, middle_layout, right_layout = layout_regular_note_body(lane, size, travel)
         sprites.left.draw(left_layout, z=z, a=a)
@@ -561,7 +556,7 @@ def _draw_regular_body(sprites: BodySprites, lane: float, size: float, travel: f
 
 def _draw_flick_body(sprites: BodySprites, lane: float, size: float, travel: float, target_time: float):
     a = get_alpha(target_time)
-    z = get_z(LAYER_NOTE_FLICK_BODY, time=(time() * 2) - target_time, lane=lane, current_time=time())
+    z = get_z(LAYER_NOTE_FLICK_BODY, time=target_time, lane=lane)
     if sprites.custom_available:
         left_layout, middle_layout, right_layout = layout_regular_note_body(lane, size, travel)
         sprites.left.draw(left_layout, z=z, a=a)
@@ -574,7 +569,7 @@ def _draw_flick_body(sprites: BodySprites, lane: float, size: float, travel: flo
 
 def _draw_slim_body(sprites: BodySprites, lane: float, size: float, travel: float, target_time: float):
     a = get_alpha(target_time)
-    z = get_z(LAYER_NOTE_SLIM_BODY, time=(time() * 2) - target_time, lane=lane, current_time=time())
+    z = get_z(LAYER_NOTE_SLIM_BODY, time=target_time, lane=lane)
     if sprites.custom_available:
         left_layout, middle_layout, right_layout = layout_slim_note_body(lane, size, travel)
         sprites.left.draw(left_layout, z=z, a=a)
@@ -587,7 +582,7 @@ def _draw_slim_body(sprites: BodySprites, lane: float, size: float, travel: floa
 
 def _draw_tick(sprites: TickSprites, lane: float, travel: float, target_time: float):
     a = get_alpha(target_time)
-    z = get_z(LAYER_NOTE_TICK, time=(time() * 2) - target_time, lane=lane, current_time=time())
+    z = get_z(LAYER_NOTE_TICK, time=target_time, lane=lane)
     layout = layout_tick(lane, travel)
     if sprites.custom_available:
         sprites.normal.draw(layout, z=z, a=a)
@@ -596,7 +591,13 @@ def _draw_tick(sprites: TickSprites, lane: float, travel: float, target_time: fl
 
 
 def _draw_arrow(
-    sprites: ArrowSprites, lane: float, size: float, travel: float, target_time: float, direction: FlickDirection
+    sprites: ArrowSprites,
+    lane: float,
+    size: float,
+    travel: float,
+    target_time: float,
+    direction: FlickDirection,
+    kind: NoteKind,
 ):
     match direction:
         case _ if Options.marker_animation:
@@ -610,13 +611,37 @@ def _draw_arrow(
             assert_never(direction)
     animation_alpha = (1 - ease_in_cubic(animation_progress)) if Options.marker_animation else 1
     a = get_alpha(target_time) * animation_alpha
-    z = get_z(LAYER_NOTE_ARROW, time=(time() * 2) - target_time, lane=lane, current_time=time())
+    z = get_z(LAYER_NOTE_ARROW, time=target_time, lane=lane, etc=get_arrow_z_offset(kind))
     if sprites.custom_available:
         layout = layout_flick_arrow(lane, size, direction, travel, animation_progress)
         sprites.get_sprite(size, direction).draw(layout, z=z, a=a)
     else:
         layout = layout_flick_arrow_fallback(lane, size, direction, travel, animation_progress)
         sprites.fallback.draw(layout, z=z, a=a)
+
+
+def get_arrow_z_offset(kind: NoteKind) -> int:
+    match kind:
+        case (
+            NoteKind.NORM_FLICK
+            | NoteKind.NORM_TRACE_FLICK
+            | NoteKind.NORM_HEAD_FLICK
+            | NoteKind.NORM_HEAD_TRACE_FLICK
+            | NoteKind.NORM_TAIL_FLICK
+            | NoteKind.NORM_TAIL_TRACE_FLICK
+        ):
+            return 1
+        case (
+            NoteKind.CRIT_FLICK
+            | NoteKind.CRIT_TRACE_FLICK
+            | NoteKind.CRIT_HEAD_FLICK
+            | NoteKind.CRIT_HEAD_TRACE_FLICK
+            | NoteKind.CRIT_TAIL_FLICK
+            | NoteKind.CRIT_TAIL_TRACE_FLICK
+        ):
+            return 2
+        case _:
+            assert_never(kind)
 
 
 def get_note_particles(kind: NoteKind) -> NoteParticleSet:

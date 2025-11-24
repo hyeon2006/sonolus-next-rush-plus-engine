@@ -19,6 +19,7 @@ from sekai.lib.layout import get_alpha
 from sekai.preview import note
 from sekai.preview.layout import (
     PREVIEW_COLUMN_SECS,
+    get_adjusted_time,
     layout_preview_slide_connector_segment,
     time_to_preview_col,
     time_to_preview_y,
@@ -61,7 +62,6 @@ class PreviewConnector(PreviewArchetype):
             segment_head_alpha=self.segment_head.segment_alpha,
             segment_tail_target_time=self.segment_tail.target_time,
             segment_tail_alpha=self.segment_tail.segment_alpha,
-            head_col=self.segment_head.col,
         )
 
     @property
@@ -97,7 +97,6 @@ def draw_connector(
     segment_head_alpha: float,
     segment_tail_target_time: float,
     segment_tail_alpha: float,
-    head_col: int,
 ):
     if head_target_time == tail_target_time:
         return
@@ -120,7 +119,9 @@ def draw_connector(
             else:
                 normal_sprite @= sprites.fallback
         case (
-            ConnectorKind.GUIDE_NEUTRAL
+            ConnectorKind.GUIDE_NORMAL
+            | ConnectorKind.GUIDE_CRITICAL
+            | ConnectorKind.GUIDE_NEUTRAL
             | ConnectorKind.GUIDE_RED
             | ConnectorKind.GUIDE_GREEN
             | ConnectorKind.GUIDE_BLUE
@@ -147,7 +148,9 @@ def draw_connector(
             segment_head_alpha = 1.0
             segment_tail_alpha = 1.0
         case (
-            ConnectorKind.GUIDE_NEUTRAL
+            ConnectorKind.GUIDE_NORMAL
+            | ConnectorKind.GUIDE_CRITICAL
+            | ConnectorKind.GUIDE_NEUTRAL
             | ConnectorKind.GUIDE_RED
             | ConnectorKind.GUIDE_GREEN
             | ConnectorKind.GUIDE_BLUE
@@ -174,8 +177,6 @@ def draw_connector(
             quality_dist_scale = 100 / PREVIEW_COLUMN_SECS * (tail_target_time - head_target_time)
     quality_alpha_scale = 30 * abs(head_alpha - tail_alpha)
     segment_count = max(1, ceil(get_connector_quality_option(kind) * max(quality_dist_scale, quality_alpha_scale)))
-
-    z = get_connector_z(kind, segment_head_target_time, segment_head_lane, head_col * PREVIEW_COLUMN_SECS)
 
     eased_head_ease_frac = ease(ease_type, head_ease_frac)
     eased_tail_ease_frac = ease(ease_type, tail_ease_frac)
@@ -205,6 +206,7 @@ def draw_connector(
         )
 
         for col in range(last_col, next_col + 1):
+            z = get_connector_z(kind, get_adjusted_time(segment_head_target_time, col), segment_head_lane, active=False)
             start_y = time_to_preview_y(last_target_time, col)
             end_y = time_to_preview_y(next_target_time, col)
             for layout in layout_preview_slide_connector_segment(

@@ -6,7 +6,6 @@ from sonolus.script.record import Record
 from sonolus.script.runtime import runtime_ui, screen, time
 from sonolus.script.vec import Vec2
 
-from sekai.lib.layer import LAYER_DAMAGE, LAYER_JUDGMENT, get_z
 from sekai.lib.layout import (
     ComboType,
     Layout,
@@ -34,7 +33,7 @@ def transform_fixed_size(h, w):
     return height, width
 
 
-def draw_combo_label(draw_time: float, ap: bool):
+def draw_combo_label(ap: bool, z: float, glow_z=float):
     ui = runtime_ui()
 
     screen_center = Vec2(x=5.337, y=0.485)
@@ -44,8 +43,6 @@ def draw_combo_label(draw_time: float, ap: bool):
     h, w = transform_fixed_size(base_h, base_w)
     a = ui.combo_config.alpha * 0.8 * (cos(time() * pi) + 1) / 2
     layout = layout_combo_label(screen_center, w=w / 2, h=h / 2)
-    z = get_z(layer=LAYER_JUDGMENT, time=1)
-    glow_z = get_z(layer=LAYER_JUDGMENT)
     if ap:
         combo_label.get_sprite(ComboType.NORMAL).draw(quad=layout, z=z, a=ui.combo_config.alpha)
     else:
@@ -53,11 +50,7 @@ def draw_combo_label(draw_time: float, ap: bool):
         combo_label.get_sprite(ComboType.GLOW).draw(quad=layout, z=glow_z, a=a)
 
 
-def draw_combo_number(
-    draw_time: float,
-    ap: bool,
-    combo: int,
-):
+def draw_combo_number(draw_time: float, ap: bool, combo: int, z: float, z2: float, z3: float):
     ui = runtime_ui()
 
     digit_count = 1 if combo == 0 else floor(log(combo, 10)) + 1  # noqa: FURB163
@@ -120,9 +113,6 @@ def draw_combo_number(
             start_x=start_x2,
         ),
     )
-    z = get_z(layer=LAYER_JUDGMENT, time=1)
-    z2 = get_z(layer=LAYER_JUDGMENT)
-    z3 = get_z(layer=LAYER_JUDGMENT, time=2)
     drawing_combo.draw_number(z=z, z2=z2, z3=z3)
 
 
@@ -214,7 +204,9 @@ class ComboNumberLayout(Record):
                 )
 
 
-def draw_judgment_text(draw_time: float, judgment: Judgment, windows_bad: Interval, accuracy: float, check_pass: bool):
+def draw_judgment_text(
+    draw_time: float, judgment: Judgment, windows_bad: Interval, accuracy: float, check_pass: bool, z: float
+):
     ui = runtime_ui()
 
     screen_center = Vec2(x=0, y=0.792)
@@ -225,19 +217,12 @@ def draw_judgment_text(draw_time: float, judgment: Judgment, windows_bad: Interv
     a = ui.judgment_config.alpha * unlerp_clamped(draw_time, draw_time + 0.064, time())
     s = unlerp_clamped(draw_time, draw_time + 0.064, time())
     layout = layout_combo_label(screen_center, w=w * s / 2, h=h * s / 2)
-    z = get_z(layer=LAYER_JUDGMENT, time=draw_time, current_time=time())
     judgment_text.get_sprite(
         judgment_type=judgment, windows_bad=windows_bad, accuracy=accuracy, check_pass=check_pass
     ).draw(quad=layout, z=z, a=a)
 
 
-def draw_judgment_accuracy(
-    draw_time: float,
-    judgment: Judgment,
-    accuracy: float,
-    windows: JudgmentWindow,
-    wrong_way: bool,
-):
+def draw_judgment_accuracy(judgment: Judgment, accuracy: float, windows: JudgmentWindow, wrong_way: bool, z: float):
     ui = runtime_ui()
 
     screen_center = Vec2(x=0, y=0.723)
@@ -247,7 +232,6 @@ def draw_judgment_accuracy(
     h, w = transform_fixed_size(base_h, base_w)
     a = ui.judgment_config.alpha
     layout = layout_combo_label(screen_center, w=w / 2, h=h / 2)
-    z = get_z(layer=LAYER_JUDGMENT, time=draw_time, current_time=time())
     accuracy_text.get_sprite(
         judgment=judgment,
         windows=windows.perfect,
@@ -256,12 +240,9 @@ def draw_judgment_accuracy(
     ).draw(quad=layout, z=z, a=a)
 
 
-def draw_damage_flash(
-    draw_time: float,
-):
+def draw_damage_flash(draw_time: float, z: float):
     t = unlerp_clamped(draw_time, draw_time + 0.35, time())
     a = 0.768 * t**0.1 * (1 - t) ** 1.35
-    z = get_z(layer=LAYER_DAMAGE, time=draw_time, current_time=time())
 
     for i in range(2):
         for j in range(2):

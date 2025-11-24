@@ -17,6 +17,7 @@ from sekai.lib.effect import Effects
 from sekai.lib.layer import (
     LAYER_ACTIVE_SIDE_CONNECTOR,
     LAYER_GUIDE_CONNECTOR,
+    LAYER_LOWER_GUIDE_CONNECTOR,
     LAYER_SLOT_GLOW_EFFECT,
     get_z,
 )
@@ -60,6 +61,8 @@ class ConnectorKind(IntEnum):
 
     ACTIVE_NORMAL = 1
     ACTIVE_CRITICAL = 2
+    GUIDE_NORMAL = 3
+    GUIDE_CRITICAL = 4
     ACTIVE_FAKE_NORMAL = 51
     ACTIVE_FAKE_CRITICAL = 52
 
@@ -81,6 +84,8 @@ ActiveConnectorKind = Literal[
 ]
 
 GuideConnectorKind = Literal[
+    ConnectorKind.GUIDE_NORMAL,
+    ConnectorKind.GUIDE_CRITICAL,
     ConnectorKind.GUIDE_NEUTRAL,
     ConnectorKind.GUIDE_RED,
     ConnectorKind.GUIDE_GREEN,
@@ -113,6 +118,10 @@ def get_active_connector_sprites(kind: ActiveConnectorKind) -> ActiveConnectorSp
 def get_guide_connector_sprites(kind: GuideConnectorKind) -> GuideSprites:
     result = +GuideSprites
     match kind:
+        case ConnectorKind.GUIDE_NORMAL:
+            result @= green_guide_sprites
+        case ConnectorKind.GUIDE_CRITICAL:
+            result @= yellow_guide_sprites
         case ConnectorKind.GUIDE_NEUTRAL:
             result @= neutral_guide_sprites
         case ConnectorKind.GUIDE_RED:
@@ -134,7 +143,7 @@ def get_guide_connector_sprites(kind: GuideConnectorKind) -> GuideSprites:
     return result
 
 
-def get_connector_z(kind: ConnectorKind, target_time: float, lane: float, current_time: float) -> float:
+def get_connector_z(kind: ConnectorKind, target_time: float, lane: float, active: bool) -> float:
     match kind:
         case (
             ConnectorKind.ACTIVE_NORMAL
@@ -146,8 +155,16 @@ def get_connector_z(kind: ConnectorKind, target_time: float, lane: float, curren
                 LAYER_ACTIVE_SIDE_CONNECTOR,
                 time=target_time,
                 lane=lane,
-                etc=get_active_connector_z_offset(kind),
-                current_time=current_time,
+                etc=get_active_connector_z_offset(kind, active),
+                invert_time=True,
+            )
+        case ConnectorKind.GUIDE_NORMAL | ConnectorKind.GUIDE_CRITICAL:
+            return get_z(
+                LAYER_LOWER_GUIDE_CONNECTOR,
+                time=target_time,
+                lane=lane,
+                etc=get_active_connector_z_offset(kind, active),
+                invert_time=True,
             )
         case (
             ConnectorKind.GUIDE_NEUTRAL
@@ -161,10 +178,10 @@ def get_connector_z(kind: ConnectorKind, target_time: float, lane: float, curren
         ):
             return get_z(
                 LAYER_GUIDE_CONNECTOR,
-                time=(current_time * 2) - target_time,
+                time=target_time,
                 lane=lane,
                 etc=kind - ConnectorKind.GUIDE_NEUTRAL,
-                current_time=current_time,
+                invert_time=True,
             )
         case ConnectorKind.NONE:
             return 0.0
@@ -172,12 +189,12 @@ def get_connector_z(kind: ConnectorKind, target_time: float, lane: float, curren
             assert_never(kind)
 
 
-def get_active_connector_z_offset(kind: ActiveConnectorKind) -> int:
+def get_active_connector_z_offset(kind: ActiveConnectorKind, active: bool) -> int:
     match kind:
-        case ConnectorKind.ACTIVE_NORMAL | ConnectorKind.ACTIVE_FAKE_NORMAL:
-            return 1
-        case ConnectorKind.ACTIVE_CRITICAL | ConnectorKind.ACTIVE_FAKE_CRITICAL:
-            return 0
+        case ConnectorKind.ACTIVE_NORMAL | ConnectorKind.ACTIVE_FAKE_NORMAL | ConnectorKind.GUIDE_NORMAL:
+            return 3 - active
+        case ConnectorKind.ACTIVE_CRITICAL | ConnectorKind.ACTIVE_FAKE_CRITICAL | ConnectorKind.GUIDE_CRITICAL:
+            return 1 - active
         case _:
             assert_never(kind)
 
@@ -192,7 +209,9 @@ def get_connector_alpha_option(kind: ConnectorKind) -> float:
         ):
             return Options.slide_alpha
         case (
-            ConnectorKind.GUIDE_NEUTRAL
+            ConnectorKind.GUIDE_NORMAL
+            | ConnectorKind.GUIDE_CRITICAL
+            | ConnectorKind.GUIDE_NEUTRAL
             | ConnectorKind.GUIDE_RED
             | ConnectorKind.GUIDE_GREEN
             | ConnectorKind.GUIDE_BLUE
@@ -218,7 +237,9 @@ def get_connector_quality_option(kind: ConnectorKind) -> float:
         ):
             return Options.slide_quality
         case (
-            ConnectorKind.GUIDE_NEUTRAL
+            ConnectorKind.GUIDE_NORMAL
+            | ConnectorKind.GUIDE_CRITICAL
+            | ConnectorKind.GUIDE_NEUTRAL
             | ConnectorKind.GUIDE_RED
             | ConnectorKind.GUIDE_GREEN
             | ConnectorKind.GUIDE_BLUE
@@ -228,32 +249,6 @@ def get_connector_quality_option(kind: ConnectorKind) -> float:
             | ConnectorKind.GUIDE_BLACK
         ):
             return Options.guide_quality
-        case ConnectorKind.NONE:
-            return 0
-        case _:
-            assert_never(kind)
-
-
-def get_max_quality_option(kind: ConnectorKind) -> float:
-    match kind:
-        case (
-            ConnectorKind.ACTIVE_NORMAL
-            | ConnectorKind.ACTIVE_FAKE_NORMAL
-            | ConnectorKind.ACTIVE_CRITICAL
-            | ConnectorKind.ACTIVE_FAKE_CRITICAL
-        ):
-            return Options.max_slide_quality
-        case (
-            ConnectorKind.GUIDE_NEUTRAL
-            | ConnectorKind.GUIDE_RED
-            | ConnectorKind.GUIDE_GREEN
-            | ConnectorKind.GUIDE_BLUE
-            | ConnectorKind.GUIDE_YELLOW
-            | ConnectorKind.GUIDE_PURPLE
-            | ConnectorKind.GUIDE_CYAN
-            | ConnectorKind.GUIDE_BLACK
-        ):
-            return Options.max_guide_quality
         case ConnectorKind.NONE:
             return 0
         case _:
@@ -307,7 +302,9 @@ def draw_connector(
             else:
                 normal_sprite @= sprites.fallback
         case (
-            ConnectorKind.GUIDE_NEUTRAL
+            ConnectorKind.GUIDE_NORMAL
+            | ConnectorKind.GUIDE_CRITICAL
+            | ConnectorKind.GUIDE_NEUTRAL
             | ConnectorKind.GUIDE_RED
             | ConnectorKind.GUIDE_GREEN
             | ConnectorKind.GUIDE_BLUE
@@ -336,7 +333,9 @@ def draw_connector(
             if visual_state == ConnectorVisualState.INACTIVE:
                 visual_state = ConnectorVisualState.ACTIVE
         case (
-            ConnectorKind.GUIDE_NEUTRAL
+            ConnectorKind.GUIDE_NORMAL
+            | ConnectorKind.GUIDE_CRITICAL
+            | ConnectorKind.GUIDE_NEUTRAL
             | ConnectorKind.GUIDE_RED
             | ConnectorKind.GUIDE_GREEN
             | ConnectorKind.GUIDE_BLUE
@@ -381,43 +380,70 @@ def draw_connector(
     end_size = max(1e-3, lerp(head_size, tail_size, end_interp_frac))  # Lightweight rendering needs >0 size.
     start_alpha = lerp(head_alpha, tail_alpha, start_frac)
     end_alpha = lerp(head_alpha, tail_alpha, end_frac)
-
-    max_segment = get_max_quality_option(kind) if get_max_quality_option(kind) > 0 else 256
-    quality = get_connector_quality_option(kind)
-
     start_pos_y = transformed_vec_at(start_lane, start_travel).y
     end_pos_y = transformed_vec_at(end_lane, end_travel).y
 
-    alpha_change_scale = max(
-        (abs(start_alpha - end_alpha) * get_connector_alpha_option(kind)) ** 0.8 * 3,
-        (abs(start_alpha - end_alpha) * get_connector_alpha_option(kind)) ** 0.5 * abs(start_pos_y - end_pos_y) * 3,
-    )
+    match ease_type:
+        case EaseType.NONE:
+            curve_change_scale = 0.0
+        case EaseType.LINEAR:
+            mid_travel = (start_travel + end_travel) / 2
+            perspective_factor = max(0.1, mid_travel) ** 0.8
 
-    if alpha_change_scale >= 0.8:
-        curve_change_scale = 0
-    else:
-        pos_offset = 0
-        for sl, el, hl, tl in (
-            (start_lane - start_size, end_lane - end_size, head_lane - head_size, tail_lane - tail_size),
-            (start_lane + start_size, end_lane + end_size, head_lane + head_size, tail_lane + tail_size),
-        ):
-            start_ref = transformed_vec_at(sl, start_travel)
-            end_ref = transformed_vec_at(el, end_travel)
+            x_diff = (
+                max(
+                    abs((start_lane - start_size) - (end_lane - end_size)),
+                    abs((start_lane + start_size) - (end_lane + end_size)),
+                )
+                * Layout.w_scale
+                / perspective_factor
+            ) * abs(end_progress - start_progress)
+            curve_change_scale = x_diff**0.8
+        case _:
+            pos_offset = 0
+            left_start_lane = start_lane - start_size
+            left_end_lane = end_lane - end_size
+            right_start_lane = start_lane + end_size
+            right_end_lane = end_lane + end_size
+            if abs(left_start_lane - left_end_lane) > abs(right_start_lane - right_end_lane):
+                ref_start_lane = left_start_lane
+                ref_end_lane = left_end_lane
+                ref_head_lane = head_lane - head_size
+                ref_tail_lane = tail_lane - tail_size
+            else:
+                ref_start_lane = right_start_lane
+                ref_end_lane = right_end_lane
+                ref_head_lane = head_lane + head_size
+                ref_tail_lane = tail_lane + tail_size
+            start_ref = transformed_vec_at(ref_start_lane, start_travel)
+            end_ref = transformed_vec_at(ref_end_lane, end_travel)
             pos_offset_this_side = 0
-            for r in (0.25, 0.5, 0.75):
+            for r in (0.25, 0.75):
                 ease_frac = lerp(start_ease_frac, end_ease_frac, r)
                 interp_frac = unlerp_clamped(eased_head_ease_frac, eased_tail_ease_frac, ease(ease_type, ease_frac))
                 progress = lerp(start_progress, end_progress, r)
                 travel = approach(progress)
-                lane = lerp(hl, tl, interp_frac)
+                lane = lerp(ref_head_lane, ref_tail_lane, interp_frac)
                 pos = transformed_vec_at(lane, travel)
                 ref_pos = lerp(start_ref, end_ref, unlerp_clamped(start_travel, end_travel, travel))
-                pos_offset_this_side += abs(pos.x - ref_pos.x)
-            pos_offset = max(pos_offset, pos_offset_this_side)
-            curve_change_scale = pos_offset**0.4 * 1.6
-    segment_count = int(clamp(ceil(max(curve_change_scale, alpha_change_scale) * quality * 10), 1, max_segment))
+                screen_offset = abs(pos.x - ref_pos.x)
+                compensation_factor = max(0.1, travel) ** 0.8
+                pos_offset_this_side += screen_offset / compensation_factor
+            pos_offset = max(pos_offset, pos_offset_this_side) * abs(end_progress - start_progress) ** 0.7
+            curve_change_scale = pos_offset**0.4 * 2
+    alpha_change_scale = max(
+        (abs(start_alpha - end_alpha) * get_connector_alpha_option(kind)) ** 0.8 * 3,
+        (abs(start_alpha - end_alpha) * get_connector_alpha_option(kind)) ** 0.5 * abs(start_pos_y - end_pos_y) * 3,
+    )
+    quality = get_connector_quality_option(kind)
+    segment_count = max(1, ceil(max(curve_change_scale, alpha_change_scale) * quality * 10))
 
-    z = get_connector_z(kind, segment_head_target_time, segment_head_lane, time())
+    z_normal = get_connector_z(kind, segment_head_target_time, segment_head_lane, active=False)
+    if visual_state == ConnectorVisualState.ACTIVE and active_sprite.is_available:
+        z_active = get_connector_z(kind, segment_head_target_time, segment_head_lane, active=True)
+    else:
+        z_active = z_normal
+
     last_travel = start_travel
     last_lane = start_lane
     last_size = start_size
@@ -457,12 +483,14 @@ def draw_connector(
         if visual_state == ConnectorVisualState.ACTIVE and active_sprite.is_available:
             if Options.connector_animation:
                 a1, a2 = get_cross_fate_opacities(base_a, time() - segment_head_target_time, 0.5)
-                normal_sprite.draw(layout, z=z, a=a1)
-                active_sprite.draw(layout, z=z, a=a2)
+                normal_sprite.draw(layout, z=z_normal, a=a1)
+                active_sprite.draw(layout, z=z_active, a=a2)
             else:
-                normal_sprite.draw(layout, z=z, a=base_a)
+                active_sprite.draw(layout, z=z_active, a=base_a)
         else:
-            normal_sprite.draw(layout, z=z, a=base_a * (1 if visual_state != ConnectorVisualState.INACTIVE else 0.5))
+            normal_sprite.draw(
+                layout, z=z_normal, a=base_a * (1 if visual_state != ConnectorVisualState.INACTIVE else 0.5)
+            )
 
         last_travel = next_travel
         last_lane = next_lane
@@ -607,7 +635,7 @@ def draw_connector_slot_glow_effect(
     )
     ex = 0.035 * abs(2 * size) + 0.08 if Options.version == 0 else 0
     layout = layout_slot_glow_effect(lane, size + ex, height)
-    z = get_z(LAYER_SLOT_GLOW_EFFECT, start_time, lane, current_time=time())
+    z = get_z(LAYER_SLOT_GLOW_EFFECT, (2 * time()) - start_time, lane)
     a = remap_clamped(start_time, start_time + 0.25, 0.0, 0.35, time())
     sprite.draw(layout, z=z, a=a)
 
