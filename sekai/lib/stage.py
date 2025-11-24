@@ -3,16 +3,6 @@ from math import cos, pi
 from sonolus.script.runtime import is_replay, is_watch, time
 
 from sekai.lib.effect import SFX_DISTANCE, Effects
-from sekai.lib.layer import (
-    LAYER_BACKGROUND_COVER,
-    LAYER_COVER,
-    LAYER_JUDGMENT,
-    LAYER_JUDGMENT_LINE,
-    LAYER_STAGE,
-    LAYER_STAGE_COVER,
-    LAYER_STAGE_LANE,
-    get_z,
-)
 from sekai.lib.layout import (
     layout_background_cover,
     layout_custom_tag,
@@ -29,71 +19,73 @@ from sekai.lib.particle import Particles
 from sekai.lib.skin import Skin
 
 
-def draw_stage_and_accessories():
-    draw_stage()
-    draw_stage_cover()
-    draw_auto_play()
-    draw_background_cover()
+def draw_stage_and_accessories(
+    z_stage_lane, z_stage_cover, z_stage, z_judgment_line, z_cover, z_cover_line, z_judgment, z_background_cover
+):
+    draw_stage(z_stage_lane, z_stage_cover, z_stage, z_judgment_line)
+    draw_stage_cover(z_cover, z_cover_line)
+    draw_auto_play(z_judgment)
+    draw_background_cover(z_background_cover)
 
 
-def draw_stage():
+def draw_stage(z_stage_lane, z_stage_cover, z_stage, z_judgment_line):
     if not Options.show_lane:
         return
     if Skin.sekai_stage_lane.is_available and Skin.sekai_stage_cover.is_available:
-        draw_sekai_divided_stage()
+        draw_sekai_divided_stage(z_stage_lane, z_stage_cover)
     elif Skin.sekai_stage.is_available:
-        draw_sekai_stage()
+        draw_sekai_stage(z_stage)
     else:
-        draw_fallback_stage()
+        draw_fallback_stage(z_stage, z_judgment_line)
 
 
-def draw_sekai_stage():
+def draw_sekai_stage(z_stage):
     layout = layout_sekai_stage()
-    Skin.sekai_stage.draw(layout, z=get_z(LAYER_STAGE))
+    Skin.sekai_stage.draw(layout, z=z_stage)
 
 
-def draw_sekai_divided_stage():
+def draw_sekai_divided_stage(z_stage_lane, z_stage_cover):
     layout = layout_sekai_stage()
-    Skin.sekai_stage_lane.draw(layout, z=get_z(LAYER_STAGE_LANE))
-    Skin.sekai_stage_cover.draw(layout, z=get_z(LAYER_STAGE_COVER), a=Options.lane_alpha)
+    Skin.sekai_stage_lane.draw(layout, z=z_stage_lane)
+    Skin.sekai_stage_cover.draw(layout, z=z_stage_cover, a=Options.lane_alpha)
 
 
-def draw_fallback_stage():
+def draw_fallback_stage(z_stage, z_judgment_line):
     layout = layout_lane_by_edges(-6.5, -6)
-    Skin.stage_left_border.draw(layout, z=get_z(LAYER_STAGE))
+    Skin.stage_left_border.draw(layout, z=z_stage)
     layout = layout_lane_by_edges(6, 6.5)
-    Skin.stage_right_border.draw(layout, z=get_z(LAYER_STAGE))
+    Skin.stage_right_border.draw(layout, z=z_stage)
 
     for lane in (-5, -3, -1, 1, 3, 5):
         layout = layout_lane(lane, 1)
-        Skin.lane.draw(layout, z=get_z(LAYER_STAGE))
+        Skin.lane.draw(layout, z=z_stage)
 
     layout = layout_fallback_judge_line()
-    Skin.judgment_line.draw(layout, z=get_z(LAYER_JUDGMENT_LINE))
+    Skin.judgment_line.draw(layout, z=z_judgment_line)
 
 
-def draw_stage_cover():
+def draw_stage_cover(z_cover, z_cover_line):
     if Options.stage_cover > 0:
         layout = layout_stage_cover()
         layout2 = layout_stage_cover_line()
-        Skin.cover.draw(layout, z=get_z(LAYER_COVER), a=0.9)
-        Skin.guide_neutral.draw(layout2, z=get_z(LAYER_COVER + 0.1), a=0.75)
+        Skin.cover.draw(layout, z=z_cover, a=0.9)
+        Skin.guide_neutral.draw(layout2, z=z_cover_line, a=0.75)
     if Options.hidden > 0:
         layout = layout_hidden_cover()
-        Skin.cover.draw(layout, z=get_z(LAYER_COVER), a=1)
+        Skin.cover.draw(layout, z=z_cover, a=1)
 
 
-def draw_background_cover():
+def draw_background_cover(z_background_cover):
     if Options.background_alpha != 1:
         layout = layout_background_cover()
-        Skin.guide_black.draw(layout, z=get_z(LAYER_BACKGROUND_COVER), a=1 - Options.background_alpha)
+        Skin.guide_black.draw(layout, z=z_background_cover, a=1 - Options.background_alpha)
 
 
-def draw_auto_play():
+def draw_auto_play(z_judgment):
     if Options.custom_tag and is_watch() and not is_replay():
         layout = layout_custom_tag()
         a = 0.8 * (cos(time() * pi) + 1) / 2
-        Skin.auto_live.draw(layout, z=get_z(LAYER_JUDGMENT), a=a)
+        Skin.auto_live.draw(layout, z=z_judgment, a=a)
 
 
 def play_lane_hit_effects(lane: float):

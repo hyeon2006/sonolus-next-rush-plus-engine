@@ -185,6 +185,7 @@ class Connector(PlayArchetype):
             if group_hide_notes(segment_head.timescale_group):
                 return
             if self.active_tail_ref.index > 0 and self.active_tail.is_despawned:
+                self.despawn = True
                 return
             draw_connector(
                 kind=self.kind,
