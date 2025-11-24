@@ -159,6 +159,8 @@ class WatchConnector(WatchArchetype):
                             )
                         case (
                             ConnectorKind.NONE
+                            | ConnectorKind.GUIDE_NORMAL
+                            | ConnectorKind.GUIDE_CRITICAL
                             | ConnectorKind.GUIDE_NEUTRAL
                             | ConnectorKind.GUIDE_RED
                             | ConnectorKind.GUIDE_GREEN
@@ -189,6 +191,8 @@ class WatchConnector(WatchArchetype):
                     )
                 case (
                     ConnectorKind.NONE
+                    | ConnectorKind.GUIDE_NORMAL
+                    | ConnectorKind.GUIDE_CRITICAL
                     | ConnectorKind.GUIDE_NEUTRAL
                     | ConnectorKind.GUIDE_RED
                     | ConnectorKind.GUIDE_GREEN

@@ -15,10 +15,9 @@ from sonolus.script.timing import beat_to_time
 from sekai.lib.ease import EaseType, ease
 from sekai.lib.effect import Effects
 from sekai.lib.layer import (
-    LAYER_ACTIVE_SIDE_CONNECTOR_BOTTOM,
-    LAYER_ACTIVE_SIDE_CONNECTOR_TOP,
-    LAYER_GUIDE_CONNECTOR_BOTTOM,
-    LAYER_GUIDE_CONNECTOR_TOP,
+    LAYER_ACTIVE_SIDE_CONNECTOR,
+    LAYER_GUIDE_CONNECTOR,
+    LAYER_LOWER_GUIDE_CONNECTOR,
     LAYER_SLOT_GLOW_EFFECT,
     get_z,
 )
@@ -48,6 +47,8 @@ class ConnectorKind(IntEnum):
 
     ACTIVE_NORMAL = 1
     ACTIVE_CRITICAL = 2
+    GUIDE_NORMAL = 3
+    GUIDE_CRITICAL = 4
     ACTIVE_FAKE_NORMAL = 51
     ACTIVE_FAKE_CRITICAL = 52
 
@@ -74,6 +75,8 @@ ActiveConnectorKind = Literal[
 ]
 
 GuideConnectorKind = Literal[
+    ConnectorKind.GUIDE_NORMAL,
+    ConnectorKind.GUIDE_CRITICAL,
     ConnectorKind.GUIDE_NEUTRAL,
     ConnectorKind.GUIDE_RED,
     ConnectorKind.GUIDE_GREEN,
@@ -106,6 +109,10 @@ def get_active_connector_sprites(kind: ActiveConnectorKind) -> ActiveConnectorSp
 def get_guide_connector_sprite(kind: GuideConnectorKind) -> Sprite:
     result = +Sprite
     match kind:
+        case ConnectorKind.GUIDE_NORMAL:
+            result @= green_guide_sprites
+        case ConnectorKind.GUIDE_CRITICAL:
+            result @= yellow_guide_sprites
         case ConnectorKind.GUIDE_NEUTRAL:
             result @= ActiveSkin.guide_neutral
         case ConnectorKind.GUIDE_RED:
@@ -141,6 +148,14 @@ def get_connector_z(kind: ConnectorKind, target_time: float, lane: float) -> flo
                 lane=lane,
                 etc=get_active_connector_z_offset(kind),
             )
+        case ConnectorKind.GUIDE_NORMAL | ConnectorKind.GUIDE_CRITICAL:
+            return get_z(
+                LAYER_LOWER_GUIDE_CONNECTOR,
+                time=target_time,
+                lane=lane,
+                etc=get_active_connector_z_offset(kind, active),
+                invert_time=True,
+            )
         case (
             ConnectorKind.GUIDE_NEUTRAL
             | ConnectorKind.GUIDE_RED
@@ -165,9 +180,9 @@ def get_connector_z(kind: ConnectorKind, target_time: float, lane: float) -> flo
 
 def get_active_connector_z_offset(kind: ActiveConnectorKind, active: bool) -> int:
     match kind:
-        case ConnectorKind.ACTIVE_NORMAL | ConnectorKind.ACTIVE_FAKE_NORMAL:
-            return 1
-        case ConnectorKind.ACTIVE_CRITICAL | ConnectorKind.ACTIVE_FAKE_CRITICAL:
+        case ConnectorKind.ACTIVE_NORMAL | ConnectorKind.ACTIVE_FAKE_NORMAL | ConnectorKind.GUIDE_NORMAL:
+            return 3 - active
+        case ConnectorKind.ACTIVE_CRITICAL | ConnectorKind.ACTIVE_FAKE_CRITICAL | ConnectorKind.GUIDE_CRITICAL:
             return 1 - active
         case _:
             assert_never(kind)
@@ -183,7 +198,9 @@ def get_connector_alpha_option(kind: ConnectorKind) -> float:
         ):
             return Options.slide_alpha
         case (
-            ConnectorKind.GUIDE_NEUTRAL
+            ConnectorKind.GUIDE_NORMAL
+            | ConnectorKind.GUIDE_CRITICAL
+            | ConnectorKind.GUIDE_NEUTRAL
             | ConnectorKind.GUIDE_RED
             | ConnectorKind.GUIDE_GREEN
             | ConnectorKind.GUIDE_BLUE
@@ -209,7 +226,9 @@ def get_connector_quality_option(kind: ConnectorKind) -> float:
         ):
             return Options.slide_quality
         case (
-            ConnectorKind.GUIDE_NEUTRAL
+            ConnectorKind.GUIDE_NORMAL
+            | ConnectorKind.GUIDE_CRITICAL
+            | ConnectorKind.GUIDE_NEUTRAL
             | ConnectorKind.GUIDE_RED
             | ConnectorKind.GUIDE_GREEN
             | ConnectorKind.GUIDE_BLUE
@@ -219,32 +238,6 @@ def get_connector_quality_option(kind: ConnectorKind) -> float:
             | ConnectorKind.GUIDE_BLACK
         ):
             return Options.guide_quality
-        case ConnectorKind.NONE:
-            return 0
-        case _:
-            assert_never(kind)
-
-
-def get_max_quality_option(kind: ConnectorKind) -> float:
-    match kind:
-        case (
-            ConnectorKind.ACTIVE_NORMAL
-            | ConnectorKind.ACTIVE_FAKE_NORMAL
-            | ConnectorKind.ACTIVE_CRITICAL
-            | ConnectorKind.ACTIVE_FAKE_CRITICAL
-        ):
-            return Options.max_slide_quality
-        case (
-            ConnectorKind.GUIDE_NEUTRAL
-            | ConnectorKind.GUIDE_RED
-            | ConnectorKind.GUIDE_GREEN
-            | ConnectorKind.GUIDE_BLUE
-            | ConnectorKind.GUIDE_YELLOW
-            | ConnectorKind.GUIDE_PURPLE
-            | ConnectorKind.GUIDE_CYAN
-            | ConnectorKind.GUIDE_BLACK
-        ):
-            return Options.max_guide_quality
         case ConnectorKind.NONE:
             return 0
         case _:
