@@ -15,8 +15,8 @@ from sekai.lib.layout import (
     layout_stage_cover_line,
 )
 from sekai.lib.options import Options
-from sekai.lib.particle import ActiveParticles
-from sekai.lib.skin import ActiveSkin
+from sekai.lib.particle import Particles
+from sekai.lib.skin import Skin
 
 
 def draw_stage_and_accessories(
@@ -33,7 +33,7 @@ def draw_stage(z_stage_lane, z_stage_cover, z_stage, z_judgment_line):
         return
     if Skin.sekai_stage_lane.is_available and Skin.sekai_stage_cover.is_available:
         draw_sekai_divided_stage(z_stage_lane, z_stage_cover)
-    elif ActiveSkin.sekai_stage.is_available:
+    elif Skin.sekai_stage.is_available:
         draw_sekai_stage(z_stage)
     else:
         draw_fallback_stage(z_stage, z_judgment_line)
@@ -46,33 +46,33 @@ def draw_sekai_stage(z_stage):
 
 def draw_sekai_divided_stage(z_stage_lane, z_stage_cover):
     layout = layout_sekai_stage()
-    ActiveSkin.sekai_stage_lane.draw(layout, z=z_stage_lane)
+    Skin.sekai_stage_lane.draw(layout, z=z_stage_lane)
     Skin.sekai_stage_cover.draw(layout, z=z_stage_cover, a=Options.lane_alpha)
 
 
 def draw_fallback_stage(z_stage, z_judgment_line):
     layout = layout_lane_by_edges(-6.5, -6)
-    ActiveSkin.stage_left_border.draw(layout, z=z_stage)
+    Skin.stage_left_border.draw(layout, z=z_stage)
     layout = layout_lane_by_edges(6, 6.5)
-    ActiveSkin.stage_right_border.draw(layout, z=z_stage)
+    Skin.stage_right_border.draw(layout, z=z_stage)
 
     for lane in (-5, -3, -1, 1, 3, 5):
         layout = layout_lane(lane, 1)
-        ActiveSkin.lane.draw(layout, z=z_stage)
+        Skin.lane.draw(layout, z=z_stage)
 
     layout = layout_fallback_judge_line()
-    ActiveSkin.judgment_line.draw(layout, z=z_judgment_line)
+    Skin.judgment_line.draw(layout, z=z_judgment_line)
 
 
 def draw_stage_cover(z_cover, z_cover_line):
     if Options.stage_cover > 0:
         layout = layout_stage_cover()
         layout2 = layout_stage_cover_line()
-        ActiveSkin.cover.draw(layout, z=z_cover, a=0.9)
+        Skin.cover.draw(layout, z=z_cover, a=0.9)
         Skin.guide_neutral.draw(layout2, z=z_cover_line, a=0.75)
     if Options.hidden > 0:
         layout = layout_hidden_cover()
-        ActiveSkin.cover.draw(layout, z=z_cover, a=1)
+        Skin.cover.draw(layout, z=z_cover, a=1)
 
 
 def draw_background_cover(z_background_cover):
@@ -106,4 +106,4 @@ def schedule_lane_sfx(lane: float, target_time: float):
 def play_lane_particle(lane: float):
     if Options.lane_effect_enabled:
         layout = layout_lane(lane, 0.5)
-        ActiveParticles.lane.spawn(layout, duration=0.3)
+        Particles.lane.spawn(layout, duration=0.3)
