@@ -1,30 +1,45 @@
 from __future__ import annotations
 
-from typing import cast
+from typing import assert_never, cast
 
 from sonolus.script.archetype import EntityRef, PreviewArchetype, StandardImport, entity_data, imported
 from sonolus.script.interval import unlerp_clamped
-from sonolus.script.sprite import Sprite
 from sonolus.script.timing import beat_to_time
 
 from sekai.lib.connector import ConnectorKind, ConnectorLayer
 from sekai.lib.ease import EaseType
 from sekai.lib.layer import (
     LAYER_NOTE_ARROW,
+    LAYER_NOTE_BODY,
+    LAYER_NOTE_FLICK_BODY,
+    LAYER_NOTE_SLIM_BODY,
     LAYER_NOTE_TICK,
     get_z,
 )
 from sekai.lib.layout import FlickDirection
-from sekai.lib.note import (
-    NoteKind,
-    get_attach_params,
-    get_note_body_layer,
-    get_note_sprite_set,
-    map_note_kind,
-    mirror_flick_direction,
-)
+from sekai.lib.note import NoteKind, get_attach_params, map_note_kind, mirror_flick_direction
 from sekai.lib.options import Options
-from sekai.lib.skin import ArrowRenderType, ArrowSpriteSet, BodyRenderType, BodySpriteSet
+from sekai.lib.skin import (
+    ArrowSprites,
+    BodySprites,
+    TickSprites,
+    critical_arrow_sprites,
+    critical_note_body_sprites,
+    critical_tick_sprites,
+    critical_trace_note_body_sprites,
+    critical_trace_tick_sprites,
+    damage_note_body_sprites,
+    flick_note_body_sprites,
+    normal_arrow_sprites,
+    normal_note_body_sprites,
+    normal_tick_sprites,
+    normal_trace_note_body_sprites,
+    normal_trace_tick_sprites,
+    slide_note_body_sprites,
+    trace_flick_note_body_sprites,
+    trace_flick_tick_sprites,
+    trace_slide_note_body_sprites,
+)
 from sekai.play.note import derive_note_archetypes
 from sekai.preview.layout import (
     PREVIEW_COLUMN_SECS,
@@ -133,47 +148,109 @@ class PreviewBaseNote(PreviewArchetype):
 def draw_note(kind: NoteKind, lane: float, size: float, direction: FlickDirection, target_time: float):
     col = time_to_preview_col(target_time)
     y = time_to_preview_y(target_time, col)
-    sprite_set = get_note_sprite_set(kind, direction)
-    draw_note_body(sprite_set.body, kind, lane, size, target_time, col, y)
-    draw_note_arrow(sprite_set.arrow, lane, size, target_time, direction, col, y)
-    draw_note_tick(sprite_set.tick, lane, target_time, col, y)
+    draw_note_body(kind, lane, size, target_time, col, y)
+    draw_note_arrow(kind, lane, size, target_time, direction, col, y)
+    draw_note_tick(kind, lane, target_time, col, y)
 
 
-def draw_note_body(
-    sprites: BodySpriteSet, kind: NoteKind, lane: float, size: float, target_time: float, col: int, y: float
-):
-    layer = get_note_body_layer(kind)
-    z = get_z(layer, time=get_adjusted_time(target_time, col), lane=lane)
-    match sprites.render_type:
-        case BodyRenderType.NORMAL:
-            left_layout, middle_layout, right_layout = layout_preview_regular_note_body(lane, size, col, y)
-            sprites.left.draw(left_layout, z=z)
-            sprites.middle.draw(middle_layout, z=z)
-            sprites.right.draw(right_layout, z=z)
-        case BodyRenderType.SLIM:
-            left_layout, middle_layout, right_layout = layout_preview_slim_note_body(lane, size, col, y)
-            sprites.left.draw(left_layout, z=z)
-            sprites.middle.draw(middle_layout, z=z)
-            sprites.right.draw(right_layout, z=z)
-        case BodyRenderType.NORMAL_FALLBACK:
-            layout = layout_preview_regular_note_body_fallback(lane, size, col, y)
-            sprites.middle.draw(layout, z=z)
-        case BodyRenderType.SLIM_FALLBACK:
-            layout = layout_preview_slim_note_body_fallback(lane, size, col, y)
-            sprites.middle.draw(layout, z=z)
+def draw_note_body(kind: NoteKind, lane: float, size: float, target_time: float, col: int, y: float):
+    match kind:
+        case NoteKind.NORM_TAP:
+            _draw_regular_body(normal_note_body_sprites, lane, size, target_time, col, y)
+        case NoteKind.NORM_FLICK | NoteKind.NORM_HEAD_FLICK | NoteKind.NORM_TAIL_FLICK:
+            _draw_flick_body(flick_note_body_sprites, lane, size, target_time, col, y)
+        case NoteKind.NORM_TRACE | NoteKind.NORM_HEAD_TRACE | NoteKind.NORM_TAIL_TRACE:
+            _draw_slim_body(normal_trace_note_body_sprites, lane, size, target_time, col, y)
+        case NoteKind.NORM_TRACE_FLICK | NoteKind.NORM_HEAD_TRACE_FLICK | NoteKind.NORM_TAIL_TRACE_FLICK:
+            _draw_slim_body(trace_flick_note_body_sprites, lane, size, target_time, col, y)
+        case (
+            NoteKind.NORM_RELEASE
+            | NoteKind.NORM_HEAD_TAP
+            | NoteKind.NORM_HEAD_RELEASE
+            | NoteKind.NORM_TAIL_TAP
+            | NoteKind.NORM_TAIL_RELEASE
+        ):
+            _draw_regular_body(slide_note_body_sprites, lane, size, target_time, col, y)
+        case (
+            NoteKind.CRIT_TAP
+            | NoteKind.CRIT_RELEASE
+            | NoteKind.CRIT_HEAD_TAP
+            | NoteKind.CRIT_HEAD_RELEASE
+            | NoteKind.CRIT_TAIL_TAP
+            | NoteKind.CRIT_TAIL_RELEASE
+        ):
+            _draw_regular_body(critical_note_body_sprites, lane, size, target_time, col, y)
+        case NoteKind.CRIT_FLICK | NoteKind.CRIT_HEAD_FLICK | NoteKind.CRIT_TAIL_FLICK:
+            _draw_flick_body(critical_note_body_sprites, lane, size, target_time, col, y)
+        case (
+            NoteKind.CRIT_TRACE
+            | NoteKind.CRIT_HEAD_TRACE
+            | NoteKind.CRIT_TAIL_TRACE
+            | NoteKind.CRIT_TRACE_FLICK
+            | NoteKind.CRIT_HEAD_TRACE_FLICK
+            | NoteKind.CRIT_TAIL_TRACE_FLICK
+        ):
+            _draw_slim_body(critical_trace_note_body_sprites, lane, size, target_time, col, y)
+        case NoteKind.NORM_HEAD_TRACE | NoteKind.NORM_TAIL_TRACE:
+            _draw_slim_body(trace_slide_note_body_sprites, lane, size, target_time, col, y)
+        case NoteKind.DAMAGE:
+            _draw_slim_body(damage_note_body_sprites, lane, size, target_time, col, y)
+        case NoteKind.NORM_TICK | NoteKind.CRIT_TICK | NoteKind.HIDE_TICK | NoteKind.ANCHOR:
+            pass
+        case _:
+            assert_never(kind)
 
 
 def draw_note_arrow(
-    sprites: ArrowSpriteSet, lane: float, size: float, target_time: float, direction: FlickDirection, col: int, y: float
+    kind: NoteKind, lane: float, size: float, target_time: float, direction: FlickDirection, col: int, y: float
 ):
-    z = get_z(LAYER_NOTE_ARROW, time=get_adjusted_time(target_time, col), lane=lane)
-    match sprites.render_type:
-        case ArrowRenderType.NORMAL:
-            layout = layout_preview_flick_arrow(lane, size, direction, col, y)
-            sprites.get_sprite(size, direction).draw(layout, z=z)
-        case ArrowRenderType.FALLBACK:
-            layout = layout_preview_flick_arrow_fallback(lane, size, direction, col, y)
-            sprites.get_sprite(size, direction).draw(layout, z=z)
+    match kind:
+        case (
+            NoteKind.NORM_FLICK
+            | NoteKind.NORM_TRACE_FLICK
+            | NoteKind.NORM_HEAD_FLICK
+            | NoteKind.NORM_HEAD_TRACE_FLICK
+            | NoteKind.NORM_TAIL_FLICK
+            | NoteKind.NORM_TAIL_TRACE_FLICK
+        ):
+            _draw_arrow(normal_arrow_sprites, lane, size, target_time, direction, col, y)
+        case (
+            NoteKind.CRIT_FLICK
+            | NoteKind.CRIT_TRACE_FLICK
+            | NoteKind.CRIT_HEAD_FLICK
+            | NoteKind.CRIT_HEAD_TRACE_FLICK
+            | NoteKind.CRIT_TAIL_FLICK
+            | NoteKind.CRIT_TAIL_TRACE_FLICK
+        ):
+            _draw_arrow(critical_arrow_sprites, lane, size, target_time, direction, col, y)
+        case (
+            NoteKind.NORM_TAP
+            | NoteKind.CRIT_TAP
+            | NoteKind.NORM_TRACE
+            | NoteKind.CRIT_TRACE
+            | NoteKind.NORM_RELEASE
+            | NoteKind.CRIT_RELEASE
+            | NoteKind.NORM_HEAD_TAP
+            | NoteKind.CRIT_HEAD_TAP
+            | NoteKind.NORM_HEAD_TRACE
+            | NoteKind.CRIT_HEAD_TRACE
+            | NoteKind.NORM_TAIL_TAP
+            | NoteKind.CRIT_TAIL_TAP
+            | NoteKind.NORM_TAIL_TRACE
+            | NoteKind.CRIT_TAIL_TRACE
+            | NoteKind.NORM_HEAD_RELEASE
+            | NoteKind.CRIT_HEAD_RELEASE
+            | NoteKind.NORM_TAIL_RELEASE
+            | NoteKind.CRIT_TAIL_RELEASE
+            | NoteKind.NORM_TICK
+            | NoteKind.CRIT_TICK
+            | NoteKind.HIDE_TICK
+            | NoteKind.ANCHOR
+            | NoteKind.DAMAGE
+        ):
+            pass
+        case _:
+            assert_never(kind)
 
 
 def draw_note_tick(kind: NoteKind, lane: float, target_time: float, col: int, y: float):

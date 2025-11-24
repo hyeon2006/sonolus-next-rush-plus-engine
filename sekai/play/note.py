@@ -174,8 +174,6 @@ class BaseNote(PlayArchetype):
         return self.start_time
 
     def should_spawn(self) -> bool:
-        if self.kind == NoteKind.ANCHOR:
-            return False
         return time() >= self.start_time
 
     def update_sequential(self):

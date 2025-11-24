@@ -27,8 +27,6 @@ class WatchInitialization(WatchArchetype):
         init_level_config(self.score_mode)
         init_layout()
         init_ui()
-        init_skin()
-        init_particles()
         init_buckets()
         init_score()
 

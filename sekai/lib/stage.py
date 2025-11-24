@@ -15,8 +15,8 @@ from sekai.lib.layout import (
     layout_stage_cover_line,
 )
 from sekai.lib.options import Options
-from sekai.lib.particle import ActiveParticles
-from sekai.lib.skin import ActiveSkin
+from sekai.lib.particle import Particles
+from sekai.lib.skin import Skin
 
 
 def draw_stage_and_accessories(
@@ -106,4 +106,4 @@ def schedule_lane_sfx(lane: float, target_time: float):
 def play_lane_particle(lane: float):
     if Options.lane_effect_enabled:
         layout = layout_lane(lane, 0.5)
-        ActiveParticles.lane.spawn(layout, duration=0.3)
+        Particles.lane.spawn(layout, duration=0.3)

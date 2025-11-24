@@ -151,7 +151,7 @@ class WatchBaseNote(WatchArchetype):
             self.judgment = Judgment.PERFECT
             if self.is_scored:
                 schedule_note_sfx(self.effect_kind, Judgment.PERFECT, self.target_time)
-                schedule_note_slot_effects(self.kind, self.lane, self.size, self.target_time, self.direction)
+                schedule_note_slot_effects(self.kind, self.lane, self.size, self.target_time)
 
         self.result.target_time = self.target_time
 
