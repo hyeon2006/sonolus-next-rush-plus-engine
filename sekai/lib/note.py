@@ -511,11 +511,19 @@ def get_note_body_layer(kind: NoteKind) -> int:
             NoteKind.NORM_FLICK
             | NoteKind.CRIT_FLICK
             | NoteKind.NORM_HEAD_FLICK
+            | NoteKind.NORM_HEAD_TRACE_FLICK
+            | NoteKind.NORM_TAIL_FLICK
+            | NoteKind.NORM_TAIL_TRACE_FLICK
+        ):
+            _draw_arrow(normal_arrow_sprites, lane, size, travel, target_time, direction, kind)
+        case (
+            NoteKind.CRIT_FLICK
+            | NoteKind.CRIT_TRACE_FLICK
             | NoteKind.CRIT_HEAD_FLICK
             | NoteKind.NORM_TAIL_FLICK
             | NoteKind.CRIT_TAIL_FLICK
         ):
-            return LAYER_NOTE_FLICK_BODY
+            _draw_arrow(critical_arrow_sprites, lane, size, travel, target_time, direction, kind)
         case (
             NoteKind.NORM_TRACE
             | NoteKind.CRIT_TRACE
@@ -608,8 +616,14 @@ def _draw_tick(sprites: TickSprites, lane: float, travel: float, target_time: fl
     sprite.draw(layout, z=z, a=a)
 
 
-def draw_note_arrow(
-    sprites: ArrowSpriteSet, lane: float, size: float, travel: float, target_time: float, direction: FlickDirection
+def _draw_arrow(
+    sprites: ArrowSprites,
+    lane: float,
+    size: float,
+    travel: float,
+    target_time: float,
+    direction: FlickDirection,
+    kind: NoteKind,
 ):
     match direction:
         case _ if Options.marker_animation:
@@ -623,7 +637,7 @@ def draw_note_arrow(
             assert_never(direction)
     animation_alpha = (1 - ease_in_cubic(animation_progress)) if Options.marker_animation else 1
     a = get_alpha(target_time) * animation_alpha
-    z = get_z(LAYER_NOTE_ARROW, time=target_time, lane=lane)
+    z = get_z(LAYER_NOTE_ARROW, time=target_time, lane=lane, etc=get_arrow_z_offset(kind))
     if sprites.custom_available:
         layout = layout_flick_arrow(lane, size, direction, travel, animation_progress)
         sprites.get_sprite(size, direction).draw(layout, z=z, a=a)
@@ -632,7 +646,31 @@ def draw_note_arrow(
         sprites.fallback.draw(layout, z=z, a=a)
 
 
-def get_note_particles(kind: NoteKind, direction: FlickDirection) -> NoteParticleSet:
+def get_arrow_z_offset(kind: NoteKind) -> int:
+    match kind:
+        case (
+            NoteKind.NORM_FLICK
+            | NoteKind.NORM_TRACE_FLICK
+            | NoteKind.NORM_HEAD_FLICK
+            | NoteKind.NORM_HEAD_TRACE_FLICK
+            | NoteKind.NORM_TAIL_FLICK
+            | NoteKind.NORM_TAIL_TRACE_FLICK
+        ):
+            return 1
+        case (
+            NoteKind.CRIT_FLICK
+            | NoteKind.CRIT_TRACE_FLICK
+            | NoteKind.CRIT_HEAD_FLICK
+            | NoteKind.CRIT_HEAD_TRACE_FLICK
+            | NoteKind.CRIT_TAIL_FLICK
+            | NoteKind.CRIT_TAIL_TRACE_FLICK
+        ):
+            return 2
+        case _:
+            assert_never(kind)
+
+
+def get_note_particles(kind: NoteKind) -> NoteParticleSet:
     result = +NoteParticleSet
     match kind:
         case NoteKind.NORM_TAP:
