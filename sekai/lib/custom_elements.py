@@ -15,11 +15,7 @@ from sekai.lib.layout import (
 )
 from sekai.lib.options import Options
 from sekai.lib.skin import (
-    accuracy_text,
-    combo_label,
-    combo_number,
-    damage_flash,
-    judgment_text,
+    ActiveSkin,
 )
 
 
@@ -44,10 +40,10 @@ def draw_combo_label(ap: bool, z: float, glow_z=float):
     a = ui.combo_config.alpha * 0.8 * (cos(time() * pi) + 1) / 2
     layout = layout_combo_label(screen_center, w=w / 2, h=h / 2)
     if ap:
-        combo_label.get_sprite(ComboType.NORMAL).draw(quad=layout, z=z, a=ui.combo_config.alpha)
+        ActiveSkin.combo_label.get_sprite(ComboType.NORMAL).draw(quad=layout, z=z, a=ui.combo_config.alpha)
     else:
-        combo_label.get_sprite(ComboType.AP).draw(quad=layout, z=z, a=ui.combo_config.alpha)
-        combo_label.get_sprite(ComboType.GLOW).draw(quad=layout, z=glow_z, a=a)
+        ActiveSkin.combo_label.get_sprite(ComboType.AP).draw(quad=layout, z=z, a=ui.combo_config.alpha)
+        ActiveSkin.combo_label.get_sprite(ComboType.GLOW).draw(quad=layout, z=glow_z, a=a)
 
 
 def draw_combo_number(draw_time: float, ap: bool, combo: int, z: float, z2: float, z3: float):
@@ -186,20 +182,20 @@ class ComboNumberLayout(Record):
             )
 
             if not self.core.ap:
-                combo_number.get_sprite(combo=digit, combo_type=ComboType.GLOW).draw(
+                ActiveSkin.combo_number.get_sprite(combo=digit, combo_type=ComboType.GLOW).draw(
                     quad=digit_layout, z=z3, a=self.alpha.a3
                 )
-                combo_number.get_sprite(combo=digit, combo_type=ComboType.AP).draw(
+                ActiveSkin.combo_number.get_sprite(combo=digit, combo_type=ComboType.AP).draw(
                     quad=digit_layout2, z=z2, a=self.alpha.a2
                 )
-                combo_number.get_sprite(combo=digit, combo_type=ComboType.AP).draw(
+                ActiveSkin.combo_number.get_sprite(combo=digit, combo_type=ComboType.AP).draw(
                     quad=digit_layout, z=z, a=self.alpha.a
                 )
             else:
-                combo_number.get_sprite(combo=digit, combo_type=ComboType.NORMAL).draw(
+                ActiveSkin.combo_number.get_sprite(combo=digit, combo_type=ComboType.NORMAL).draw(
                     quad=digit_layout2, z=z2, a=self.alpha.a2
                 )
-                combo_number.get_sprite(combo=digit, combo_type=ComboType.NORMAL).draw(
+                ActiveSkin.combo_number.get_sprite(combo=digit, combo_type=ComboType.NORMAL).draw(
                     quad=digit_layout, z=z, a=self.alpha.a
                 )
 
@@ -217,7 +213,7 @@ def draw_judgment_text(
     a = ui.judgment_config.alpha * unlerp_clamped(draw_time, draw_time + 0.064, time())
     s = unlerp_clamped(draw_time, draw_time + 0.064, time())
     layout = layout_combo_label(screen_center, w=w * s / 2, h=h * s / 2)
-    judgment_text.get_sprite(
+    ActiveSkin.judgment.get_sprite(
         judgment_type=judgment, windows_bad=windows_bad, accuracy=accuracy, check_pass=check_pass
     ).draw(quad=layout, z=z, a=a)
 
@@ -232,7 +228,7 @@ def draw_judgment_accuracy(judgment: Judgment, accuracy: float, windows: Judgmen
     h, w = transform_fixed_size(base_h, base_w)
     a = ui.judgment_config.alpha
     layout = layout_combo_label(screen_center, w=w / 2, h=h / 2)
-    accuracy_text.get_sprite(
+    ActiveSkin.accuracy_warning.get_sprite(
         judgment=judgment,
         windows=windows.perfect,
         accuracy=accuracy,
@@ -257,4 +253,4 @@ def draw_damage_flash(draw_time: float, z: float):
                 tl=Vec2(l_val, t_val),
                 tr=Vec2(0, t_val),
             )
-            damage_flash.get_sprite().draw(quad=layout, z=z, a=a * 0.8)
+            ActiveSkin.damage_flash.draw(quad=layout, z=z, a=a * 0.8)

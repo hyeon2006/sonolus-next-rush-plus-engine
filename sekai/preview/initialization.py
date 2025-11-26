@@ -4,7 +4,7 @@ from sonolus.script.timing import beat_to_time
 
 from sekai.lib import archetype_names
 from sekai.lib.layer import LAYER_BEAT_LINE, get_z
-from sekai.lib.skin import Skin
+from sekai.lib.skin import ActiveSkin, init_skin
 from sekai.lib.ui import init_ui
 from sekai.preview.layout import (
     PREVIEW_COLUMN_SECS,
@@ -22,6 +22,7 @@ class PreviewInitialization(PreviewArchetype):
 
     @callback(order=1)
     def preprocess(self):
+        init_skin()
         init_ui()
         init_preview_layout()
 
@@ -52,8 +53,8 @@ def draw_beat_lines():
             layout = layout_preview_bar_line(
                 beat_to_time(beat + beat_offset), extend="left_only", extend_scale=extend_scale
             )
-            Skin.beat_line.draw(layout, z=get_z(LAYER_BEAT_LINE), a=0.5)
+            ActiveSkin.beat_line.draw(layout, z=get_z(LAYER_BEAT_LINE), a=0.5)
             layout = layout_preview_bar_line(
                 beat_to_time(beat + beat_offset), extend="right_only", extend_scale=extend_scale
             )
-            Skin.beat_line.draw(layout, z=get_z(LAYER_BEAT_LINE), a=0.5)
+            ActiveSkin.beat_line.draw(layout, z=get_z(LAYER_BEAT_LINE), a=0.5)

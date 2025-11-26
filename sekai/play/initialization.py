@@ -4,6 +4,7 @@ from sekai.lib import archetype_names
 from sekai.lib.buckets import init_buckets
 from sekai.lib.layout import init_layout
 from sekai.lib.note import init_note_life, init_score
+from sekai.lib.skin import init_skin
 from sekai.lib.ui import init_ui
 from sekai.play.input_manager import InputManager
 from sekai.play.note import NOTE_ARCHETYPES
@@ -20,6 +21,7 @@ class Initialization(PlayArchetype):
     def preprocess(self):
         init_level_config(self.score_mode)
         init_layout()
+        init_skin()
         init_ui()
         init_buckets()
         init_score(NOTE_ARCHETYPES)

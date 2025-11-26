@@ -13,7 +13,7 @@ from sonolus.script.vec import Vec2
 
 from sekai.lib.layout import Layout
 from sekai.lib.options import Options
-from sekai.lib.skin import combo_label, combo_number, judgment_text
+from sekai.lib.skin import ActiveSkin
 
 ui_config = UiConfig(
     scope="Sekai",
@@ -67,9 +67,9 @@ def init_ui():
     gap = 0.05
     box = screen().shrink(Vec2(gap, gap))
     show_ui = not Options.hide_ui
-    custom_combo_label = not Options.custom_combo or not combo_label.custom_available
-    custom_combo_number = not Options.custom_combo or not combo_number.custom_available
-    custom_judgment = not Options.custom_judgment or not judgment_text.custom_available
+    custom_combo_label = not Options.custom_combo or not ActiveSkin.combo_label.available
+    custom_combo_number = not Options.custom_combo or not ActiveSkin.combo_number.available
+    custom_judgment = not Options.custom_judgment or not ActiveSkin.judgment.available
 
     ui.menu.update(
         anchor=box.tr,

@@ -13,7 +13,7 @@ from sekai.lib.connector import (
     get_connector_alpha_option,
     get_connector_quality_option,
     get_connector_z,
-    get_guide_connector_sprites,
+    get_guide_connector_sprite,
 )
 from sekai.lib.ease import EaseType, ease
 from sekai.lib.layout import get_alpha
@@ -115,10 +115,7 @@ def draw_connector(
             | ConnectorKind.ACTIVE_FAKE_CRITICAL
         ):
             sprites = get_active_connector_sprites(kind)
-            if sprites.custom_available:
-                normal_sprite @= sprites.normal
-            else:
-                normal_sprite @= sprites.fallback
+            normal_sprite @= sprites.connection.normal
         case (
             ConnectorKind.GUIDE_NORMAL
             | ConnectorKind.GUIDE_CRITICAL
@@ -131,11 +128,7 @@ def draw_connector(
             | ConnectorKind.GUIDE_CYAN
             | ConnectorKind.GUIDE_BLACK
         ):
-            sprites = get_guide_connector_sprites(kind)
-            if sprites.custom_available:
-                normal_sprite @= sprites.normal
-            else:
-                normal_sprite @= sprites.fallback
+            normal_sprite @= get_guide_connector_sprite(kind)
         case ConnectorKind.NONE:
             return
         case _:

@@ -8,7 +8,7 @@ from sekai.lib.buckets import init_buckets
 from sekai.lib.layout import init_layout
 from sekai.lib.note import init_note_life, init_score
 from sekai.lib.options import Options
-from sekai.lib.skin import combo_label, combo_number, damage_flash, judgment_text
+from sekai.lib.skin import ActiveSkin, init_skin
 from sekai.lib.stage import schedule_lane_sfx
 from sekai.lib.streams import Streams
 from sekai.lib.ui import init_ui
@@ -26,6 +26,7 @@ class WatchInitialization(WatchArchetype):
     def preprocess(self):
         init_level_config(self.score_mode)
         init_layout()
+        init_skin()
         init_ui()
         init_buckets()
         init_score()
@@ -42,11 +43,11 @@ class WatchInitialization(WatchArchetype):
 
         if (
             not Options.hide_custom
-            or (Options.custom_combo and combo_label.custom_available)
-            or (Options.custom_combo and combo_number.custom_available)
-            or (Options.custom_judgment and judgment_text.custom_available)
+            or (Options.custom_combo and ActiveSkin.combo_label.available)
+            or (Options.custom_combo and ActiveSkin.combo_number.available)
+            or (Options.custom_judgment and ActiveSkin.judgment.available)
             or (Options.custom_accuracy and Options.custom_accuracy and is_replay())
-            or (Options.custom_damage and damage_flash.custom_available and is_replay())
+            or (Options.custom_damage and ActiveSkin.damage_flash.is_available and is_replay())
         ):
             sorted_linked_list()
 
