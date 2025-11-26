@@ -17,7 +17,7 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "sonolus-py", specifier = "~=0.12.9" }]
+requires-dist = [{ name = "sonolus-py", specifier = "~=0.12.10" }]
 
 [package.metadata.requires-dev]
 dev = [
