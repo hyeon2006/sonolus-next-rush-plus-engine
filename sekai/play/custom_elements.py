@@ -14,7 +14,7 @@ from sekai.lib.custom_elements import (
 )
 from sekai.lib.layer import LAYER_DAMAGE, LAYER_JUDGMENT, get_z
 from sekai.lib.options import Options
-from sekai.lib.skin import accuracy_text, combo_label, combo_number, damage_flash, judgment_text
+from sekai.lib.skin import ActiveSkin
 
 
 def spawn_custom(
@@ -27,11 +27,11 @@ def spawn_custom(
 ):
     if Options.hide_custom:
         return
-    if Options.custom_combo and combo_label.custom_available:
+    if Options.custom_combo and ActiveSkin.combo_label.available:
         ComboLabel.spawn(spawn_time=time(), judgment=judgment)
-    if Options.custom_combo and combo_number.custom_available:
+    if Options.custom_combo and ActiveSkin.combo_number.available:
         ComboNumber.spawn(spawn_time=time(), judgment=judgment)
-    if Options.custom_judgment and judgment_text.custom_available:
+    if Options.custom_judgment and ActiveSkin.judgment.available:
         JudgmentText.spawn(
             spawn_time=time(),
             judgment=judgment,
@@ -42,8 +42,8 @@ def spawn_custom(
     if (
         Options.custom_judgment
         and Options.custom_accuracy
-        and judgment_text.custom_available
-        and accuracy_text.custom_available
+        and ActiveSkin.judgment.available
+        and ActiveSkin.accuracy_warning.available
         and judgment != Judgment.PERFECT
         and check_pass
     ):
@@ -54,7 +54,7 @@ def spawn_custom(
             windows=windows,
             wrong_way=wrong_way,
         )
-    if Options.custom_damage and damage_flash.custom_available and judgment == Judgment.MISS:
+    if Options.custom_damage and ActiveSkin.damage_flash.is_available and judgment == Judgment.MISS:
         DamageFlash.spawn(spawn_time=time())
 
 
