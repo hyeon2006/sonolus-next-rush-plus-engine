@@ -502,7 +502,7 @@ class ComboNumberSpriteSet(Record):
 
     @property
     def available(self):
-        return self.normal[int(0)].is_available  # noqa: RUF046, UP018
+        return self.normal[0].is_available
 
 
 class ComboLabelSpriteSet(Record):
