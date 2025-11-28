@@ -137,13 +137,6 @@ class Connector(PlayArchetype):
                 hitbox = self.active_connector_info.get_hitbox(CONNECTOR_LENIENCY)
                 for touch in touches():
                     if not touch.ended and hitbox.contains_point(touch.position):
-                        if self.segment_head.segment_kind in (
-                            ConnectorKind.ACTIVE_NORMAL,
-                            ConnectorKind.ACTIVE_CRITICAL,
-                            ConnectorKind.ACTIVE_FAKE_NORMAL,
-                            ConnectorKind.ACTIVE_FAKE_CRITICAL,
-                        ):
-                            input_manager.disallow_empty(touch)
                         if not self.active_connector_info.is_active:
                             self.active_connector_info.active_start_time = time()
                         self.active_connector_info.is_active = True
@@ -161,6 +154,24 @@ class Connector(PlayArchetype):
                 self.active_connector_info.connector_kind = self.kind
             if group_hide_notes(self.segment_head.timescale_group):
                 self.active_connector_info.connector_kind = ConnectorKind.NONE
+
+    def touch(self):
+        if self.active_head_ref.index > 0 and time() in self.input_active_interval:
+            hitbox = self.active_connector_info.get_hitbox(CONNECTOR_LENIENCY)
+            for touch in touches():
+                if (
+                    not touch.ended
+                    and hitbox.contains_point(touch.position)
+                    and self.segment_head.segment_kind
+                    in (
+                        ConnectorKind.ACTIVE_NORMAL,
+                        ConnectorKind.ACTIVE_CRITICAL,
+                        ConnectorKind.ACTIVE_FAKE_NORMAL,
+                        ConnectorKind.ACTIVE_FAKE_CRITICAL,
+                    )
+                    and input_manager.is_allowed_empty(touch)
+                ):
+                    input_manager.disallow_empty(touch)
 
     def update_parallel(self):
         if time() < self.visual_active_interval.end:
