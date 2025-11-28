@@ -401,6 +401,12 @@ class BaseNote(PlayArchetype):
     def handle_tap_input(self):
         if time() > self.input_interval.end:
             return
+
+        hitbox = self.get_full_hitbox()
+        for empty_touch in touches():
+            if hitbox.contains_point(empty_touch.position) and empty_touch.started:
+                input_manager.disallow_empty(empty_touch)
+
         if self.captured_touch_id == 0:
             return
         touch = next(tap for tap in touches() if tap.id == self.captured_touch_id)
@@ -426,17 +432,17 @@ class BaseNote(PlayArchetype):
         hitbox = self.get_full_hitbox()
 
         for touch in touches():
+            if hitbox.contains_point(touch.position) and touch.started:
+                input_manager.disallow_empty(touch)
             if not self.check_touch_touch_is_eligible_for_flick(hitbox, touch):
                 continue
             if not self.check_direction_matches(touch.angle):
                 continue
-            input_manager.disallow_empty(touch)
             self.judge(touch.time)
             return
         for touch in touches():
             if not self.check_touch_touch_is_eligible_for_flick(hitbox, touch):
                 continue
-            input_manager.disallow_empty(touch)
             self.judge_wrong_way(touch.time)
             return
 
