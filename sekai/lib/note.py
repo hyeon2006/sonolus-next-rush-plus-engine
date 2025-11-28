@@ -2,7 +2,7 @@ from collections.abc import Iterable
 from enum import IntEnum, auto
 from typing import assert_never, cast
 
-from sonolus.script.archetype import ArchetypeLife, EntityRef, PlayArchetype, WatchArchetype, get_archetype_by_name
+from sonolus.script.archetype import EntityRef, PlayArchetype, WatchArchetype, get_archetype_by_name
 from sonolus.script.bucket import Bucket, Judgment, JudgmentWindow
 from sonolus.script.easing import ease_in_cubic
 from sonolus.script.effect import Effect
@@ -216,26 +216,7 @@ def init_life(
 
 
 def init_note_life(archetype: type[PlayArchetype | WatchArchetype]):
-    life = get_note_life(cast(NoteKind, archetype.key))
-    archetype.life.update(
-        perfect_increment=life.perfect_increment,
-        great_increment=life.great_increment,
-        good_increment=life.good_increment,
-        miss_increment=life.miss_increment,
-    )
-
-
-def map_note_kind(kind: NoteKind) -> NoteKind:
-    return kind
-
-
-def get_note_life(kind: NoteKind) -> ArchetypeLife:
-    result = ArchetypeLife(
-        perfect_increment=0,
-        great_increment=0,
-        good_increment=0,
-        miss_increment=0,
-    )
+    kind = cast(NoteKind, archetype.key)
     match kind:
         case (
             NoteKind.NORM_TAP
@@ -269,14 +250,17 @@ def get_note_life(kind: NoteKind) -> ArchetypeLife:
             | NoteKind.NORM_TAIL_RELEASE
             | NoteKind.CRIT_TAIL_RELEASE
         ):
-            result.miss_increment = -80
+            archetype.life.miss_increment = -80
         case NoteKind.NORM_TICK | NoteKind.CRIT_TICK | NoteKind.HIDE_TICK | NoteKind.DAMAGE:
-            result.miss_increment = -40
+            archetype.life.miss_increment = -40
         case NoteKind.ANCHOR:
             pass
         case _:
             assert_never(kind)
-    return result
+
+
+def map_note_kind(kind: NoteKind) -> NoteKind:
+    return kind
 
 
 def mirror_flick_direction(direction: FlickDirection) -> FlickDirection:
