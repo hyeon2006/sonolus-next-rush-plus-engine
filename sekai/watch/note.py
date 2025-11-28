@@ -40,8 +40,8 @@ from sekai.lib.note import (
     schedule_note_slot_effects,
 )
 from sekai.lib.options import Options
-from sekai.lib.particle import Particles
-from sekai.lib.skin import accuracy_text, combo_label, combo_number, damage_flash, judgment_text
+from sekai.lib.particle import BaseParticles
+from sekai.lib.skin import ActiveSkin
 from sekai.lib.timescale import group_hide_notes, group_scaled_time, group_time_to_scaled_time
 from sekai.play.note import derive_note_archetypes
 from sekai.watch.particle_manager import ParticleManager
@@ -144,13 +144,15 @@ class WatchBaseNote(WatchArchetype):
                     schedule_note_auto_sfx(self.effect_kind, self.target_time)
                 else:
                     schedule_note_sfx(self.effect_kind, self.judgment, self.end_time)
-                schedule_note_slot_effects(self.kind, self.lane, self.size, self.end_time, self.judgment)
+                schedule_note_slot_effects(
+                    self.kind, self.lane, self.size, self.end_time, self.direction, self.judgment
+                )
             self.result.bucket_value = self.accuracy * 1000
         else:
             self.judgment = Judgment.PERFECT
             if self.is_scored:
                 schedule_note_sfx(self.effect_kind, Judgment.PERFECT, self.target_time)
-                schedule_note_slot_effects(self.kind, self.lane, self.size, self.target_time)
+                schedule_note_slot_effects(self.kind, self.lane, self.size, self.target_time, self.direction)
 
         self.result.target_time = self.target_time
 
@@ -169,24 +171,24 @@ class WatchBaseNote(WatchArchetype):
 
     def spawn_critical_lane(self):
         if Options.lane_effect_enabled:
-            particles = get_note_particles(self.kind)
-            if particles.lane.id == Particles.critical_flick_note_lane_linear.id:
+            particles = get_note_particles(self.kind, self.direction)
+            if particles.lane.id == BaseParticles.critical_flick_note_lane_linear.id:
                 ParticleManager.spawn(lane=self.lane, size=self.size, target_time=self.hit_time, particles=particles)
 
     def spawn_custom(self):
         if Options.hide_custom:
             return
-        if Options.custom_combo and combo_label.custom_available and (not Options.auto_judgment or is_replay()):
+        if Options.custom_combo and ActiveSkin.combo_label.available and (not Options.auto_judgment or is_replay()):
             get_archetype_by_name("ComboLabel").spawn(
                 next_ref=self.next_ref,
                 note_index=self.index,
             )
-        if Options.custom_combo and combo_number.custom_available and (not Options.auto_judgment or is_replay()):
+        if Options.custom_combo and ActiveSkin.combo_number.available and (not Options.auto_judgment or is_replay()):
             get_archetype_by_name("ComboNumber").spawn(
                 next_ref=self.next_ref,
                 note_index=self.index,
             )
-        if Options.custom_judgment and judgment_text.custom_available:
+        if Options.custom_judgment and ActiveSkin.judgment.available:
             get_archetype_by_name("JudgmentText").spawn(
                 next_ref=self.next_ref,
                 note_index=self.index,
@@ -194,8 +196,8 @@ class WatchBaseNote(WatchArchetype):
         if (
             Options.custom_judgment
             and Options.custom_accuracy
-            and judgment_text.custom_available
-            and accuracy_text.custom_available
+            and ActiveSkin.judgment.available
+            and ActiveSkin.accuracy_warning.available
             and self.judgment != Judgment.PERFECT
             and self.played_hit_effects
             and is_replay()
@@ -204,7 +206,12 @@ class WatchBaseNote(WatchArchetype):
                 next_ref=self.next_ref_accuracy,
                 note_index=self.index,
             )
-        if Options.custom_damage and damage_flash.custom_available and self.judgment == Judgment.MISS and is_replay():
+        if (
+            Options.custom_damage
+            and ActiveSkin.damage_flash.is_available
+            and self.judgment == Judgment.MISS
+            and is_replay()
+        ):
             get_archetype_by_name("DamageFlash").spawn(
                 next_ref=self.next_ref_damage_flash,
                 note_index=self.index,
@@ -226,8 +233,6 @@ class WatchBaseNote(WatchArchetype):
             return self.target_time
 
     def update_parallel(self):
-        if self.kind == NoteKind.ANCHOR:
-            return
         if time() < self.visual_start_time:
             return
         if is_head(self.kind) and time() > self.target_time:

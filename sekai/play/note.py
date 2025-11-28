@@ -49,7 +49,7 @@ from sekai.lib.note import (
     schedule_note_auto_sfx,
 )
 from sekai.lib.options import Options
-from sekai.lib.particle import Particles
+from sekai.lib.particle import BaseParticles
 from sekai.lib.timescale import group_hide_notes, group_scaled_time, group_time_to_scaled_time
 from sekai.play import input_manager
 from sekai.play.custom_elements import spawn_custom
@@ -173,11 +173,11 @@ class BaseNote(PlayArchetype):
         return self.start_time
 
     def should_spawn(self) -> bool:
+        if self.kind == NoteKind.ANCHOR:
+            return False
         return time() >= self.start_time
 
     def update_sequential(self):
-        if self.kind == NoteKind.ANCHOR:
-            return
         if self.despawn:
             return
         if self.is_scored and time() in self.input_interval and self.captured_touch_id == 0:
@@ -253,8 +253,6 @@ class BaseNote(PlayArchetype):
                 assert_never(kind)
 
     def update_parallel(self):
-        if self.kind == NoteKind.ANCHOR:
-            return
         if self.despawn:
             return
         if not self.is_scored and time() >= self.target_time:
@@ -280,56 +278,53 @@ class BaseNote(PlayArchetype):
             return
         draw_note(self.kind, self.lane, self.size, self.progress, self.direction, self.target_time)
 
-    def tick_trigger(self) -> bool:
-        return bool(
-            (
-                self.kind in (NoteKind.NORM_TICK, NoteKind.CRIT_TICK)
-                and (
-                    (
-                        not self.is_attached
-                        and (
-                            (
-                                self.tick_head_ref.index > 0
-                                and (
-                                    self.tick_head_ref.get().active_connector_info.is_active
-                                    and time() >= self.input_interval.start
-                                )
+    def tick_trigger(self):
+        return (
+            self.kind in (NoteKind.NORM_TICK, NoteKind.CRIT_TICK)
+            and (
+                (
+                    not self.is_attached
+                    and (
+                        (
+                            self.tick_head_ref.index > 0
+                            and (
+                                self.tick_head_ref.get().active_connector_info.is_active
+                                and time() >= self.input_interval.start
                             )
-                            or (self.tick_tail_ref.index > 0 and self.tick_tail_ref.get().is_despawned)
                         )
+                        or (self.tick_tail_ref.index > 0 and self.tick_tail_ref.get().is_despawned)
                     )
-                    or (
-                        self.is_attached
-                        and (
-                            (
-                                self.attach_head_ref.get().tick_head_ref.index > 0
-                                and (
-                                    self.attach_head_ref.get().tick_head_ref.get().active_connector_info.is_active
-                                    and time() >= self.input_interval.start
-                                )
+                )
+                or (
+                    self.is_attached
+                    and (
+                        (
+                            self.attach_head_ref.get().tick_head_ref.index > 0
+                            and (
+                                self.attach_head_ref.get().tick_head_ref.get().active_connector_info.is_active
+                                and time() >= self.input_interval.start
                             )
-                            or (
-                                self.attach_head_ref.get().tick_tail_ref.index > 0
-                                and self.attach_head_ref.get().tick_tail_ref.get().is_despawned
-                            )
+                        )
+                        or (
+                            self.attach_head_ref.get().tick_tail_ref.index > 0
+                            and self.attach_head_ref.get().tick_tail_ref.get().is_despawned
                         )
                     )
                 )
             )
-            or (
-                self.kind == NoteKind.HIDE_TICK
-                and self.attach_head_ref.index > 0
-                and self.attach_head_ref.get().tick_tail_ref.index > 0
-                and (
-                    self.attach_head_ref.get().tick_tail_ref.get().is_despawned
-                    or (
-                        self.attach_head_ref.get().tick_tail_ref.get().kind == NoteKind.ANCHOR
-                        and time() >= self.attach_head_ref.get().tick_tail_ref.get().target_time
-                    )
-                    or (
-                        self.attach_head_ref.get().tick_head_ref.get().active_connector_info.is_active
-                        and time() >= self.input_interval.start
-                    )
+        ) or (
+            self.kind == NoteKind.HIDE_TICK
+            and self.attach_head_ref.index > 0
+            and self.attach_head_ref.get().tick_tail_ref.index > 0
+            and (
+                self.attach_head_ref.get().tick_tail_ref.get().is_despawned
+                or (
+                    self.attach_head_ref.get().tick_tail_ref.get().kind == NoteKind.ANCHOR
+                    and time() >= self.attach_head_ref.get().tick_tail_ref.get().target_time
+                )
+                or (
+                    self.attach_head_ref.get().tick_head_ref.get().active_connector_info.is_active
+                    and time() >= self.input_interval.start
                 )
             )
         )
@@ -379,8 +374,8 @@ class BaseNote(PlayArchetype):
                 self.result.judgment,
             )
             if Options.lane_effect_enabled:
-                particles = get_note_particles(self.kind)
-                if particles.lane.id == Particles.critical_flick_note_lane_linear.id:
+                particles = get_note_particles(self.kind, self.direction)
+                if particles.lane.id == BaseParticles.critical_flick_note_lane_linear.id:
                     layout = layout_lane(self.lane, self.size)
                     ParticleManager.spawn(
                         particle=particles.lane.spawn(layout, duration=1 * Options.note_effect_duration),

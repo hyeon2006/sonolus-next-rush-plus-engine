@@ -4,7 +4,7 @@ from sonolus.script.timing import beat_to_time
 
 from sekai.lib import archetype_names
 from sekai.lib.layer import LAYER_BPM_LINE, get_z
-from sekai.lib.skin import Skin
+from sekai.lib.skin import ActiveSkin
 from sekai.preview.layout import layout_preview_bar_line, print_at_time
 
 
@@ -20,7 +20,7 @@ class PreviewBpmChange(PreviewArchetype):
         self.time = beat_to_time(self.beat)
 
     def render(self):
-        Skin.bpm_change_line.draw(
+        ActiveSkin.bpm_change_line.draw(
             layout_preview_bar_line(self.time, "right"),
             z=get_z(LAYER_BPM_LINE),
             a=0.8,

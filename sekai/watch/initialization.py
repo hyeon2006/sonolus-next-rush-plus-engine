@@ -5,13 +5,16 @@ from sonolus.script.runtime import is_replay
 
 from sekai.lib import archetype_names
 from sekai.lib.buckets import init_buckets
+from sekai.lib.layer import LAYER_DAMAGE, LAYER_JUDGMENT, get_z
 from sekai.lib.layout import init_layout
 from sekai.lib.note import init_note_life, init_score
 from sekai.lib.options import Options
-from sekai.lib.skin import combo_label, combo_number, damage_flash, judgment_text
+from sekai.lib.particle import init_particles
+from sekai.lib.skin import ActiveSkin, init_skin
 from sekai.lib.stage import schedule_lane_sfx
 from sekai.lib.streams import Streams
 from sekai.lib.ui import init_ui
+from sekai.watch.custom_elements import PrecalcLayer
 from sekai.watch.note import WATCH_NOTE_ARCHETYPES, WatchBaseNote
 from sekai.watch.stage import WatchScheduledLaneEffect, WatchStage
 
@@ -22,9 +25,16 @@ class WatchInitialization(WatchArchetype):
     @callback(order=-1)
     def preprocess(self):
         init_layout()
+        init_skin()
+        init_particles()
         init_ui()
         init_buckets()
         init_score()
+
+        PrecalcLayer.judgment = get_z(layer=LAYER_JUDGMENT)
+        PrecalcLayer.judgment1 = get_z(layer=LAYER_JUDGMENT, etc=1)
+        PrecalcLayer.judgment2 = get_z(layer=LAYER_JUDGMENT, etc=2)
+        PrecalcLayer.damage = get_z(layer=LAYER_DAMAGE)
 
         for note_archetype in WATCH_NOTE_ARCHETYPES:
             init_note_life(note_archetype)
@@ -38,11 +48,11 @@ class WatchInitialization(WatchArchetype):
 
         if (
             not Options.hide_custom
-            or (Options.custom_combo and combo_label.custom_available)
-            or (Options.custom_combo and combo_number.custom_available)
-            or (Options.custom_judgment and judgment_text.custom_available)
+            or (Options.custom_combo and ActiveSkin.combo_label.available)
+            or (Options.custom_combo and ActiveSkin.combo_number.available)
+            or (Options.custom_judgment and ActiveSkin.judgment.available)
             or (Options.custom_accuracy and Options.custom_accuracy and is_replay())
-            or (Options.custom_damage and damage_flash.custom_available and is_replay())
+            or (Options.custom_damage and ActiveSkin.damage_flash.is_available and is_replay())
         ):
             sorted_linked_list()
 

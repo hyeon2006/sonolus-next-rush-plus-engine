@@ -1,6 +1,6 @@
 from sonolus.script.engine import PreviewMode
 
-from sekai.lib.skin import Skin
+from sekai.lib.skin import BaseSkin
 from sekai.preview.bpm_change import PreviewBpmChange
 from sekai.preview.connector import PreviewConnector
 from sekai.preview.initialization import PreviewInitialization
@@ -18,5 +18,5 @@ preview_mode = PreviewMode(
         PreviewConnector,
         PreviewSimLine,
     ],
-    skin=Skin,
+    skin=BaseSkin,
 )
