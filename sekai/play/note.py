@@ -94,6 +94,8 @@ class BaseNote(PlayArchetype):
 
     active_connector_info: ActiveConnectorInfo = shared_memory()
 
+    count: int = shared_memory()
+
     # For trace early touches
     best_touch_time: float = entity_memory()
     best_touch_matches_direction: bool = entity_memory()
@@ -734,6 +736,16 @@ class BaseNote(PlayArchetype):
 class NoteMemory:
     active_tap_input_notes: VarArray[EntityRef[BaseNote], Dim[256]]
     active_release_input_notes: VarArray[EntityRef[BaseNote], Dim[256]]
+
+
+@level_memory
+class FeverChanceEventCounter:
+    fever_chance_time: float
+    fever_start_time: float
+    fever_chance_current_combo: int
+    fever_chance_cant_super_fever: bool
+    fever_last_note: EntityRef[BaseNote]
+    fever_first_note: EntityRef[BaseNote]
 
 
 NormalTapNote = BaseNote.derive(archetype_names.NORMAL_TAP_NOTE, is_scored=True, key=NoteKind.NORM_TAP)
