@@ -5,13 +5,16 @@ from sonolus.script.runtime import is_replay
 
 from sekai.lib import archetype_names
 from sekai.lib.buckets import init_buckets
+from sekai.lib.layer import LAYER_DAMAGE, LAYER_JUDGMENT, get_z
 from sekai.lib.layout import init_layout
 from sekai.lib.note import init_note_life, init_score
 from sekai.lib.options import Options
+from sekai.lib.particle import init_particles
 from sekai.lib.skin import ActiveSkin, init_skin
 from sekai.lib.stage import schedule_lane_sfx
 from sekai.lib.streams import Streams
 from sekai.lib.ui import init_ui
+from sekai.watch.custom_elements import PrecalcLayer
 from sekai.watch.note import WATCH_NOTE_ARCHETYPES, WatchBaseNote
 from sekai.watch.stage import WatchScheduledLaneEffect, WatchStage
 
@@ -27,9 +30,15 @@ class WatchInitialization(WatchArchetype):
         init_level_config(self.score_mode)
         init_layout()
         init_skin()
+        init_particles()
         init_ui()
         init_buckets()
         init_score()
+
+        PrecalcLayer.judgment = get_z(layer=LAYER_JUDGMENT)
+        PrecalcLayer.judgment1 = get_z(layer=LAYER_JUDGMENT, etc=1)
+        PrecalcLayer.judgment2 = get_z(layer=LAYER_JUDGMENT, etc=2)
+        PrecalcLayer.damage = get_z(layer=LAYER_DAMAGE)
 
         for note_archetype in WATCH_NOTE_ARCHETYPES:
             init_note_life(note_archetype)

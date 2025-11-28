@@ -40,7 +40,7 @@ from sekai.lib.note import (
     schedule_note_slot_effects,
 )
 from sekai.lib.options import Options
-from sekai.lib.particle import Particles
+from sekai.lib.particle import BaseParticles
 from sekai.lib.skin import ActiveSkin
 from sekai.lib.timescale import group_hide_notes, group_scaled_time, group_time_to_scaled_time
 from sekai.play.note import derive_note_archetypes
@@ -172,8 +172,8 @@ class WatchBaseNote(WatchArchetype):
 
     def spawn_critical_lane(self):
         if Options.lane_effect_enabled:
-            particles = get_note_particles(self.kind)
-            if particles.lane.id == Particles.critical_flick_note_lane_linear.id:
+            particles = get_note_particles(self.kind, self.direction)
+            if particles.lane.id == BaseParticles.critical_flick_note_lane_linear.id:
                 ParticleManager.spawn(lane=self.lane, size=self.size, target_time=self.hit_time, particles=particles)
 
     def spawn_custom(self):

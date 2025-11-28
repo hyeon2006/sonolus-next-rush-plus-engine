@@ -12,9 +12,16 @@ from sekai.lib.custom_elements import (
     draw_judgment_accuracy,
     draw_judgment_text,
 )
-from sekai.lib.layer import LAYER_DAMAGE, LAYER_JUDGMENT, get_z
 from sekai.lib.options import Options
 from sekai.lib.skin import ActiveSkin
+
+
+@level_memory
+class PrecalcLayer:
+    judgment: float
+    judgment1: float
+    judgment2: float
+    damage: float
 
 
 def spawn_custom(
@@ -74,8 +81,8 @@ class ComboLabel(PlayArchetype):
     name = archetype_names.COMBO_LABEL
 
     def initialize(self):
-        self.z = get_z(layer=LAYER_JUDGMENT, etc=1)
-        self.glow_z = get_z(layer=LAYER_JUDGMENT)
+        self.z = PrecalcLayer.judgment1
+        self.glow_z = PrecalcLayer.judgment
 
     def update_parallel(self):
         if self.combo != ComboLabelMemory.combo_check:
@@ -117,9 +124,9 @@ class ComboNumber(PlayArchetype):
     name = archetype_names.COMBO_NUMBER
 
     def initialize(self):
-        self.z = get_z(layer=LAYER_JUDGMENT, etc=1)
-        self.z2 = get_z(layer=LAYER_JUDGMENT)
-        self.z3 = get_z(layer=LAYER_JUDGMENT, etc=2)
+        self.z = PrecalcLayer.judgment1
+        self.z2 = PrecalcLayer.judgment
+        self.z3 = PrecalcLayer.judgment2
 
     def update_parallel(self):
         if self.combo != ComboNumberMemory.combo_check:
@@ -163,7 +170,7 @@ class JudgmentText(PlayArchetype):
     name = archetype_names.JUDGMENT_TEXT
 
     def initialize(self):
-        self.z = get_z(layer=LAYER_JUDGMENT)
+        self.z = PrecalcLayer.judgment
 
     def update_parallel(self):
         if self.combo != JudgmentTextMemory.combo_check:
@@ -206,7 +213,7 @@ class JudgmentAccuracy(PlayArchetype):
     name = archetype_names.JUDGMENT_ACCURACY
 
     def initialize(self):
-        self.z = get_z(layer=LAYER_JUDGMENT)
+        self.z = PrecalcLayer.judgment
 
     def update_parallel(self):
         if self.combo != JudgmentAccuracyMemory.combo_check:
@@ -244,7 +251,7 @@ class DamageFlash(PlayArchetype):
     name = archetype_names.DAMAGE_FLASH
 
     def initialize(self):
-        self.z = get_z(layer=LAYER_DAMAGE)
+        self.z = PrecalcLayer.damage
 
     def update_parallel(self):
         if self.combo != DamageFlashMemory.combo_check:
