@@ -706,14 +706,12 @@ def play_note_hit_effects(
     if Options.sfx_enabled and not Options.auto_sfx and not is_watch() and sfx.is_available:
         sfx.play(SFX_DISTANCE)
     if Options.note_effect_enabled:
-        linear_particle = particles.lane
-        if linear_particle.is_available:
+        if particles.linear.is_available:
             layout = layout_linear_effect(lane, shear=0)
-            linear_particle.spawn(layout, duration=0.5)
-        circular_particle = particles.circular
-        if circular_particle.is_available:
+            particles.linear.spawn(layout, duration=0.5)
+        if particles.circular.is_available:
             layout = layout_circular_effect(lane, w=1.75, h=1.05)
-            circular_particle.spawn(layout, duration=0.6)
+            particles.circular.spawn(layout, duration=0.6)
         if particles.directional.is_available:
             match direction:
                 case FlickDirection.UP_OMNI | FlickDirection.DOWN_OMNI:
