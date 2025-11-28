@@ -34,7 +34,7 @@ from sekai.lib.layout import (
     transformed_vec_at,
 )
 from sekai.lib.options import Options
-from sekai.lib.particle import Particles
+from sekai.lib.particle import ActiveParticles
 from sekai.lib.skin import ActiveConnectorSpriteSet, ActiveSkin
 from sekai.lib.timescale import iter_timescale_changes_in_group_after_time_inclusive
 
@@ -523,9 +523,9 @@ def update_circular_connector_particle(
         particle = +Particle(-1)
         match kind:
             case ConnectorKind.ACTIVE_NORMAL | ConnectorKind.ACTIVE_FAKE_NORMAL:
-                particle @= Particles.normal_slide_connector_circular
+                particle @= ActiveParticles.normal_slide_connector.circular
             case ConnectorKind.ACTIVE_CRITICAL | ConnectorKind.ACTIVE_FAKE_CRITICAL:
-                particle @= Particles.critical_slide_connector_circular
+                particle @= ActiveParticles.critical_slide_connector.circular
             case _:
                 assert_never(kind)
         replace_looped_particle(handle, particle, layout, duration=1 * Options.note_effect_duration)
@@ -546,9 +546,9 @@ def update_linear_connector_particle(
     if replace or handle.id == 0:
         match kind:
             case ConnectorKind.ACTIVE_NORMAL | ConnectorKind.ACTIVE_FAKE_NORMAL:
-                particle @= Particles.normal_slide_connector_linear
+                particle @= ActiveParticles.normal_slide_connector.linear
             case ConnectorKind.ACTIVE_CRITICAL | ConnectorKind.ACTIVE_FAKE_CRITICAL:
-                particle @= Particles.critical_slide_connector_linear
+                particle @= ActiveParticles.critical_slide_connector.linear
             case _:
                 assert_never(kind)
         replace_looped_particle(handle, particle, layout, duration=1 * Options.note_effect_duration)
@@ -566,9 +566,9 @@ def spawn_linear_connector_trail_particle(
     particle = +Particle
     match kind:
         case ConnectorKind.ACTIVE_NORMAL | ConnectorKind.ACTIVE_FAKE_NORMAL:
-            particle @= Particles.normal_slide_connector_trail_linear
+            particle @= ActiveParticles.normal_slide_connector.trail_linear
         case ConnectorKind.ACTIVE_CRITICAL | ConnectorKind.ACTIVE_FAKE_CRITICAL:
-            particle @= Particles.critical_slide_connector_trail_linear
+            particle @= ActiveParticles.critical_slide_connector.trail_linear
         case _:
             assert_never(kind)
     particle.spawn(layout, duration=0.5 * Options.note_effect_duration)
@@ -584,9 +584,9 @@ def spawn_connector_slot_particles(
     particle = +Particle
     match kind:
         case ConnectorKind.ACTIVE_NORMAL | ConnectorKind.ACTIVE_FAKE_NORMAL:
-            particle @= Particles.normal_slide_connector_slot_linear
+            particle @= ActiveParticles.normal_slide_connector.slot_linear
         case ConnectorKind.ACTIVE_CRITICAL | ConnectorKind.ACTIVE_FAKE_CRITICAL:
-            particle @= Particles.critical_slide_connector_slot_linear
+            particle @= ActiveParticles.critical_slide_connector.slot_linear
         case _:
             assert_never(kind)
     for slot_lane in iter_slot_lanes(lane, size):

@@ -1,4 +1,5 @@
 from sonolus.script.archetype import EntityRef, WatchArchetype, entity_memory
+from sonolus.script.globals import level_memory
 
 from sekai.lib import archetype_names
 from sekai.lib.custom_elements import (
@@ -8,8 +9,15 @@ from sekai.lib.custom_elements import (
     draw_judgment_accuracy,
     draw_judgment_text,
 )
-from sekai.lib.layer import LAYER_DAMAGE, LAYER_JUDGMENT, get_z
 from sekai.watch.note import WatchBaseNote
+
+
+@level_memory
+class PrecalcLayer:
+    judgment: float
+    judgment1: float
+    judgment2: float
+    damage: float
 
 
 class ComboLabel(WatchArchetype):
@@ -20,8 +28,8 @@ class ComboLabel(WatchArchetype):
     name = archetype_names.COMBO_LABEL
 
     def initialize(self):
-        self.z = get_z(layer=LAYER_JUDGMENT, etc=1)
-        self.glow_z = get_z(layer=LAYER_JUDGMENT)
+        self.z = PrecalcLayer.judgment1
+        self.glow_z = PrecalcLayer.judgment
 
     def spawn_time(self) -> float:
         return WatchBaseNote.at(self.note_index).hit_time
@@ -47,9 +55,9 @@ class ComboNumber(WatchArchetype):
     name = archetype_names.COMBO_NUMBER
 
     def initialize(self):
-        self.z = get_z(layer=LAYER_JUDGMENT, etc=1)
-        self.z2 = get_z(layer=LAYER_JUDGMENT)
-        self.z3 = get_z(layer=LAYER_JUDGMENT, etc=2)
+        self.z = PrecalcLayer.judgment1
+        self.z2 = PrecalcLayer.judgment
+        self.z3 = PrecalcLayer.judgment2
 
     def spawn_time(self) -> float:
         return WatchBaseNote.at(self.note_index).hit_time
@@ -80,7 +88,7 @@ class JudgmentText(WatchArchetype):
     name = archetype_names.JUDGMENT_TEXT
 
     def initialize(self):
-        self.z = get_z(layer=LAYER_JUDGMENT)
+        self.z = PrecalcLayer.judgment
 
     def spawn_time(self) -> float:
         return WatchBaseNote.at(self.note_index).hit_time
@@ -109,7 +117,7 @@ class JudgmentAccuracy(WatchArchetype):
     name = archetype_names.JUDGMENT_ACCURACY
 
     def initialize(self):
-        self.z = get_z(layer=LAYER_JUDGMENT)
+        self.z = PrecalcLayer.judgment
 
     def spawn_time(self) -> float:
         return WatchBaseNote.at(self.note_index).hit_time
@@ -137,7 +145,7 @@ class DamageFlash(WatchArchetype):
     name = archetype_names.DAMAGE_FLASH
 
     def initialize(self):
-        self.z = get_z(layer=LAYER_DAMAGE)
+        self.z = PrecalcLayer.damage
 
     def spawn_time(self) -> float:
         return WatchBaseNote.at(self.note_index).hit_time

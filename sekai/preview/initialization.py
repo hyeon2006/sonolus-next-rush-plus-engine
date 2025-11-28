@@ -4,6 +4,7 @@ from sonolus.script.timing import beat_to_time
 
 from sekai.lib import archetype_names
 from sekai.lib.layer import LAYER_BEAT_LINE, get_z
+from sekai.lib.particle import init_particles
 from sekai.lib.skin import ActiveSkin, init_skin
 from sekai.lib.ui import init_ui
 from sekai.preview.layout import (
@@ -24,6 +25,7 @@ class PreviewInitialization(PreviewArchetype):
     def preprocess(self):
         init_skin()
         init_ui()
+        init_particles()
         init_preview_layout()
 
     def render(self):
