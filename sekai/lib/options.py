@@ -261,3 +261,16 @@ class Options:
         step=0.1,
         unit=StandardText.PERCENTAGE_UNIT,
     )
+    fever_effect: int = select_option(
+        name="Fever Effect",
+        description="Beta, only default options work",
+        scope="Rush",
+        default=0,
+        values=["default", "lightweight"],
+    )
+    forced_fever_chance: bool = toggle_option(
+        name="Forced Fever Chance",
+        description="Fever occurs even when not in a multiplayer environment",
+        scope="Rush",
+        default=False,
+    )

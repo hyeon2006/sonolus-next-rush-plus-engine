@@ -14,6 +14,7 @@ from sekai.lib.custom_elements import (
 )
 from sekai.lib.options import Options
 from sekai.lib.skin import ActiveSkin
+from sekai.play import note
 
 
 @level_memory
@@ -22,6 +23,9 @@ class PrecalcLayer:
     judgment1: float
     judgment2: float
     damage: float
+    fever_chance_cover: float
+    fever_chance_side: float
+    fever_chance_gauge: float
 
 
 def spawn_custom(
@@ -31,11 +35,12 @@ def spawn_custom(
     windows_bad: Interval,
     wrong_way: bool,
     check_pass: bool,
+    target_time: float,
 ):
     if Options.hide_custom:
         return
     if Options.custom_combo and ActiveSkin.combo_label.available:
-        ComboLabel.spawn(spawn_time=time(), judgment=judgment)
+        ComboLabel.spawn(target_time=target_time, judgment=judgment)
     if Options.custom_combo and ActiveSkin.combo_number.available:
         ComboNumber.spawn(spawn_time=time(), judgment=judgment)
     if Options.custom_judgment and ActiveSkin.judgment.available:
@@ -72,7 +77,7 @@ class ComboLabelMemory:
 
 
 class ComboLabel(PlayArchetype):
-    spawn_time: float = entity_memory()
+    target_time: float = entity_memory()
     judgment: Judgment = entity_memory()
     check: bool = entity_memory()
     combo: int = entity_memory()
@@ -103,6 +108,12 @@ class ComboLabel(PlayArchetype):
         else:
             ComboLabelMemory.combo_check += 1
             self.combo = ComboLabelMemory.combo_check
+            if (
+                note.FeverChanceEventCounter.fever_chance_time
+                <= self.target_time
+                < note.FeverChanceEventCounter.fever_start_time
+            ):
+                note.FeverChanceEventCounter.fever_chance_current_combo += 1
         if self.judgment != Judgment.PERFECT:
             ComboLabelMemory.ap = True
 

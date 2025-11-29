@@ -5,12 +5,13 @@ from sonolus.script.archetype import (
     entity_memory,
 )
 from sonolus.script.interval import clamp
-from sonolus.script.runtime import time
+from sonolus.script.runtime import is_multiplayer, time
 from sonolus.script.timing import beat_to_time
 
 from sekai.lib import archetype_names
-from sekai.lib.events import draw_fever_side_cover
-from sekai.play import note
+from sekai.lib.events import draw_fever_gauge, draw_fever_side_bar, draw_fever_side_cover
+from sekai.lib.options import Options
+from sekai.play import custom_elements, note
 
 
 class Skill(PlayArchetype):
@@ -38,11 +39,19 @@ class FeverChance(PlayArchetype):
     counter: int = entity_memory()
     percentage: float = entity_memory()
     name = archetype_names.FEVER_CHANCE
+    z: float = entity_memory()
+    z2: float = entity_memory()
+    z3: float = entity_memory()
 
     @callback(order=-2)
     def preprocess(self):
         self.start_time = beat_to_time(self.beat)
         note.FeverChanceEventCounter.fever_chance_time = self.start_time
+
+    def initialize(self):
+        self.z = custom_elements.PrecalcLayer.fever_chance_cover
+        self.z2 = custom_elements.PrecalcLayer.fever_chance_side
+        self.z3 = custom_elements.PrecalcLayer.fever_chance_gauge
 
     def spawn_order(self):
         return self.start_time
@@ -51,24 +60,26 @@ class FeverChance(PlayArchetype):
         return time() >= self.start_time
 
     def update_parallel(self):
+        if not is_multiplayer() and not Options.forced_fever_chance:
+            self.despawn = True
+            return
         if time() >= note.FeverChanceEventCounter.fever_start_time:
             self.despawn = True
             return
-        draw_fever_side_cover()
         self.percentage = clamp(
             note.FeverChanceEventCounter.fever_chance_current_combo / self.counter,
             0,
-            1 if not note.FeverChanceEventCounter.fever_chance_cant_super_fever else 0.99,
+            0.9,
         )
+        draw_fever_side_cover(self.z, time() - self.start_time)
+        draw_fever_side_bar(self.z2, time() - self.start_time)
+        draw_fever_gauge(self.z3, self.percentage)
 
     def update_sequential(self):
         if self.checker:
             return
         self.checker = True
-        self.counter = (
-            note.FeverChanceEventCounter.fever_last_note.get().count
-            - note.FeverChanceEventCounter.fever_first_note.get().count
-        )
+        self.counter = note.FeverChanceEventCounter.fever_last_count - note.FeverChanceEventCounter.fever_first_count
 
 
 class FeverStart(PlayArchetype):
