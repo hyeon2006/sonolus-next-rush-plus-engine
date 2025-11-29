@@ -605,6 +605,34 @@ def layout_combo_label(
     )
 
 
+def layout_fever_cover_left() -> Quad:
+    perspective = perspective_rect(l=-6.5, r=-6.5, t=LANE_T, b=LANE_B)
+    return Quad(
+        bl=screen().bl,
+        br=perspective.br,
+        tl=screen().tl,
+        tr=perspective.tr,
+    )
+
+
+def layout_fever_cover_right() -> Quad:
+    perspective = perspective_rect(l=6.5, r=6.5, t=LANE_T, b=LANE_B)
+    return Quad(
+        bl=perspective.bl,
+        br=screen().br,
+        tl=perspective.tl,
+        tr=screen().tr,
+    )
+
+
+def layout_fever_gauge_left(t) -> Quad:
+    return perspective_rect(l=-6.5, r=-6, t=t, b=LANE_B)
+
+
+def layout_fever_gauge_right(t) -> Quad:
+    return perspective_rect(l=6, r=6.5, t=t, b=LANE_B)
+
+
 def layout_hitbox(
     l: float,
     r: float,

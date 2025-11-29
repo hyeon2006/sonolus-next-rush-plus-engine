@@ -28,6 +28,10 @@ class BaseSkin:
     sekai_stage_lane: Sprite = sprite("Sekai Stage Lane")
     sekai_stage_cover: Sprite = sprite("Sekai Stage Cover")
 
+    sekai_stage_fever: Sprite = sprite("Sekai Stage Fever")
+    sekai_fever_gauge_yellow: Sprite = sprite("Sekai Fever Gauge Yellow")
+    sekai_fever_gauge_rainbow: Sprite = sprite("Sekai Fever Gauge Rainbow")
+
     sim_line: StandardSprite.SIMULTANEOUS_CONNECTION_NEUTRAL
 
     note_cyan_left: Sprite = sprite("Sekai Note Cyan Left")
@@ -445,6 +449,24 @@ class ArrowSpriteSet(Record):
         )
 
 
+def first_available_arrow_sprite_set(*sets: ArrowSpriteSet) -> ArrowSpriteSet:
+    result = +EMPTY_ARROW_SPRITE_SET
+    for s in sets:
+        if s.available:
+            result @= s
+            break
+    return result
+
+
+EMPTY_ARROW_SPRITE_SET = ArrowSpriteSet(
+    render_type=ArrowRenderType.FALLBACK,
+    up=EMPTY_SPRITE_GROUP,
+    up_left=EMPTY_SPRITE_GROUP,
+    down=EMPTY_SPRITE_GROUP,
+    down_left=EMPTY_SPRITE_GROUP,
+)
+
+
 class SlotGlowSpriteSet(Record):
     perfect: Sprite
     great: Sprite
@@ -603,22 +625,21 @@ class AccuracySpriteSet(Record):
         return self.fast.is_available
 
 
-def first_available_arrow_sprite_set(*sets: ArrowSpriteSet) -> ArrowSpriteSet:
-    result = +EMPTY_ARROW_SPRITE_SET
-    for s in sets:
-        if s.available:
-            result @= s
-            break
-    return result
+class FeverGaugeSpriteSet(Record):
+    yellow: Sprite
+    rainbow: Sprite
 
+    def get_sprite(self, percentage: float):
+        result = +Sprite
+        if percentage >= 0.8:
+            result @= self.rainbow
+        else:
+            result @= self.yellow
+        return result
 
-EMPTY_ARROW_SPRITE_SET = ArrowSpriteSet(
-    render_type=ArrowRenderType.FALLBACK,
-    up=EMPTY_SPRITE_GROUP,
-    up_left=EMPTY_SPRITE_GROUP,
-    down=EMPTY_SPRITE_GROUP,
-    down_left=EMPTY_SPRITE_GROUP,
-)
+    @property
+    def available(self):
+        return self.yellow.is_available
 
 
 class NoteSpriteSet(Record):
@@ -954,6 +975,9 @@ class ActiveSkin:
     sekai_stage_lane: Sprite
     sekai_stage_cover: Sprite
 
+    sekai_stage_fever: Sprite
+    sekai_fever_gauge: FeverGaugeSpriteSet
+
     sim_line: Sprite
 
     normal_note: NoteSpriteSet
@@ -1000,6 +1024,7 @@ class ActiveSkin:
 
 def init_skin():
     ActiveSkin.cover = BaseSkin.cover
+    ActiveSkin.background = BaseSkin.background
 
     ActiveSkin.lane = BaseSkin.lane
     ActiveSkin.judgment_line = BaseSkin.judgment_line
@@ -1009,6 +1034,11 @@ def init_skin():
     ActiveSkin.sekai_stage = BaseSkin.sekai_stage
     ActiveSkin.sekai_stage_lane = BaseSkin.sekai_stage_lane
     ActiveSkin.sekai_stage_cover = BaseSkin.sekai_stage_cover
+
+    ActiveSkin.sekai_stage_fever = BaseSkin.sekai_stage_fever
+    ActiveSkin.sekai_fever_gauge = FeverGaugeSpriteSet(
+        yellow=BaseSkin.sekai_fever_gauge_yellow, rainbow=BaseSkin.sekai_fever_gauge_rainbow
+    )
 
     ActiveSkin.sim_line = BaseSkin.sim_line
     ActiveSkin.normal_note = NoteSpriteSet(
