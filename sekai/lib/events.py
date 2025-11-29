@@ -36,5 +36,5 @@ def draw_fever_gauge(z: float, percentage: float):
     t = lerp(LANE_B, LANE_T, percentage)
     layout1 = layout_fever_gauge_left(t)
     layout2 = layout_fever_gauge_right(t)
-    ActiveSkin.sekai_fever_gauge.get_sprite(percentage).draw(layout1, z, a=0.5)
-    ActiveSkin.sekai_fever_gauge.get_sprite(percentage).draw(layout2, z, a=0.5)
+    ActiveSkin.sekai_fever_gauge.get_sprite(percentage).draw(layout1, z, a=0.55)
+    ActiveSkin.sekai_fever_gauge.get_sprite(percentage).draw(layout2, z, a=0.55)
