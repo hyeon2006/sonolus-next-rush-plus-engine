@@ -119,9 +119,7 @@ def draw_connector(
             sprites = get_active_connector_sprites(kind)
             normal_sprite @= sprites.connection.normal
         case (
-            ConnectorKind.GUIDE_NORMAL
-            | ConnectorKind.GUIDE_CRITICAL
-            | ConnectorKind.GUIDE_NEUTRAL
+            ConnectorKind.GUIDE_NEUTRAL
             | ConnectorKind.GUIDE_RED
             | ConnectorKind.GUIDE_GREEN
             | ConnectorKind.GUIDE_BLUE
@@ -144,9 +142,7 @@ def draw_connector(
             segment_head_alpha = 1.0
             segment_tail_alpha = 1.0
         case (
-            ConnectorKind.GUIDE_NORMAL
-            | ConnectorKind.GUIDE_CRITICAL
-            | ConnectorKind.GUIDE_NEUTRAL
+            ConnectorKind.GUIDE_NEUTRAL
             | ConnectorKind.GUIDE_RED
             | ConnectorKind.GUIDE_GREEN
             | ConnectorKind.GUIDE_BLUE
