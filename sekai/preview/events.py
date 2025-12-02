@@ -27,7 +27,7 @@ class PreviewSkill(PreviewArchetype):
         print_at_time(
             self.time,
             self.time,
-            fmt=PrintFormat.SKILL,
+            fmt=PrintFormat.NUMBER,
             color=PrintColor.GREEN,
             side="right",
         )
@@ -52,7 +52,7 @@ class PreviewFeverChance(PreviewArchetype):
         print_at_time(
             self.time,
             self.time,
-            fmt=PrintFormat.FEVER_CHANCE,
+            fmt=PrintFormat.NUMBER,
             color=PrintColor.CYAN,
             side="right",
         )
@@ -77,7 +77,7 @@ class PreviewFeverStart(PreviewArchetype):
         print_at_time(
             round(self.time, 2),
             self.time,
-            fmt=PrintFormat.FEVER_CHANCE,
+            fmt=PrintFormat.NUMBER,
             color=PrintColor.BLUE,
             side="right",
         )
