@@ -12,6 +12,7 @@ from sonolus.script.archetype import (
     shared_memory,
 )
 from sonolus.script.bucket import Judgment, JudgmentWindow
+from sonolus.script.globals import level_memory
 from sonolus.script.interval import Interval, remap_clamped, unlerp_clamped
 from sonolus.script.runtime import is_replay, is_skip, time
 from sonolus.script.timing import beat_to_time
@@ -80,6 +81,7 @@ class WatchBaseNote(WatchArchetype):
     judgment_window: JudgmentWindow = shared_memory()
     judgment_window_bad: Interval = shared_memory()
     combo: int = shared_memory()
+    count: int = shared_memory()
     ap: bool = shared_memory()
 
     end_time: float = imported()
@@ -309,6 +311,16 @@ class WatchBaseNote(WatchArchetype):
         else:
             ref @= self.ref()
         return ref.get()
+
+
+@level_memory
+class FeverChanceEventCounter:
+    fever_chance_time: float
+    fever_start_time: float
+    fever_chance_current_combo: int
+    fever_chance_cant_super_fever: bool
+    fever_last_count: int
+    fever_first_count: int
 
 
 WATCH_NOTE_ARCHETYPES = derive_note_archetypes(WatchBaseNote)

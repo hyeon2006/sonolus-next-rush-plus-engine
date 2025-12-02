@@ -97,15 +97,20 @@ def setting_count(head: int) -> None:
     ptr = head
     count = 0
     while ptr > 0:
-        note = BaseNote.at(ptr)
         count += 1
-        note.count += count
-        if FeverChanceEventCounter.fever_chance_time <= note.target_time < FeverChanceEventCounter.fever_start_time:
+        BaseNote.at(ptr).count += count
+        if (
+            FeverChanceEventCounter.fever_chance_time
+            <= BaseNote.at(ptr).target_time
+            < FeverChanceEventCounter.fever_start_time
+        ):
             FeverChanceEventCounter.fever_first_count = (
-                min(note.count, FeverChanceEventCounter.fever_first_count)
+                min(BaseNote.at(ptr).count, FeverChanceEventCounter.fever_first_count)
                 if FeverChanceEventCounter.fever_first_count != 0
-                else note.count
+                else BaseNote.at(ptr).count
             )
-            FeverChanceEventCounter.fever_last_count = max(note.count, FeverChanceEventCounter.fever_last_count)
+            FeverChanceEventCounter.fever_last_count = max(
+                BaseNote.at(ptr).count, FeverChanceEventCounter.fever_last_count
+            )
 
         ptr = BaseNote.at(ptr).next_ref.index

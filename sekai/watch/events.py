@@ -1,11 +1,11 @@
 from sonolus.script.archetype import (
-    PlayArchetype,
     StandardImport,
+    WatchArchetype,
     callback,
     entity_memory,
 )
 from sonolus.script.interval import clamp
-from sonolus.script.runtime import is_multiplayer, offset_adjusted_time, time
+from sonolus.script.runtime import is_replay, is_skip, time
 from sonolus.script.timing import beat_to_time
 
 from sekai.lib import archetype_names
@@ -18,10 +18,10 @@ from sekai.lib.events import (
 )
 from sekai.lib.options import Options
 from sekai.lib.streams import Streams
-from sekai.play import custom_elements, note
+from sekai.watch import custom_elements, note
 
 
-class Skill(PlayArchetype):
+class Skill(WatchArchetype):
     beat: StandardImport.BEAT
     start_time: float = entity_memory()
     name = archetype_names.SKILL
@@ -29,20 +29,17 @@ class Skill(PlayArchetype):
     def preprocess(self):
         self.start_time = beat_to_time(self.beat)
 
-    def spawn_order(self):
+    def spawn_time(self):
         return self.start_time
 
-    def should_spawn(self):
-        return time() >= self.start_time
-
-    def update_parallel(self):
-        self.despawn = True
+    def despawn_time(self):
+        return self.start_time + 1
 
 
-class FeverChance(PlayArchetype):
+class FeverChance(WatchArchetype):
     beat: StandardImport.BEAT
     start_time: float = entity_memory()
-    checker: bool = entity_memory()
+    checker: int = entity_memory()
     counter: int = entity_memory()
     percentage: float = entity_memory()
     name = archetype_names.FEVER_CHANCE
@@ -64,30 +61,35 @@ class FeverChance(PlayArchetype):
         self.z2 = custom_elements.PrecalcLayer.fever_chance_side
         self.z3 = custom_elements.PrecalcLayer.fever_chance_gauge
 
-    def spawn_order(self):
+    def spawn_time(self):
         return self.start_time
 
-    def should_spawn(self):
-        return time() >= self.start_time
+    def despawn_time(self):
+        return note.FeverChanceEventCounter.fever_start_time + 10
 
     def update_parallel(self):
-        if not is_multiplayer() and not Options.forced_fever_chance:
-            self.despawn = True
+        if is_skip():
+            self.checker = 0
+        if self.checker >= 2:
             return
-        Streams.fever_chance_counter[0][-2] = 1
+        if not is_replay() and not Options.forced_fever_chance:
+            return
         if time() >= note.FeverChanceEventCounter.fever_start_time:
             spawn_fever_start_particle(note.FeverChanceEventCounter.fever_chance_cant_super_fever)
-            self.despawn = True
+            self.checker = 2
             return
         if time() >= note.FeverChanceEventCounter.fever_chance_time and not self.checker:
             spawn_fever_chance_particle()
-            self.checker = True
-        self.percentage = clamp(
-            note.FeverChanceEventCounter.fever_chance_current_combo / self.counter,
-            0,
-            0.9,
+            self.checker = 1
+        self.percentage = (
+            clamp(
+                note.FeverChanceEventCounter.fever_chance_current_combo / self.counter,
+                0,
+                0.9,
+            )
+            if not Streams.fever_chance_counter[0][-2]
+            else Streams.fever_chance_counter[0][time()]
         )
-        Streams.fever_chance_counter[0][offset_adjusted_time()] = self.percentage
         draw_fever_side_cover(self.z, time() - self.start_time)
         draw_fever_side_bar(self.z2, time() - self.start_time)
         draw_fever_gauge(self.z3, self.percentage)
@@ -97,8 +99,11 @@ class FeverChance(PlayArchetype):
             return
         self.counter = note.FeverChanceEventCounter.fever_last_count - note.FeverChanceEventCounter.fever_first_count
 
+    def terminate(self):
+        self.checker = 0
 
-class FeverStart(PlayArchetype):
+
+class FeverStart(WatchArchetype):
     beat: StandardImport.BEAT
     start_time: float = entity_memory()
     name = archetype_names.FEVER_START
@@ -112,11 +117,11 @@ class FeverStart(PlayArchetype):
             else self.start_time
         )
 
-    def spawn_order(self):
+    def spawn_time(self):
         return 1e8
 
-    def should_spawn(self):
-        return False
+    def despawn_time(self):
+        return 1e8
 
 
 EVENT_ARCHETYPES = (Skill, FeverChance, FeverStart)

@@ -1,26 +1,27 @@
-from sonolus.script.archetype import WatchArchetype, callback, entity_info_at
+from sonolus.script.archetype import WatchArchetype, callback, entity_info_at, imported
 from sonolus.script.bucket import Judgment
 from sonolus.script.containers import sort_linked_entities
+from sonolus.script.debug import debug_log
 from sonolus.script.runtime import is_replay
 
 from sekai.lib import archetype_names
 from sekai.lib.buckets import init_buckets
-from sekai.lib.layer import LAYER_DAMAGE, LAYER_JUDGMENT, get_z
+from sekai.lib.layer import LAYER_BACKGROUND_SIDE, LAYER_DAMAGE, LAYER_GAUGE, LAYER_JUDGMENT, LAYER_STAGE, get_z
 from sekai.lib.layout import init_layout
 from sekai.lib.note import init_note_life, init_score
-from sekai.lib.options import Options
 from sekai.lib.particle import init_particles
-from sekai.lib.skin import ActiveSkin, init_skin
+from sekai.lib.skin import init_skin
 from sekai.lib.stage import schedule_lane_sfx
 from sekai.lib.streams import Streams
 from sekai.lib.ui import init_ui
 from sekai.watch.custom_elements import PrecalcLayer
-from sekai.watch.note import WATCH_NOTE_ARCHETYPES, WatchBaseNote
+from sekai.watch.note import WATCH_NOTE_ARCHETYPES, FeverChanceEventCounter, WatchBaseNote
 from sekai.watch.stage import WatchScheduledLaneEffect, WatchStage
 
 
 class WatchInitialization(WatchArchetype):
     name = archetype_names.INITIALIZATION
+    is_multi: bool = imported()
 
     @callback(order=-1)
     def preprocess(self):
@@ -35,6 +36,9 @@ class WatchInitialization(WatchArchetype):
         PrecalcLayer.judgment1 = get_z(layer=LAYER_JUDGMENT, etc=1)
         PrecalcLayer.judgment2 = get_z(layer=LAYER_JUDGMENT, etc=2)
         PrecalcLayer.damage = get_z(layer=LAYER_DAMAGE)
+        PrecalcLayer.fever_chance_cover = get_z(layer=LAYER_BACKGROUND_SIDE)
+        PrecalcLayer.fever_chance_side = get_z(layer=LAYER_STAGE)
+        PrecalcLayer.fever_chance_gauge = get_z(layer=LAYER_GAUGE)
 
         for note_archetype in WATCH_NOTE_ARCHETYPES:
             init_note_life(note_archetype)
@@ -46,15 +50,7 @@ class WatchInitialization(WatchArchetype):
                 schedule_lane_sfx(lane, input_time)
                 WatchScheduledLaneEffect.spawn(lane=lane, target_time=input_time)
 
-        if (
-            not Options.hide_custom
-            or (Options.custom_combo and ActiveSkin.combo_label.available)
-            or (Options.custom_combo and ActiveSkin.combo_number.available)
-            or (Options.custom_judgment and ActiveSkin.judgment.available)
-            or (Options.custom_accuracy and Options.custom_accuracy and is_replay())
-            or (Options.custom_damage and ActiveSkin.damage_flash.is_available and is_replay())
-        ):
-            sorted_linked_list()
+        sorted_linked_list()
 
 
 def sorted_linked_list():
@@ -99,6 +95,7 @@ def sort_entities(index: int):
 def setting_combo(head: int) -> None:
     ptr = head
     combo = 0
+    count = 0
     ap = False
     accuracy = head
     damage_flash = head
@@ -106,6 +103,12 @@ def setting_combo(head: int) -> None:
         judgment = WatchBaseNote.at(ptr).judgment
         if is_replay() and judgment in (Judgment.GOOD, Judgment.MISS):
             combo = 0
+            if (
+                FeverChanceEventCounter.fever_chance_time
+                <= WatchBaseNote.at(ptr).hit_time
+                < FeverChanceEventCounter.fever_start_time
+            ):
+                FeverChanceEventCounter.fever_chance_cant_super_fever = True
         else:
             combo += 1
         WatchBaseNote.at(ptr).combo = combo
@@ -113,13 +116,31 @@ def setting_combo(head: int) -> None:
         if is_replay() and judgment != Judgment.PERFECT:
             ap = True
         if is_replay() and ap:
-            WatchBaseNote.at(ptr).ap = True
+            WatchBaseNote.at(ptr).at(ptr).ap = True
 
-        if is_replay() and judgment != Judgment.PERFECT and WatchBaseNote.at(ptr).played_hit_effects:
-            WatchBaseNote.at(accuracy).next_ref_accuracy.index = ptr
+        if is_replay() and judgment != Judgment.PERFECT and WatchBaseNote.at(ptr).at(ptr).played_hit_effects:
+            WatchBaseNote.at(ptr).at(accuracy).next_ref_accuracy.index = ptr
             accuracy = ptr
 
         if is_replay() and judgment == Judgment.MISS:
-            WatchBaseNote.at(damage_flash).next_ref_damage_flash.index = ptr
+            WatchBaseNote.at(ptr).at(damage_flash).next_ref_damage_flash.index = ptr
             damage_flash = ptr
+
+        count += 1
+        WatchBaseNote.at(ptr).count = count
+        debug_log(WatchBaseNote.at(ptr).count)
+        if (
+            FeverChanceEventCounter.fever_chance_time
+            <= WatchBaseNote.at(ptr).hit_time
+            < FeverChanceEventCounter.fever_start_time
+        ):
+            FeverChanceEventCounter.fever_first_count = (
+                min(WatchBaseNote.at(ptr).count, FeverChanceEventCounter.fever_first_count)
+                if FeverChanceEventCounter.fever_first_count != 0
+                else WatchBaseNote.at(ptr).count
+            )
+            FeverChanceEventCounter.fever_last_count = max(
+                WatchBaseNote.at(ptr).count, FeverChanceEventCounter.fever_last_count
+            )
+        debug_log(FeverChanceEventCounter.fever_first_count)
         ptr = WatchBaseNote.at(ptr).next_ref.index

@@ -10,3 +10,4 @@ class Streams:
     empty_input_lanes: Stream[VarArray[float, Dim[16]]]
     connector_visual_states: StreamGroup[ConnectorVisualState, Dim[1_000_000]]
     connector_effect_kinds: StreamGroup[ConnectorKind, Dim[1_000_000]]
+    fever_chance_counter: StreamGroup[float, Dim[1_000_000]]

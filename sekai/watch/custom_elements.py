@@ -1,4 +1,5 @@
 from sonolus.script.archetype import EntityRef, WatchArchetype, entity_memory
+from sonolus.script.debug import debug_log
 from sonolus.script.globals import level_memory
 
 from sekai.lib import archetype_names
@@ -9,6 +10,7 @@ from sekai.lib.custom_elements import (
     draw_judgment_accuracy,
     draw_judgment_text,
 )
+from sekai.watch import note
 from sekai.watch.note import WatchBaseNote
 
 
@@ -18,12 +20,16 @@ class PrecalcLayer:
     judgment1: float
     judgment2: float
     damage: float
+    fever_chance_cover: float
+    fever_chance_side: float
+    fever_chance_gauge: float
 
 
 class ComboLabel(WatchArchetype):
     next_ref: EntityRef[WatchBaseNote] = entity_memory()
     note_index: int = entity_memory()
     z: float = entity_memory()
+    checker: float = entity_memory()
     glow_z: float = entity_memory()
     name = archetype_names.COMBO_LABEL
 
@@ -41,9 +47,27 @@ class ComboLabel(WatchArchetype):
             return 1e8
 
     def update_parallel(self):
+        debug_log(11)
         if WatchBaseNote.at(self.note_index).combo == 0:
             return
+        debug_log(22)
         draw_combo_label(ap=WatchBaseNote.at(self.note_index).ap, z=self.z, glow_z=self.glow_z)
+
+    def update_sequential(self):
+        if self.checker:
+            return
+        if (
+            note.FeverChanceEventCounter.fever_chance_time
+            <= WatchBaseNote.at(self.note_index).hit_time
+            < note.FeverChanceEventCounter.fever_start_time
+        ):
+            note.FeverChanceEventCounter.fever_chance_current_combo = (
+                WatchBaseNote.at(self.note_index).count - note.FeverChanceEventCounter.fever_first_count
+            )
+            self.checker = True
+
+    def terminate(self):
+        self.checker = False
 
 
 class ComboNumber(WatchArchetype):
