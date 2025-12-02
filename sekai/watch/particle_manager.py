@@ -43,6 +43,7 @@ class ParticleManager(WatchArchetype):
         if is_skip():
             ParticleHandler.critical_flick_lane_effect.clear()
             self.check = False
+            return
         if self.check:
             return
         layout = layout_lane(self.lane, self.size)
@@ -50,6 +51,10 @@ class ParticleManager(WatchArchetype):
             self.particles.lane.spawn(layout, duration=1 * Options.note_effect_duration), self.lane, self.target_time
         )
         self.check = True
+
+    def update_parallel(self):
+        if is_skip():
+            self.particle.destroy()
 
     def terminate(self):
         self.check = False
