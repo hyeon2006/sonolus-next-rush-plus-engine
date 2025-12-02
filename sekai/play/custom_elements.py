@@ -105,6 +105,12 @@ class ComboLabel(PlayArchetype):
         if self.judgment in (Judgment.MISS, Judgment.GOOD):
             ComboLabelMemory.combo_check = 0
             self.combo = ComboLabelMemory.combo_check
+            if (
+                note.FeverChanceEventCounter.fever_chance_time
+                <= self.target_time
+                < note.FeverChanceEventCounter.fever_start_time
+            ):
+                note.FeverChanceEventCounter.fever_chance_cant_super_fever = True
         else:
             ComboLabelMemory.combo_check += 1
             self.combo = ComboLabelMemory.combo_check

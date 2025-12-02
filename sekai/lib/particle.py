@@ -135,6 +135,13 @@ class BaseParticles:
     damage_note_circular: Particle = particle("Sekai Damage Note Circular")
     damage_note_linear: Particle = particle("Sekai Damage Note Linear")
 
+    fever_chance_text: Particle = particle("Sekai Fever Chance Text")
+    fever_chance_lane: Particle = particle("Sekai Fever Chance Lane")
+    fever_start_text: Particle = particle("Sekai Fever Text")
+    fever_start_lane: Particle = particle("Sekai Fever Lane")
+    super_fever_start_text: Particle = particle("Sekai Super Fever Text")
+    super_fever_start_lane: Particle = particle("Sekai Super Fever Lane")
+
 
 EMPTY_PARTICLE = Particle(-1)
 
@@ -263,6 +270,13 @@ class ActiveParticles:
 
     normal_slide_connector: ActiveConnectorParticleSet
     critical_slide_connector: ActiveConnectorParticleSet
+
+    fever_chance_text: Particle
+    fever_chance_lane: Particle
+    fever_start_text: Particle
+    fever_start_lane: Particle
+    super_fever_start_text: Particle
+    super_fever_start_lane: Particle
 
 
 def init_particles():
@@ -736,3 +750,10 @@ def init_particles():
             BaseParticles.critical_slide_connector_slot_linear, BaseParticles.slide_connector_slot_linear_yellow
         ),
     )
+
+    ActiveParticles.fever_chance_text @= BaseParticles.fever_chance_text
+    ActiveParticles.fever_chance_lane @= BaseParticles.fever_chance_lane
+    ActiveParticles.fever_start_text @= BaseParticles.fever_start_text
+    ActiveParticles.fever_start_lane @= BaseParticles.fever_start_lane
+    ActiveParticles.super_fever_start_text @= BaseParticles.super_fever_start_text
+    ActiveParticles.super_fever_start_lane @= BaseParticles.super_fever_start_lane

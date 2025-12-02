@@ -7,8 +7,11 @@ from sekai.lib.layout import (
     layout_fever_cover_right,
     layout_fever_gauge_left,
     layout_fever_gauge_right,
+    layout_fever_text,
+    layout_lane,
     layout_sekai_stage,
 )
+from sekai.lib.particle import ActiveParticles
 from sekai.lib.skin import ActiveSkin
 
 
@@ -38,3 +41,20 @@ def draw_fever_gauge(z: float, percentage: float):
     layout2 = layout_fever_gauge_right(t)
     ActiveSkin.sekai_fever_gauge.get_sprite(percentage).draw(layout1, z, a=0.55)
     ActiveSkin.sekai_fever_gauge.get_sprite(percentage).draw(layout2, z, a=0.55)
+
+
+def spawn_fever_start_particle(cant_super_fever: bool):
+    if cant_super_fever:
+        layout_text = layout_fever_text()
+        layout_lane1 = layout_lane(-6, 1)
+        layout_lane2 = layout_lane(6, 1)
+        ActiveParticles.fever_start_text.spawn(layout_text, 1, False)
+        ActiveParticles.fever_start_lane.spawn(layout_lane1, 1, False)
+        ActiveParticles.fever_start_lane.spawn(layout_lane2, 1, False)
+    else:
+        layout_text = layout_fever_text()
+        layout_lane1 = layout_lane(-6, 1)
+        layout_lane2 = layout_lane(6, 1)
+        ActiveParticles.super_fever_start_text.spawn(layout_text, 1, False)
+        ActiveParticles.super_fever_start_lane.spawn(layout_lane1, 1, False)
+        ActiveParticles.super_fever_start_lane.spawn(layout_lane2, 1, False)
