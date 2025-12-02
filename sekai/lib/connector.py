@@ -105,10 +105,6 @@ def get_active_connector_sprites(kind: ActiveConnectorKind) -> ActiveConnectorSp
 def get_guide_connector_sprite(kind: GuideConnectorKind) -> Sprite:
     result = +Sprite
     match kind:
-        case ConnectorKind.GUIDE_NORMAL:
-            result @= ActiveSkin.guide_green
-        case ConnectorKind.GUIDE_CRITICAL:
-            result @= ActiveSkin.guide_yellow
         case ConnectorKind.GUIDE_NEUTRAL:
             result @= ActiveSkin.guide_neutral
         case ConnectorKind.GUIDE_RED:
@@ -176,9 +172,9 @@ def get_connector_z(kind: ConnectorKind, target_time: float, lane: float) -> flo
 
 def get_active_connector_z_offset(kind: ActiveConnectorKind, active: bool) -> int:
     match kind:
-        case ConnectorKind.ACTIVE_NORMAL | ConnectorKind.ACTIVE_FAKE_NORMAL | ConnectorKind.GUIDE_NORMAL:
+        case ConnectorKind.ACTIVE_NORMAL | ConnectorKind.ACTIVE_FAKE_NORMAL:
             return 3 - active
-        case ConnectorKind.ACTIVE_CRITICAL | ConnectorKind.ACTIVE_FAKE_CRITICAL | ConnectorKind.GUIDE_CRITICAL:
+        case ConnectorKind.ACTIVE_CRITICAL | ConnectorKind.ACTIVE_FAKE_CRITICAL:
             return 1 - active
         case _:
             assert_never(kind)
@@ -194,9 +190,7 @@ def get_connector_alpha_option(kind: ConnectorKind) -> float:
         ):
             return Options.slide_alpha
         case (
-            ConnectorKind.GUIDE_NORMAL
-            | ConnectorKind.GUIDE_CRITICAL
-            | ConnectorKind.GUIDE_NEUTRAL
+            ConnectorKind.GUIDE_NEUTRAL
             | ConnectorKind.GUIDE_RED
             | ConnectorKind.GUIDE_GREEN
             | ConnectorKind.GUIDE_BLUE
@@ -222,9 +216,7 @@ def get_connector_quality_option(kind: ConnectorKind) -> float:
         ):
             return Options.slide_quality
         case (
-            ConnectorKind.GUIDE_NORMAL
-            | ConnectorKind.GUIDE_CRITICAL
-            | ConnectorKind.GUIDE_NEUTRAL
+            ConnectorKind.GUIDE_NEUTRAL
             | ConnectorKind.GUIDE_RED
             | ConnectorKind.GUIDE_GREEN
             | ConnectorKind.GUIDE_BLUE
@@ -285,9 +277,7 @@ def draw_connector(
             normal_sprite @= sprites.connection.normal
             active_sprite @= sprites.connection.active
         case (
-            ConnectorKind.GUIDE_NORMAL
-            | ConnectorKind.GUIDE_CRITICAL
-            | ConnectorKind.GUIDE_NEUTRAL
+            ConnectorKind.GUIDE_NEUTRAL
             | ConnectorKind.GUIDE_RED
             | ConnectorKind.GUIDE_GREEN
             | ConnectorKind.GUIDE_BLUE
@@ -313,9 +303,7 @@ def draw_connector(
             if visual_state == ConnectorVisualState.INACTIVE:
                 visual_state = ConnectorVisualState.ACTIVE
         case (
-            ConnectorKind.GUIDE_NORMAL
-            | ConnectorKind.GUIDE_CRITICAL
-            | ConnectorKind.GUIDE_NEUTRAL
+            ConnectorKind.GUIDE_NEUTRAL
             | ConnectorKind.GUIDE_RED
             | ConnectorKind.GUIDE_GREEN
             | ConnectorKind.GUIDE_BLUE

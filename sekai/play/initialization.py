@@ -77,7 +77,7 @@ def initial_list(entity_count):
     list_length = 0
     watch_note_id = BaseNote._compile_time_id()
     for i in range(entity_count):
-        entity_index = entity_count - 1 - i
+        entity_index: int = entity_count - 1 - i
         info = entity_info_at(entity_index)
         is_watch_note = watch_note_id in BaseNote._get_mro_id_array(info.archetype_id)
         if is_watch_note and BaseNote.at(entity_index).is_scored:
