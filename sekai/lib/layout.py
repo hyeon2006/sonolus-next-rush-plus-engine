@@ -633,6 +633,11 @@ def layout_fever_gauge_right(t) -> Quad:
     return perspective_rect(l=6, r=6.5, t=t, b=LANE_B)
 
 
+def layout_fever_text() -> Quad:
+    rect = Rect(t=0.585 - 0.25, b=0.585 + 0.25, l=-1.5, r=1.5)
+    return transform_quad(rect)
+
+
 def layout_hitbox(
     l: float,
     r: float,

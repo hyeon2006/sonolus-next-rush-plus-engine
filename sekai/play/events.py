@@ -9,7 +9,12 @@ from sonolus.script.runtime import is_multiplayer, time
 from sonolus.script.timing import beat_to_time
 
 from sekai.lib import archetype_names
-from sekai.lib.events import draw_fever_gauge, draw_fever_side_bar, draw_fever_side_cover
+from sekai.lib.events import (
+    draw_fever_gauge,
+    draw_fever_side_bar,
+    draw_fever_side_cover,
+    spawn_fever_start_particle,
+)
 from sekai.lib.options import Options
 from sekai.play import custom_elements, note
 
@@ -64,8 +69,12 @@ class FeverChance(PlayArchetype):
             self.despawn = True
             return
         if time() >= note.FeverChanceEventCounter.fever_start_time:
+            spawn_fever_start_particle(
+                note.FeverChanceEventCounter.fever_chance_cant_super_fever
+            )
             self.despawn = True
             return
+        self.checker = True
         self.percentage = clamp(
             note.FeverChanceEventCounter.fever_chance_current_combo / self.counter,
             0,
@@ -78,8 +87,10 @@ class FeverChance(PlayArchetype):
     def update_sequential(self):
         if self.checker:
             return
-        self.checker = True
-        self.counter = note.FeverChanceEventCounter.fever_last_count - note.FeverChanceEventCounter.fever_first_count
+        self.counter = (
+            note.FeverChanceEventCounter.fever_last_count
+            - note.FeverChanceEventCounter.fever_first_count
+        )
 
 
 class FeverStart(PlayArchetype):
