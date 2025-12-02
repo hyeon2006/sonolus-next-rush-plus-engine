@@ -82,7 +82,7 @@ class BaseNote(PlayArchetype):
     start_time: float = entity_data()
     target_scaled_time: float = entity_data()
     judgment_window: JudgmentWindow = entity_data()
-    judgment_window_bad: Interval = entity_data()
+    judgment_window_bad: Interval = shared_memory()
     input_interval: Interval = entity_data()
     unadjusted_input_interval: Interval = entity_data()
 
