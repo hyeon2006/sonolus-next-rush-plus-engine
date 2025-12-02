@@ -58,3 +58,12 @@ def spawn_fever_start_particle(cant_super_fever: bool):
         ActiveParticles.super_fever_start_text.spawn(layout_text, 1, False)
         ActiveParticles.super_fever_start_lane.spawn(layout_lane1, 1, False)
         ActiveParticles.super_fever_start_lane.spawn(layout_lane2, 1, False)
+
+
+def spawn_fever_chance_particle():
+    layout_text = layout_fever_text()
+    layout_lane1 = layout_lane(-6, 0.5)
+    layout_lane2 = layout_lane(6, 0.5)
+    ActiveParticles.fever_chance_text.spawn(layout_text, 1, False)
+    ActiveParticles.fever_chance_lane.spawn(layout_lane1, 1, False)
+    ActiveParticles.fever_chance_lane.spawn(layout_lane2, 1, False)
