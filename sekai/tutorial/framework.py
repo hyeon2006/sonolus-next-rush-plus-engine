@@ -20,6 +20,7 @@ from sekai.lib.connector import (
     CONNECTOR_SLOT_SPAWN_PERIOD,
     CONNECTOR_TRAIL_SPAWN_PERIOD,
     ConnectorKind,
+    ConnectorLayer,
     ConnectorVisualState,
     destroy_looped_particle,
     destroy_looped_sfx,
@@ -332,6 +333,7 @@ class QueuedTutorialNoteDrawConnectorTo(Record):
             segment_head_alpha=1,
             segment_tail_target_time=tail_target_time,
             segment_tail_alpha=1,
+            layer=ConnectorLayer.TOP,
         )
         if self.effect_index >= 0 and tail_progress < 1 < head_progress and self.active:
             frac = unlerp(head_progress, tail_progress, 1)
