@@ -282,7 +282,7 @@ class Options:
         description="Beta, only default options work",
         scope="Rush",
         default=0,
-        values=["default", "lightweight"],
+        values=["Default", "Lightweight"],
     )
     forced_fever_chance: bool = toggle_option(
         name="Forced Fever Chance",
