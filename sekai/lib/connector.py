@@ -47,8 +47,6 @@ class ConnectorKind(IntEnum):
 
     ACTIVE_NORMAL = 1
     ACTIVE_CRITICAL = 2
-    GUIDE_NORMAL = 3
-    GUIDE_CRITICAL = 4
     ACTIVE_FAKE_NORMAL = 51
     ACTIVE_FAKE_CRITICAL = 52
 
@@ -75,8 +73,6 @@ ActiveConnectorKind = Literal[
 ]
 
 GuideConnectorKind = Literal[
-    ConnectorKind.GUIDE_NORMAL,
-    ConnectorKind.GUIDE_CRITICAL,
     ConnectorKind.GUIDE_NEUTRAL,
     ConnectorKind.GUIDE_RED,
     ConnectorKind.GUIDE_GREEN,
