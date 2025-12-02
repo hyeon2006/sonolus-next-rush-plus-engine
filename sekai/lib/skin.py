@@ -270,6 +270,9 @@ class BaseSkin:
     bpm_change_line: StandardSprite.GRID_PURPLE
     timescale_change_line: StandardSprite.GRID_YELLOW
     special_line: StandardSprite.GRID_RED
+    skill_line: StandardSprite.GRID_GREEN
+    fever_chance_line: StandardSprite.GRID_CYAN
+    fever_start_line: StandardSprite.GRID_BLUE
 
     # Custom Elements
     perfect: Sprite = sprite("Perfect")
@@ -1013,6 +1016,9 @@ class ActiveSkin:
     bpm_change_line: Sprite
     timescale_change_line: Sprite
     special_line: Sprite
+    skill_line: Sprite
+    fever_chance_line: Sprite
+    fever_start_line: Sprite
 
     judgment: JudgmentSpriteSet
     combo_number: ComboNumberSpriteSet
@@ -1422,6 +1428,9 @@ def init_skin():
     ActiveSkin.bpm_change_line = BaseSkin.bpm_change_line
     ActiveSkin.timescale_change_line = BaseSkin.timescale_change_line
     ActiveSkin.special_line = BaseSkin.special_line
+    ActiveSkin.skill_line = BaseSkin.skill_line
+    ActiveSkin.fever_chance_line = BaseSkin.fever_chance_line
+    ActiveSkin.fever_start_line = BaseSkin.fever_start_line
     ActiveSkin.judgment = JudgmentSpriteSet(
         perfect=BaseSkin.perfect,
         great=BaseSkin.great,
