@@ -1,7 +1,6 @@
 from sonolus.script.archetype import WatchArchetype, callback, entity_info_at, imported
 from sonolus.script.bucket import Judgment
 from sonolus.script.containers import sort_linked_entities
-from sonolus.script.debug import debug_log
 from sonolus.script.runtime import is_replay
 
 from sekai.lib import archetype_names
@@ -132,7 +131,6 @@ def setting_combo(head: int) -> None:
 
         count += 1
         WatchBaseNote.at(ptr).count = count
-        debug_log(WatchBaseNote.at(ptr).count)
         if (
             FeverChanceEventCounter.fever_chance_time
             <= WatchBaseNote.at(ptr).hit_time
@@ -146,5 +144,4 @@ def setting_combo(head: int) -> None:
             FeverChanceEventCounter.fever_last_count = max(
                 WatchBaseNote.at(ptr).count, FeverChanceEventCounter.fever_last_count
             )
-        debug_log(FeverChanceEventCounter.fever_first_count)
         ptr = WatchBaseNote.at(ptr).next_ref.index
