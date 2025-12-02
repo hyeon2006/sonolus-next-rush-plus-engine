@@ -25,7 +25,7 @@ from sonolus.script.timing import beat_to_time
 
 from sekai.lib import archetype_names
 from sekai.lib.buckets import WINDOW_SCALE, get_judgment_interval
-from sekai.lib.connector import ActiveConnectorInfo, ConnectorKind
+from sekai.lib.connector import ActiveConnectorInfo, ConnectorKind, ConnectorLayer
 from sekai.lib.ease import EaseType
 from sekai.lib.layout import FlickDirection, Layout, layout_hitbox, layout_lane, progress_to
 from sekai.lib.note import (
@@ -69,6 +69,7 @@ class BaseNote(PlayArchetype):
     connector_ease: EaseType = imported(name="connectorEase")
     segment_kind: ConnectorKind = imported(name="segmentKind")
     segment_alpha: float = imported(name="segmentAlpha")
+    segment_layer: ConnectorLayer = imported(name="segmentLayer")
     attach_head_ref: EntityRef[BaseNote] = imported(name="attachHead")
     attach_tail_ref: EntityRef[BaseNote] = imported(name="attachTail")
     next_ref: EntityRef[BaseNote] = imported(name="next")  # Only for level data; not used in-game.

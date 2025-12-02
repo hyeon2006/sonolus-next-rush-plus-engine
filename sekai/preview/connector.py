@@ -8,6 +8,7 @@ from sonolus.script.sprite import Sprite
 from sekai.lib import archetype_names
 from sekai.lib.connector import (
     ConnectorKind,
+    ConnectorLayer,
     get_active_connector_sprites,
     get_connector_alpha_option,
     get_connector_quality_option,
@@ -62,6 +63,7 @@ class PreviewConnector(PreviewArchetype):
             segment_head_alpha=self.segment_head.segment_alpha,
             segment_tail_target_time=self.segment_tail.target_time,
             segment_tail_alpha=self.segment_tail.segment_alpha,
+            layer=self.segment_head.segment_layer,
         )
 
     @property
@@ -97,6 +99,7 @@ def draw_connector(
     segment_head_alpha: float,
     segment_tail_target_time: float,
     segment_tail_alpha: float,
+    layer: ConnectorLayer,
 ):
     if head_target_time == tail_target_time:
         return
@@ -199,7 +202,9 @@ def draw_connector(
         )
 
         for col in range(last_col, next_col + 1):
-            z = get_connector_z(kind, get_adjusted_time(segment_head_target_time, col), segment_head_lane, active=False)
+            z = get_connector_z(
+                kind, get_adjusted_time(segment_head_target_time, col), segment_head_lane, active=False, layer=layer
+            )
             start_y = time_to_preview_y(last_target_time, col)
             end_y = time_to_preview_y(next_target_time, col)
             for layout in layout_preview_slide_connector_segment(

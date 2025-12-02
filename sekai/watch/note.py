@@ -17,7 +17,7 @@ from sonolus.script.runtime import is_replay, is_skip, time
 from sonolus.script.timing import beat_to_time
 
 from sekai.lib.buckets import get_judgment_interval
-from sekai.lib.connector import ActiveConnectorInfo, ConnectorKind
+from sekai.lib.connector import ActiveConnectorInfo, ConnectorKind, ConnectorLayer
 from sekai.lib.ease import EaseType
 from sekai.lib.layout import FlickDirection, progress_to
 from sekai.lib.note import (
@@ -60,6 +60,7 @@ class WatchBaseNote(WatchArchetype):
     connector_ease: EaseType = imported(name="connectorEase")
     segment_kind: ConnectorKind = imported(name="segmentKind")
     segment_alpha: float = imported(name="segmentAlpha")
+    segment_layer: ConnectorLayer = imported(name="segmentLayer")
     attach_head_ref: EntityRef[WatchBaseNote] = imported(name="attachHead")
     attach_tail_ref: EntityRef[WatchBaseNote] = imported(name="attachTail")
     effect_kind: NoteEffectKind = imported(name="effectKind")

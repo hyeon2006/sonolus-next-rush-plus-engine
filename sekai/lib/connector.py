@@ -15,9 +15,10 @@ from sonolus.script.timing import beat_to_time
 from sekai.lib.ease import EaseType, ease
 from sekai.lib.effect import Effects
 from sekai.lib.layer import (
-    LAYER_ACTIVE_SIDE_CONNECTOR,
-    LAYER_GUIDE_CONNECTOR,
-    LAYER_LOWER_GUIDE_CONNECTOR,
+    LAYER_ACTIVE_SIDE_CONNECTOR_BOTTOM,
+    LAYER_ACTIVE_SIDE_CONNECTOR_TOP,
+    LAYER_GUIDE_CONNECTOR_BOTTOM,
+    LAYER_GUIDE_CONNECTOR_TOP,
     LAYER_SLOT_GLOW_EFFECT,
     get_z,
 )
@@ -60,6 +61,11 @@ class ConnectorKind(IntEnum):
     GUIDE_PURPLE = 106
     GUIDE_CYAN = 107
     GUIDE_BLACK = 108
+
+
+class ConnectorLayer(IntEnum):
+    TOP = 0
+    BOTTOM = 1
 
 
 ActiveConnectorKind = Literal[
@@ -129,7 +135,7 @@ def get_guide_connector_sprite(kind: GuideConnectorKind) -> Sprite:
     return result
 
 
-def get_connector_z(kind: ConnectorKind, target_time: float, lane: float, active: bool) -> float:
+def get_connector_z(kind: ConnectorKind, target_time: float, lane: float, active: bool, layer: ConnectorLayer) -> float:
     match kind:
         case (
             ConnectorKind.ACTIVE_NORMAL
@@ -137,21 +143,22 @@ def get_connector_z(kind: ConnectorKind, target_time: float, lane: float, active
             | ConnectorKind.ACTIVE_CRITICAL
             | ConnectorKind.ACTIVE_FAKE_CRITICAL
         ):
-            return get_z(
-                LAYER_ACTIVE_SIDE_CONNECTOR,
-                time=target_time,
-                lane=lane,
-                etc=get_active_connector_z_offset(kind, active),
-                invert_time=True,
-            )
-        case ConnectorKind.GUIDE_NORMAL | ConnectorKind.GUIDE_CRITICAL:
-            return get_z(
-                LAYER_LOWER_GUIDE_CONNECTOR,
-                time=target_time,
-                lane=lane,
-                etc=get_active_connector_z_offset(kind, active),
-                invert_time=True,
-            )
+            if layer == ConnectorLayer.TOP:
+                return get_z(
+                    LAYER_ACTIVE_SIDE_CONNECTOR_TOP,
+                    time=target_time,
+                    lane=lane,
+                    etc=get_active_connector_z_offset(kind, active),
+                    invert_time=True,
+                )
+            else:
+                return get_z(
+                    LAYER_ACTIVE_SIDE_CONNECTOR_BOTTOM,
+                    time=target_time,
+                    lane=lane,
+                    etc=get_active_connector_z_offset(kind, active),
+                    invert_time=True,
+                )
         case (
             ConnectorKind.GUIDE_NEUTRAL
             | ConnectorKind.GUIDE_RED
@@ -162,13 +169,22 @@ def get_connector_z(kind: ConnectorKind, target_time: float, lane: float, active
             | ConnectorKind.GUIDE_CYAN
             | ConnectorKind.GUIDE_BLACK
         ):
-            return get_z(
-                LAYER_GUIDE_CONNECTOR,
-                time=target_time,
-                lane=lane,
-                etc=kind - ConnectorKind.GUIDE_NEUTRAL,
-                invert_time=True,
-            )
+            if layer == ConnectorLayer.TOP:
+                return get_z(
+                    LAYER_GUIDE_CONNECTOR_TOP,
+                    time=target_time,
+                    lane=lane,
+                    etc=kind - ConnectorKind.GUIDE_NEUTRAL,
+                    invert_time=True,
+                )
+            else:
+                return get_z(
+                    LAYER_GUIDE_CONNECTOR_BOTTOM,
+                    time=target_time,
+                    lane=lane,
+                    etc=kind - ConnectorKind.GUIDE_NEUTRAL,
+                    invert_time=True,
+                )
         case ConnectorKind.NONE:
             return 0.0
         case _:
@@ -260,6 +276,7 @@ def draw_connector(
     segment_head_alpha: float,
     segment_tail_target_time: float,
     segment_tail_alpha: float,
+    layer: ConnectorLayer,
 ):
     if time() < head_target_time and (
         (head_progress < Layout.progress_start and tail_progress < Layout.progress_start)
@@ -418,9 +435,9 @@ def draw_connector(
     quality = get_connector_quality_option(kind)
     segment_count = max(1, ceil(max(curve_change_scale, alpha_change_scale) * quality * 10))
 
-    z_normal = get_connector_z(kind, segment_head_target_time, segment_head_lane, active=False)
+    z_normal = get_connector_z(kind, segment_head_target_time, segment_head_lane, active=False, layer=layer)
     if visual_state == ConnectorVisualState.ACTIVE and active_sprite.is_available:
-        z_active = get_connector_z(kind, segment_head_target_time, segment_head_lane, active=True)
+        z_active = get_connector_z(kind, segment_head_target_time, segment_head_lane, active=True, layer=layer)
     else:
         z_active = z_normal
 
