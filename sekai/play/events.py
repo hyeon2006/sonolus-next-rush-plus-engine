@@ -13,6 +13,7 @@ from sekai.lib.events import (
     draw_fever_gauge,
     draw_fever_side_bar,
     draw_fever_side_cover,
+    spawn_fever_chance_particle,
     spawn_fever_start_particle,
 )
 from sekai.lib.options import Options
@@ -51,7 +52,11 @@ class FeverChance(PlayArchetype):
     @callback(order=-2)
     def preprocess(self):
         self.start_time = beat_to_time(self.beat)
-        note.FeverChanceEventCounter.fever_chance_time = self.start_time
+        note.FeverChanceEventCounter.fever_chance_time = (
+            min(self.start_time, note.FeverChanceEventCounter.fever_chance_time)
+            if note.FeverChanceEventCounter.fever_chance_time != 0
+            else self.start_time
+        )
 
     def initialize(self):
         self.z = custom_elements.PrecalcLayer.fever_chance_cover
@@ -69,12 +74,12 @@ class FeverChance(PlayArchetype):
             self.despawn = True
             return
         if time() >= note.FeverChanceEventCounter.fever_start_time:
-            spawn_fever_start_particle(
-                note.FeverChanceEventCounter.fever_chance_cant_super_fever
-            )
+            spawn_fever_start_particle(note.FeverChanceEventCounter.fever_chance_cant_super_fever)
             self.despawn = True
             return
-        self.checker = True
+        if time() >= note.FeverChanceEventCounter.fever_chance_time and not self.checker:
+            spawn_fever_chance_particle()
+            self.checker = True
         self.percentage = clamp(
             note.FeverChanceEventCounter.fever_chance_current_combo / self.counter,
             0,
@@ -87,10 +92,7 @@ class FeverChance(PlayArchetype):
     def update_sequential(self):
         if self.checker:
             return
-        self.counter = (
-            note.FeverChanceEventCounter.fever_last_count
-            - note.FeverChanceEventCounter.fever_first_count
-        )
+        self.counter = note.FeverChanceEventCounter.fever_last_count - note.FeverChanceEventCounter.fever_first_count
 
 
 class FeverStart(PlayArchetype):
@@ -101,7 +103,11 @@ class FeverStart(PlayArchetype):
     @callback(order=-2)
     def preprocess(self):
         self.start_time = beat_to_time(self.beat)
-        note.FeverChanceEventCounter.fever_start_time = self.start_time
+        note.FeverChanceEventCounter.fever_start_time = (
+            min(self.start_time, note.FeverChanceEventCounter.fever_start_time)
+            if note.FeverChanceEventCounter.fever_start_time != 0
+            else self.start_time
+        )
 
     def spawn_order(self):
         return 1e8
