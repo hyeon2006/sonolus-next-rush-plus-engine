@@ -625,7 +625,8 @@ def layout_fever_gauge_right(t) -> Quad:
 
 
 def layout_fever_text() -> Quad:
-    rect = Rect(t=0.585 - 0.25, b=0.585 + 0.25, l=-1.5, r=1.5)
+    center = 0.65
+    rect = Rect(t=center - 0.2, b=center + 0.2, l=-1.5, r=1.5)
     return transform_quad(rect)
 
 
