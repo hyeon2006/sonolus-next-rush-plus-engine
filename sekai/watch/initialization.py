@@ -78,8 +78,6 @@ def initial_list(entity_count):
         entity_index = entity_count - 1 - i
         info = entity_info_at(entity_index)
         is_watch_note = watch_note_id in WatchBaseNote._get_mro_id_array(info.archetype_id)
-        if is_watch_note and not WatchBaseNote.at(entity_index).is_scored and WatchBaseNote.at(entity_index).size == 0:
-            WatchBaseNote.at(entity_index).init_data()
         if is_watch_note and WatchBaseNote.at(entity_index).is_scored:
             WatchBaseNote.at(entity_index).init_data()
             list_length += 1

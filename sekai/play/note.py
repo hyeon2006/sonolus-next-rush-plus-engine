@@ -417,12 +417,7 @@ class BaseNote(PlayArchetype):
                 wrong_way=self.wrong_way,
                 target_time=self.target_time,
             )
-        if (
-            not self.is_scored
-            and self.size == 0
-            and self.kind == NoteKind.NORM_TAP
-            and not FeverChanceEventCounter.fever_chance_exist
-        ):
+        if not self.is_scored and self.size == 0 and self.kind == NoteKind.NORM_TAP:
             FeverChance.spawn(start_time=self.target_time, force_chance=self.lane == 8)
 
     def handle_tap_input(self):
@@ -776,7 +771,6 @@ class FeverChanceEventCounter:
     fever_chance_cant_super_fever: bool
     fever_last_count: int
     fever_first_count: int
-    fever_chance_exist: bool
 
 
 NormalTapNote = BaseNote.derive(archetype_names.NORMAL_TAP_NOTE, is_scored=True, key=NoteKind.NORM_TAP)
