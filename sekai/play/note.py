@@ -53,6 +53,7 @@ from sekai.lib.particle import BaseParticles
 from sekai.lib.timescale import group_hide_notes, group_scaled_time, group_time_to_scaled_time
 from sekai.play import input_manager
 from sekai.play.custom_elements import spawn_custom
+from sekai.play.events import FeverChance
 from sekai.play.particle_manager import ParticleManager
 
 DEFAULT_BEST_TOUCH_TIME = -1e8
@@ -135,6 +136,23 @@ class BaseNote(PlayArchetype):
             self.target_scaled_time = group_time_to_scaled_time(self.timescale_group, self.target_time)
             self.visual_start_time = get_visual_spawn_time(self.timescale_group, self.target_scaled_time)
             self.start_time = min(self.visual_start_time, self.input_interval.start)
+
+        self.check_event_fake()
+
+    def check_event_fake(self):
+        if not self.is_scored and self.size == 0:
+            if self.kind == NoteKind.NORM_TAP:
+                FeverChanceEventCounter.fever_chance_time = (
+                    self.target_time
+                    if FeverChanceEventCounter.fever_chance_time == 0
+                    else FeverChanceEventCounter.fever_chance_time
+                )
+            elif self.kind == NoteKind.CRIT_TAP:
+                FeverChanceEventCounter.fever_start_time = (
+                    self.target_time
+                    if FeverChanceEventCounter.fever_start_time == 0
+                    else FeverChanceEventCounter.fever_start_time
+                )
 
     def preprocess(self):
         self.init_data()
@@ -399,6 +417,8 @@ class BaseNote(PlayArchetype):
                 wrong_way=self.wrong_way,
                 target_time=self.target_time,
             )
+        if not self.is_scored and self.size == 0 and self.kind == NoteKind.NORM_TAP:
+            FeverChance.spawn(start_time=self.target_time, force_chance=self.lane == 8)
 
     def handle_tap_input(self):
         if time() > self.input_interval.end:
