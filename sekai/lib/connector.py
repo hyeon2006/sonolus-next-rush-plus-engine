@@ -501,7 +501,6 @@ class ActiveConnectorInfo(Record):
     input_lane: float
     input_size: float
     is_active: bool
-    is_inactive: bool
     active_start_time: float
     connector_kind: ConnectorKind
 

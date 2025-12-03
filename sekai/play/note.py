@@ -292,7 +292,7 @@ class BaseNote(PlayArchetype):
                         (
                             self.tick_head_ref.index > 0
                             and (
-                                not self.tick_head_ref.get().active_connector_info.is_inactive
+                                self.tick_head_ref.get().active_connector_info.is_active
                                 and time() >= self.input_interval.start
                             )
                         )
@@ -305,7 +305,7 @@ class BaseNote(PlayArchetype):
                         (
                             self.attach_head_ref.get().tick_head_ref.index > 0
                             and (
-                                not self.attach_head_ref.get().tick_head_ref.get().active_connector_info.is_inactive
+                                self.attach_head_ref.get().tick_head_ref.get().active_connector_info.is_active
                                 and time() >= self.input_interval.start
                             )
                         )
@@ -327,7 +327,7 @@ class BaseNote(PlayArchetype):
                     and time() >= self.attach_head_ref.get().tick_tail_ref.get().target_time
                 )
                 or (
-                    not self.attach_head_ref.get().tick_head_ref.get().active_connector_info.is_inactive
+                    self.attach_head_ref.get().tick_head_ref.get().active_connector_info.is_active
                     and time() >= self.input_interval.start
                 )
             )
@@ -508,7 +508,6 @@ class BaseNote(PlayArchetype):
             self.best_touch_matches_direction = has_correct_direction_touch
 
     def handle_tick_input(self):
-        return
         hitbox = self.get_full_hitbox()
         for touch in touches():
             if not hitbox.contains_point(touch.position):
