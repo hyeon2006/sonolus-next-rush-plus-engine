@@ -1,9 +1,4 @@
-from sonolus.script.archetype import (
-    StandardImport,
-    WatchArchetype,
-    callback,
-    entity_memory,
-)
+from sonolus.script.archetype import StandardImport, WatchArchetype, callback, entity_memory, imported
 from sonolus.script.interval import clamp
 from sonolus.script.runtime import is_replay, is_skip, time
 from sonolus.script.timing import beat_to_time
@@ -38,6 +33,7 @@ class Skill(WatchArchetype):
 
 class FeverChance(WatchArchetype):
     beat: StandardImport.BEAT
+    force: bool = imported(name="force")
     start_time: float = entity_memory()
     checker: int = entity_memory()
     counter: int = entity_memory()
@@ -68,7 +64,7 @@ class FeverChance(WatchArchetype):
         return note.FeverChanceEventCounter.fever_start_time + 10
 
     def update_parallel(self):
-        if not is_replay() and not Options.forced_fever_chance:
+        if not is_replay() and not Options.forced_fever_chance and not self.force:
             return
         if is_skip():
             self.checker = 0
