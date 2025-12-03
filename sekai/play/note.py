@@ -513,8 +513,6 @@ class BaseNote(PlayArchetype):
             if not hitbox.contains_point(touch.position):
                 continue
             input_manager.disallow_empty(touch)
-            if self.tick_head_ref.index > 0 or self.is_attached:
-                return
             self.complete()
 
     def handle_damage_input(self):
