@@ -1,9 +1,4 @@
-from sonolus.script.archetype import (
-    PlayArchetype,
-    StandardImport,
-    callback,
-    entity_memory,
-)
+from sonolus.script.archetype import PlayArchetype, StandardImport, callback, entity_memory, imported
 from sonolus.script.interval import clamp
 from sonolus.script.runtime import is_multiplayer, offset_adjusted_time, time
 from sonolus.script.timing import beat_to_time
@@ -41,6 +36,7 @@ class Skill(PlayArchetype):
 
 class FeverChance(PlayArchetype):
     beat: StandardImport.BEAT
+    force: bool = imported(name="force")
     start_time: float = entity_memory()
     checker: bool = entity_memory()
     counter: int = entity_memory()
@@ -71,7 +67,7 @@ class FeverChance(PlayArchetype):
         return time() >= self.start_time
 
     def update_parallel(self):
-        if not is_multiplayer() and not Options.forced_fever_chance:
+        if not is_multiplayer() and not Options.forced_fever_chance and not self.force:
             self.despawn = True
             return
         Streams.fever_chance_counter[0][-2] = 1
