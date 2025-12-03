@@ -138,11 +138,13 @@ class Connector(PlayArchetype):
                         if not self.active_connector_info.is_active:
                             self.active_connector_info.active_start_time = time()
                         self.active_connector_info.is_active = True
+                        self.active_connector_info.is_inactive = False
                         self.delay = False
                         break
                 else:
                     if self.delay:
                         self.active_connector_info.is_active = False
+                        self.active_connector_info.is_inactive = True
                     else:
                         self.delay = True
             if time() in self.visual_active_interval:
