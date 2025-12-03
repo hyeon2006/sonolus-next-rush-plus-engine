@@ -80,7 +80,7 @@ class FeverChance(PlayArchetype):
             spawn_fever_chance_particle()
             self.checker = True
         self.percentage = clamp(
-            note.FeverChanceEventCounter.fever_chance_current_combo / self.counter,
+            (note.FeverChanceEventCounter.fever_chance_current_combo / self.counter) * 1.2,
             0,
             0.9,
         )
