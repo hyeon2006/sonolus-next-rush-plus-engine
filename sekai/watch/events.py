@@ -80,7 +80,7 @@ class FeverChance(WatchArchetype):
             self.checker = 1
         self.percentage = (
             clamp(
-                note.FeverChanceEventCounter.fever_chance_current_combo / self.counter,
+                (note.FeverChanceEventCounter.fever_chance_current_combo / self.counter) * 1.2,
                 0,
                 0.9,
             )
