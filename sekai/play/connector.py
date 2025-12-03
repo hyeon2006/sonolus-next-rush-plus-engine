@@ -135,6 +135,10 @@ class Connector(PlayArchetype):
                             self.active_connector_info.active_start_time = time()
                         self.active_connector_info.last_active_time = time()
                         break
+                if self.kind in {ConnectorKind.ACTIVE_FAKE_NORMAL, ConnectorKind.ACTIVE_FAKE_CRITICAL}:
+                    if not self.active_connector_info.is_active:
+                        self.active_connector_info.active_start_time = time()
+                    self.active_connector_info.last_active_time = time()
             if time() in self.visual_active_interval:
                 visual_lane, visual_size = self.get_attached_params(time())
                 self.active_connector_info.visual_lane = visual_lane
