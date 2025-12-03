@@ -158,6 +158,13 @@ class WatchBaseNote(WatchArchetype):
             self.size = size
             self.visual_start_time = min(attach_head.visual_start_time, attach_tail.visual_start_time)
             self.start_time = self.get_min_start_time()
+
+        if (
+            not self.is_scored
+            and self.size == 0
+            and self.kind == NoteKind.NORM_TAP
+            and not FeverChanceEventCounter.fever_chance_exist
+        ):
             FeverChance.spawn(start_time=self.target_time, force_chance=self.lane == 8)
 
         if is_replay():
@@ -340,6 +347,7 @@ class FeverChanceEventCounter:
     fever_chance_cant_super_fever: bool
     fever_last_count: int
     fever_first_count: int
+    fever_chance_exist: bool
 
 
 WATCH_NOTE_ARCHETYPES = derive_note_archetypes(WatchBaseNote)
