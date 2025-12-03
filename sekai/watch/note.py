@@ -45,7 +45,6 @@ from sekai.lib.particle import BaseParticles
 from sekai.lib.skin import ActiveSkin
 from sekai.lib.timescale import group_hide_notes, group_scaled_time, group_time_to_scaled_time
 from sekai.play.note import derive_note_archetypes
-from sekai.watch.events import FeverChance
 from sekai.watch.particle_manager import ParticleManager
 
 MIN_START_TIME = 0.0161  # Executes the terminate process with a guaranteed minimum duration.
@@ -116,23 +115,6 @@ class WatchBaseNote(WatchArchetype):
             self.visual_start_time = get_visual_spawn_time(self.timescale_group, self.target_scaled_time)
             self.start_time = self.get_min_start_time()
 
-        self.check_event_fake()
-
-    def check_event_fake(self):
-        if not self.is_scored and self.size == 0:
-            if self.kind == NoteKind.NORM_TAP:
-                FeverChanceEventCounter.fever_chance_time = (
-                    self.target_time
-                    if FeverChanceEventCounter.fever_chance_time == 0
-                    else FeverChanceEventCounter.fever_chance_time
-                )
-            elif self.kind == NoteKind.CRIT_TAP:
-                FeverChanceEventCounter.fever_start_time = (
-                    self.target_time
-                    if FeverChanceEventCounter.fever_start_time == 0
-                    else FeverChanceEventCounter.fever_start_time
-                )
-
     def preprocess(self):
         self.init_data()
 
@@ -158,7 +140,6 @@ class WatchBaseNote(WatchArchetype):
             self.size = size
             self.visual_start_time = min(attach_head.visual_start_time, attach_tail.visual_start_time)
             self.start_time = self.get_min_start_time()
-            FeverChance.spawn(start_time=self.target_time, force_chance=self.lane == 8)
 
         if is_replay():
             if self.played_hit_effects:

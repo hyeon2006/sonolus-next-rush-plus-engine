@@ -34,7 +34,6 @@ class Skill(WatchArchetype):
 class FeverChance(WatchArchetype):
     beat: StandardImport.BEAT
     force: bool = imported(name="force")
-    force_chance: bool = entity_memory()
     start_time: float = entity_memory()
     checker: int = entity_memory()
     counter: int = entity_memory()
@@ -65,7 +64,7 @@ class FeverChance(WatchArchetype):
         return note.FeverChanceEventCounter.fever_start_time + 10
 
     def update_parallel(self):
-        if not is_replay() and not Options.forced_fever_chance and not self.force and not self.force_chance:
+        if not is_replay() and not Options.forced_fever_chance and not self.force:
             return
         if is_skip():
             self.checker = 0
@@ -81,7 +80,7 @@ class FeverChance(WatchArchetype):
             self.checker = 1
         self.percentage = (
             clamp(
-                (note.FeverChanceEventCounter.fever_chance_current_combo / self.counter) * 1.2,
+                note.FeverChanceEventCounter.fever_chance_current_combo / self.counter,
                 0,
                 0.9,
             )
