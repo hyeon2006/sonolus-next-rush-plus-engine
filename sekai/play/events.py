@@ -55,7 +55,6 @@ class FeverChance(PlayArchetype):
             if note.FeverChanceEventCounter.fever_chance_time != 0
             else self.start_time
         )
-        note.FeverChanceEventCounter.fever_chance_exist = True
 
     def initialize(self):
         self.z = custom_elements.PrecalcLayer.fever_chance_cover

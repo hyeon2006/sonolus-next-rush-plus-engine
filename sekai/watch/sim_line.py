@@ -33,8 +33,6 @@ class WatchSimLine(WatchArchetype):
     def update_parallel(self):
         if group_hide_notes(self.left.timescale_group) or group_hide_notes(self.right.timescale_group):
             return
-        if (not self.left.is_scored and self.left.size == 0) or (not self.right.is_scored and self.right.size == 0):
-            return
         draw_sim_line(
             left_lane=self.left.lane,
             left_progress=self.left.progress,
