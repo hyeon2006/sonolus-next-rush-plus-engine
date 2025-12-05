@@ -4,6 +4,7 @@ from sonolus.script.runtime import is_replay, is_skip, time
 from sonolus.script.timing import beat_to_time
 
 from sekai.lib import archetype_names
+from sekai.lib.ease import EaseType, ease
 from sekai.lib.events import (
     draw_fever_gauge,
     draw_fever_side_bar,
@@ -80,7 +81,7 @@ class FeverChance(WatchArchetype):
             self.checker = 1
         self.percentage = (
             clamp(
-                (note.FeverChanceEventCounter.fever_chance_current_combo / self.counter) * 1.2,
+                ease(EaseType.OUT_QUAD, note.FeverChanceEventCounter.fever_chance_current_combo / self.counter),
                 0,
                 0.9,
             )

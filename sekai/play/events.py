@@ -4,6 +4,7 @@ from sonolus.script.runtime import is_multiplayer, offset_adjusted_time, time
 from sonolus.script.timing import beat_to_time
 
 from sekai.lib import archetype_names
+from sekai.lib.ease import EaseType, ease
 from sekai.lib.events import (
     draw_fever_gauge,
     draw_fever_side_bar,
@@ -80,7 +81,7 @@ class FeverChance(PlayArchetype):
             spawn_fever_chance_particle()
             self.checker = True
         self.percentage = clamp(
-            (note.FeverChanceEventCounter.fever_chance_current_combo / self.counter) * 1.2,
+            ease(EaseType.OUT_QUAD, note.FeverChanceEventCounter.fever_chance_current_combo / self.counter),
             0,
             0.9,
         )
