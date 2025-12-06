@@ -634,7 +634,7 @@ class FeverGaugeSpriteSet(Record):
 
     def get_sprite(self, percentage: float):
         result = +Sprite
-        if percentage >= 0.8:
+        if percentage >= 0.78:
             result @= self.rainbow
         else:
             result @= self.yellow

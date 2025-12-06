@@ -72,7 +72,7 @@ class FeverChance(WatchArchetype):
         if self.checker >= 2:
             return
         if time() >= note.FeverChanceEventCounter.fever_start_time:
-            if self.percentage >= 0.8:
+            if self.percentage >= 0.78:
                 spawn_fever_start_particle(note.FeverChanceEventCounter.fever_chance_cant_super_fever)
             self.checker = 2
             return
