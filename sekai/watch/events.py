@@ -70,6 +70,8 @@ class FeverChance(WatchArchetype):
             return
         if is_skip():
             self.checker = 0
+            if time() <= self.start_time:
+                self.percentage = 0
         if self.checker >= 2:
             return
         if time() >= note.FeverChanceEventCounter.fever_start_time:
