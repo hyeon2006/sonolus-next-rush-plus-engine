@@ -86,7 +86,8 @@ class FeverChance(PlayArchetype):
             0.9,
         )
         Streams.fever_chance_counter[0][offset_adjusted_time()] = self.percentage
-        draw_fever_side_cover(self.z, time() - self.start_time)
+        if Options.fever_effect == 0:
+            draw_fever_side_cover(self.z, time() - self.start_time)
         draw_fever_side_bar(self.z2, time() - self.start_time)
         draw_fever_gauge(self.z3, self.percentage)
 

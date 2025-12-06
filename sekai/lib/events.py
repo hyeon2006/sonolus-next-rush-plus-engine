@@ -11,6 +11,7 @@ from sekai.lib.layout import (
     layout_lane,
     layout_sekai_stage,
 )
+from sekai.lib.options import Options
 from sekai.lib.particle import ActiveParticles
 from sekai.lib.skin import ActiveSkin
 
@@ -49,8 +50,9 @@ def spawn_fever_start_particle(cant_super_fever: bool):
         layout_lane1 = layout_lane(-6, 1)
         layout_lane2 = layout_lane(6, 1)
         ActiveParticles.fever_start_text.spawn(layout_text, 1, False)
-        ActiveParticles.fever_start_lane.spawn(layout_lane1, 1, False)
-        ActiveParticles.fever_start_lane.spawn(layout_lane2, 1, False)
+        if Options.fever_effect == 0:
+            ActiveParticles.fever_start_lane.spawn(layout_lane1, 1, False)
+            ActiveParticles.fever_start_lane.spawn(layout_lane2, 1, False)
     else:
         layout_text = layout_fever_text()
         layout_lane1 = layout_lane(-6, 1)
@@ -65,5 +67,6 @@ def spawn_fever_chance_particle():
     layout_lane1 = layout_lane(-6, 0.5)
     layout_lane2 = layout_lane(6, 0.5)
     ActiveParticles.fever_chance_text.spawn(layout_text, 1, False)
-    ActiveParticles.fever_chance_lane.spawn(layout_lane1, 1, False)
-    ActiveParticles.fever_chance_lane.spawn(layout_lane2, 1, False)
+    if Options.fever_effect == 0:
+        ActiveParticles.fever_chance_lane.spawn(layout_lane1, 1, False)
+        ActiveParticles.fever_chance_lane.spawn(layout_lane2, 1, False)
