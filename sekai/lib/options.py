@@ -279,7 +279,6 @@ class Options:
     )
     fever_effect: int = select_option(
         name="Fever Effect",
-        description="Beta, only default options work",
         scope="Rush",
         default=0,
         values=["Default", "Lightweight"],
