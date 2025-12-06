@@ -73,7 +73,7 @@ class FeverChance(PlayArchetype):
             return
         Streams.fever_chance_counter[0][-2] = 1
         if time() >= note.FeverChanceEventCounter.fever_start_time:
-            if self.percentage >= 0.8:
+            if self.percentage >= 0.78:
                 spawn_fever_start_particle(note.FeverChanceEventCounter.fever_chance_cant_super_fever)
             self.despawn = True
             return
