@@ -10,6 +10,7 @@ from sekai.lib.layout import (
     layout_fever_text,
     layout_lane,
     layout_sekai_stage,
+    perspective_rect,
 )
 from sekai.lib.options import Options
 from sekai.lib.particle import ActiveParticles
@@ -57,9 +58,15 @@ def spawn_fever_start_particle(cant_super_fever: bool):
         layout_text = layout_fever_text()
         layout_lane1 = layout_lane(-6, 1)
         layout_lane2 = layout_lane(6, 1)
+        mid = (LANE_T + LANE_B) / 2
+        layout_effect1 = perspective_rect(l=-6 - 0.5, r=-6 + 0.5, t=mid - 0.050075, b=mid + 0.050075)
+        layout_effect2 = perspective_rect(l=6 - 0.5, r=6 + 0.5, t=mid - 0.050075, b=mid + 0.050075)
         ActiveParticles.super_fever_start_text.spawn(layout_text, 1, False)
-        ActiveParticles.super_fever_start_lane.spawn(layout_lane1, 1, False)
-        ActiveParticles.super_fever_start_lane.spawn(layout_lane2, 1, False)
+        if Options.fever_effect == 0:
+            ActiveParticles.super_fever_start_lane.spawn(layout_lane1, 1, False)
+            ActiveParticles.super_fever_start_lane.spawn(layout_lane2, 1, False)
+            ActiveParticles.super_fever_start_effect.spawn(layout_effect1, 1, False)
+            ActiveParticles.super_fever_start_effect.spawn(layout_effect2, 1, False)
 
 
 def spawn_fever_chance_particle():
