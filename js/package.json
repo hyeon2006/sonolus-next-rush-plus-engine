@@ -1,0 +1,46 @@
+{
+  "name": "@next-sekai/sonolus-next-sekai-engine",
+  "version": "0.0.0",
+  "description": "A new Project Sekai inspired engine for Sonolus",
+  "author": "qwewqa",
+  "repository": "github:Next-SEKAI/sonolus-next-sekai-engine",
+  "license": "MIT",
+  "keywords": [
+    "Sonolus"
+  ],
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.js",
+    "./EngineConfiguration": "./dist/EngineConfiguration",
+    "./EnginePlayData": "./dist/EnginePlayData",
+    "./EngineWatchData": "./dist/EngineWatchData",
+    "./EnginePreviewData": "./dist/EnginePreviewData",
+    "./EngineTutorialData": "./dist/EngineTutorialData",
+    "./EngineRom": "./dist/EngineRom",
+    "./EngineThumbnail": "./dist/thumbnail.png"
+  },
+  "scripts": {
+    "check-type": "tsc -p . --noEmit",
+    "check-lint": "eslint .",
+    "check-format": "prettier . --check",
+    "version": "node ./version.js",
+    "build": "tsc -p . && node ./build.js"
+  },
+  "dependencies": {
+    "@sonolus/core": "~7.14.2"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@sonolus/sonolus.js": "~9.6.0",
+    "@types/node": "^22.19.1",
+    "eslint": "^9.39.1",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.7.4",
+    "prettier-plugin-organize-imports": "^4.3.0",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.48.1"
+  }
+}

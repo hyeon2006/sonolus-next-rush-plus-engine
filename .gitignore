@@ -11,3 +11,5 @@ resources/
 .venv
 
 .idea/
+
+js/node_modules/
