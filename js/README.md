@@ -5,7 +5,7 @@ A new Project Sekai inspired engine for [Sonolus](https://sonolus.com).
 ## Installation
 
 ```
-npm install @next-sekai/sonolus-next-sekai-engine
+npm install sonolus-next-rush-plus-engine
 ```
 
 ## Documentation
