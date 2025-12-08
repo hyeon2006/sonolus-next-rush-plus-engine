@@ -3,7 +3,10 @@
   "version": "0.0.0",
   "description": "A new Project Sekai inspired engine for Sonolus",
   "author": "Hyeon2",
-  "repository": "github:hyeon2006/sonolus-next-rush-plus-engine",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hyeon2006/sonolus-next-rush-plus-engine.git"
+  },
   "license": "MIT",
   "keywords": [
     "Sonolus"

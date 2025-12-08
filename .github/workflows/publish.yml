@@ -43,3 +43,5 @@ jobs:
         working-directory: ./js
       - run: npm publish
         working-directory: ./js
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
