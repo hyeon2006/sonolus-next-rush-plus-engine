@@ -1,9 +1,9 @@
 {
-  "name": "@next-sekai/sonolus-next-sekai-engine",
+  "name": "sonolus-next-rush-plus-engine",
   "version": "0.0.0",
   "description": "A new Project Sekai inspired engine for Sonolus",
-  "author": "qwewqa",
-  "repository": "github:Next-SEKAI/sonolus-next-sekai-engine",
+  "author": "Hyeon2",
+  "repository": "github:hyeon2006/sonolus-next-rush-plus-engine",
   "license": "MIT",
   "keywords": [
     "Sonolus"
