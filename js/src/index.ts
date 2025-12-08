@@ -4,26 +4,31 @@ export { susToUSC } from './sus/convert.js'
 export { uscToLevelData } from './usc/convert.js'
 export * from './usc/index.js'
 
-export const version = '0.0.0'
+export const version = '1.1.1'
 
 export const databaseEngineItem = {
-    name: 'next-sekai',
+    name: 'next-rush-plus',
     version: 13,
     title: {
-        en: 'Next SEKAI',
+        en: 'Next RUSH+',
     },
     subtitle: {
-        en: 'Next SEKAI',
+        en: 'Next RUSH+',
     },
     author: {
-        en: 'qwewqa#590353',
+        en: 'Next RUSH+',
     },
     description: {
         en: [
-            'A new Project Sekai inspired engine for Sonolus.',
+            "Next SEKAI's expansion engine",
             `Version: ${version}`,
             '',
-            'GitHub Repository',
+            'https://github.com/Next-SEKAI/sonolus-next-sekai-engine',
+        ].join('\n'),
+        ko: [
+            'Next SEKAI의 확장 엔진',
+            `버전: ${version}`,
+            '',
             'https://github.com/Next-SEKAI/sonolus-next-sekai-engine',
         ].join('\n'),
     },

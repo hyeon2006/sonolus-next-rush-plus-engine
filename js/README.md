@@ -1,4 +1,4 @@
-# Next SEKAI Sonolus Engine
+# Next RUSH+ Sonolus Engine
 
 A new Project Sekai inspired engine for [Sonolus](https://sonolus.com).
 
@@ -22,25 +22,25 @@ Partial database engine item compatible with [sonolus-express](https://github.co
 
 Converts sus chart to USC (Universal Sekai Chart).
 
-- `sus`: sus chart.
+-   `sus`: sus chart.
 
 ### `uscToLevelData(usc, offset?)`
 
 Converts USC (Universal Sekai Chart) to Level Data.
 
-- `usc`: usc chart.
-- `offset`: offset (default: `0`).
+-   `usc`: usc chart.
+-   `offset`: offset (default: `0`).
 
 ### Assets
 
 The following assets are exposed as package entry points:
 
-- `EngineConfiguration`
-- `EnginePlayData`
-- `EngineWatchData`
-- `EnginePreviewData`
-- `EngineTutorialData`
-- `EngineRom`
-- `EngineThumbnail`
+-   `EngineConfiguration`
+-   `EnginePlayData`
+-   `EngineWatchData`
+-   `EnginePreviewData`
+-   `EngineTutorialData`
+-   `EngineRom`
+-   `EngineThumbnail`
 
 In Node.js, you can obtain path to assets `import.meta.resolve('sonolus-pjsekai-engine/EngineConfiguration')`.

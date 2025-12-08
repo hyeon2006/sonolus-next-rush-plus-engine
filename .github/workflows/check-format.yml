@@ -20,4 +20,4 @@ jobs:
               with:
                   node-version: 'lts/*'
             - run: npm ci
-            - run: npm run check-format
+            - run: npm run biome
