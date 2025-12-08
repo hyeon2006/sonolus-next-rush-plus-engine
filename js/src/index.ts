@@ -4,7 +4,7 @@ export { susToUSC } from './sus/convert.js'
 export { uscToLevelData } from './usc/convert.js'
 export * from './usc/index.js'
 
-export const version = '1.1.1'
+export const version = '0.0.0'
 
 export const databaseEngineItem = {
     name: 'next-rush-plus',
