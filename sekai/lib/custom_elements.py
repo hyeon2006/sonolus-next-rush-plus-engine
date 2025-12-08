@@ -39,7 +39,7 @@ def draw_combo_label(ap: bool, z: float, glow_z=float):
     h, w = transform_fixed_size(base_h, base_w)
     a = ui.combo_config.alpha * 0.8 * (cos(time() * pi) + 1) / 2
     layout = layout_combo_label(screen_center, w=w / 2, h=h / 2)
-    if ap:
+    if ap or not Options.ap_effect:
         ActiveSkin.combo_label.get_sprite(ComboType.NORMAL).draw(quad=layout, z=z, a=ui.combo_config.alpha)
     else:
         ActiveSkin.combo_label.get_sprite(ComboType.AP).draw(quad=layout, z=z, a=ui.combo_config.alpha)
