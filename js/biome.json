@@ -18,9 +18,7 @@
         "bracketSpacing": true,
         "expand": "auto",
         "useEditorconfig": true,
-        "includes": [
-            "src/**/*.*"
-        ]
+        "includes": ["src/**/*.*"]
     },
     "linter": {
         "enabled": true,
@@ -88,9 +86,7 @@
                 "useGetterReturn": "error"
             }
         },
-        "includes": [
-            "src/**/*.*"
-        ]
+        "includes": ["src/**/*.*"]
     },
     "javascript": {
         "formatter": {
@@ -112,9 +108,7 @@
     },
     "overrides": [
         {
-            "includes": [
-                "src/**/*.*"
-            ],
+            "includes": ["src/**/*.*"],
             "javascript": {
                 "globals": []
             }
