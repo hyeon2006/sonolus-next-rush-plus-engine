@@ -181,7 +181,7 @@ class ComboNumberLayout(Record):
                 b=self.layout2.scale * (self.common.center_y + self.layout2.height / 2) + s2_inv * self.common.center_y,
             )
 
-            if not self.core.ap:
+            if not self.core.ap or not Options.ap_effect:
                 ActiveSkin.combo_number.get_sprite(combo=digit, combo_type=ComboType.GLOW).draw(
                     quad=digit_layout, z=z3, a=self.alpha.a3
                 )
