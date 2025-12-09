@@ -82,7 +82,7 @@ def draw_background_cover(z_background_cover):
 
 
 def draw_auto_play(z_judgment):
-    if Options.custom_tag and is_watch() and not is_replay() and not Options.record_mode:
+    if Options.custom_tag and is_watch() and not is_replay() and Options.hide_ui != 2:
         layout = layout_custom_tag()
         a = 0.8 * (cos(time() * pi) + 1) / 2
         ActiveSkin.auto_live.draw(layout, z=z_judgment, a=a)

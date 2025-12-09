@@ -42,7 +42,6 @@ from sekai.lib.note import (
 )
 from sekai.lib.options import Options
 from sekai.lib.particle import BaseParticles
-from sekai.lib.skin import ActiveSkin
 from sekai.lib.timescale import group_hide_notes, group_scaled_time, group_time_to_scaled_time
 from sekai.play.note import derive_note_archetypes
 from sekai.watch.particle_manager import ParticleManager
@@ -179,42 +178,24 @@ class WatchBaseNote(WatchArchetype):
                 ParticleManager.spawn(lane=self.lane, size=self.size, target_time=self.hit_time, particles=particles)
 
     def spawn_custom(self):
-        if Options.hide_custom:
-            return
-        if Options.custom_combo and ActiveSkin.combo_label.available and (not Options.auto_judgment or is_replay()):
-            get_archetype_by_name("ComboLabel").spawn(
-                next_ref=self.next_ref,
-                note_index=self.index,
-            )
-        if Options.custom_combo and ActiveSkin.combo_number.available and (not Options.auto_judgment or is_replay()):
-            get_archetype_by_name("ComboNumber").spawn(
-                next_ref=self.next_ref,
-                note_index=self.index,
-            )
-        if Options.custom_judgment and ActiveSkin.judgment.available:
-            get_archetype_by_name("JudgmentText").spawn(
-                next_ref=self.next_ref,
-                note_index=self.index,
-            )
-        if (
-            Options.custom_judgment
-            and Options.custom_accuracy
-            and ActiveSkin.judgment.available
-            and ActiveSkin.accuracy_warning.available
-            and self.judgment != Judgment.PERFECT
-            and self.played_hit_effects
-            and is_replay()
-        ):
+        get_archetype_by_name("ComboLabel").spawn(
+            next_ref=self.next_ref,
+            note_index=self.index,
+        )
+        get_archetype_by_name("ComboNumber").spawn(
+            next_ref=self.next_ref,
+            note_index=self.index,
+        )
+        get_archetype_by_name("JudgmentText").spawn(
+            next_ref=self.next_ref,
+            note_index=self.index,
+        )
+        if self.judgment != Judgment.PERFECT and self.played_hit_effects and is_replay():
             get_archetype_by_name("JudgmentAccuracy").spawn(
                 next_ref=self.next_ref_accuracy,
                 note_index=self.index,
             )
-        if (
-            Options.custom_damage
-            and ActiveSkin.damage_flash.is_available
-            and self.judgment == Judgment.MISS
-            and is_replay()
-        ):
+        if self.judgment == Judgment.MISS and is_replay():
             get_archetype_by_name("DamageFlash").spawn(
                 next_ref=self.next_ref_damage_flash,
                 note_index=self.index,

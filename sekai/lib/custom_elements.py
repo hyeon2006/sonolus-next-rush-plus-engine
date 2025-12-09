@@ -3,7 +3,7 @@ from math import cos, floor, log, pi
 from sonolus.script.bucket import Judgment, JudgmentWindow
 from sonolus.script.interval import Interval, unlerp, unlerp_clamped
 from sonolus.script.record import Record
-from sonolus.script.runtime import runtime_ui, screen, time
+from sonolus.script.runtime import is_replay, is_watch, runtime_ui, screen, time
 from sonolus.script.vec import Vec2
 
 from sekai.lib.layout import (
@@ -30,8 +30,13 @@ def transform_fixed_size(h, w):
 
 
 def draw_combo_label(ap: bool, z: float, glow_z=float):
-    if Options.record_mode:
+    if Options.hide_ui == 2:
         return
+    if not ActiveSkin.combo_label.available:
+        return
+    if is_watch() and Options.auto_judgment and not is_replay():
+        return
+
     ui = runtime_ui()
 
     screen_center = Vec2(x=5.337, y=0.485)
@@ -49,8 +54,13 @@ def draw_combo_label(ap: bool, z: float, glow_z=float):
 
 
 def draw_combo_number(draw_time: float, ap: bool, combo: int, z: float, z2: float, z3: float):
-    if Options.record_mode:
+    if Options.hide_ui == 2:
         return
+    if not ActiveSkin.combo_number.available:
+        return
+    if is_watch() and Options.auto_judgment and not is_replay():
+        return
+
     ui = runtime_ui()
 
     digit_count = 1 if combo == 0 else floor(log(combo, 10)) + 1  # noqa: FURB163
@@ -207,7 +217,9 @@ class ComboNumberLayout(Record):
 def draw_judgment_text(
     draw_time: float, judgment: Judgment, windows_bad: Interval, accuracy: float, check_pass: bool, z: float
 ):
-    if Options.record_mode:
+    if Options.hide_ui == 2:
+        return
+    if not ActiveSkin.judgment.available:
         return
 
     ui = runtime_ui()
@@ -226,7 +238,9 @@ def draw_judgment_text(
 
 
 def draw_judgment_accuracy(judgment: Judgment, accuracy: float, windows: JudgmentWindow, wrong_way: bool, z: float):
-    if Options.record_mode:
+    if Options.hide_ui == 2:
+        return
+    if not ActiveSkin.accuracy_warning.available:
         return
 
     ui = runtime_ui()
@@ -247,7 +261,9 @@ def draw_judgment_accuracy(judgment: Judgment, accuracy: float, windows: Judgmen
 
 
 def draw_damage_flash(draw_time: float, z: float):
-    if Options.record_mode:
+    if Options.hide_ui == 2:
+        return
+    if not ActiveSkin.damage_flash.is_available:
         return
 
     t = unlerp_clamped(draw_time, draw_time + 0.35, time())

@@ -20,7 +20,9 @@ from sekai.lib.skin import ActiveSkin
 def draw_fever_side_cover(z: float, time: float):
     if not ActiveSkin.background.is_available:
         return
-    if Options.record_mode:
+    if Options.hide_ui == 2:
+        return
+    if Options.fever_effect == 2:
         return
     layout1 = layout_fever_cover_left()
     layout2 = layout_fever_cover_right()
@@ -32,7 +34,9 @@ def draw_fever_side_cover(z: float, time: float):
 def draw_fever_side_bar(z: float, time: float):
     if not ActiveSkin.sekai_stage_fever.is_available:
         return
-    if Options.record_mode:
+    if Options.hide_ui == 2:
+        return
+    if Options.fever_effect == 2:
         return
     layout = layout_sekai_stage()
     a = unlerp_clamped(0, 0.25, time)
@@ -42,7 +46,9 @@ def draw_fever_side_bar(z: float, time: float):
 def draw_fever_gauge(z: float, percentage: float):
     if not ActiveSkin.sekai_fever_gauge.available:
         return
-    if Options.record_mode:
+    if Options.hide_ui == 2:
+        return
+    if Options.fever_effect == 2:
         return
     t = lerp(LANE_B, LANE_T, percentage)
     layout1 = layout_fever_gauge_left(t)
@@ -52,7 +58,9 @@ def draw_fever_gauge(z: float, percentage: float):
 
 
 def spawn_fever_start_particle(cant_super_fever: bool):
-    if Options.record_mode:
+    if Options.hide_ui == 2:
+        return
+    if Options.fever_effect == 2:
         return
     if cant_super_fever:
         layout_text = layout_fever_text()
@@ -78,7 +86,9 @@ def spawn_fever_start_particle(cant_super_fever: bool):
 
 
 def spawn_fever_chance_particle():
-    if Options.record_mode:
+    if Options.hide_ui == 2:
+        return
+    if Options.fever_effect == 2:
         return
     layout_text = layout_fever_text()
     layout_lane1 = layout_lane(-6, 0.5)

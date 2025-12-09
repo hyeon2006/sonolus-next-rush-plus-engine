@@ -136,10 +136,11 @@ class Options:
         scope="Sekai",
         default=True,
     )
-    hide_ui: bool = toggle_option(
+    hide_ui: int = select_option(
         name="Hide UI",
-        scope="Sekai",
-        default=False,
+        scope="Rush",
+        default=0,
+        values=["None", "Sonolus", "All"],
     )
     show_lane: bool = toggle_option(
         name=StandardText.STAGE,
@@ -237,12 +238,6 @@ class Options:
         scope="Rush",
         default=True,
     )
-    hide_custom: bool = toggle_option(
-        name="Hide Custom Elements",
-        description="Hide custom elements such as custom combo",
-        scope="Rush",
-        default=False,
-    )
     background_alpha: float = slider_option(
         name=StandardText.STAGE_ALPHA,
         scope="Sekai",
@@ -265,7 +260,7 @@ class Options:
         name="Fever Effect",
         scope="Rush",
         default=0,
-        values=["Default", "Lightweight"],
+        values=["Default", "Lightweight", "None"],
     )
     forced_fever_chance: bool = toggle_option(
         name="Forced Fever Chance",
@@ -277,10 +272,4 @@ class Options:
         name="Skill Effect",
         scope="Rush",
         default=True,
-    )
-    record_mode: bool = toggle_option(
-        name="Recording Mode",
-        description="Hides all UI elements for recording",
-        scope="Rush",
-        default=False,
     )
