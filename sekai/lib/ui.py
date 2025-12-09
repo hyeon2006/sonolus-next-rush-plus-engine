@@ -67,7 +67,6 @@ def init_ui():
     gap = 0.05
     box = screen().shrink(Vec2(gap, gap))
     show_ui = not Options.hide_ui
-    not_record = not Options.record_mode
     custom_combo_label = not Options.custom_combo or not ActiveSkin.combo_label.available
     custom_combo_number = not Options.custom_combo or not ActiveSkin.combo_number.available
     custom_judgment = not Options.custom_judgment or not ActiveSkin.judgment.available
@@ -76,7 +75,7 @@ def init_ui():
         anchor=box.tr,
         pivot=Vec2(1, 1),
         dimensions=Vec2(0.15, 0.15) * ui.menu_config.scale,
-        alpha=ui.menu_config.alpha * show_ui * not_record,
+        alpha=ui.menu_config.alpha * show_ui,
         horizontal_align=HorizontalAlign.CENTER,
         background=True,
     )
@@ -84,7 +83,7 @@ def init_ui():
         anchor=box.tl,
         pivot=Vec2(0, 1),
         dimensions=Vec2(0.75, 0.15) * ui.primary_metric_config.scale,
-        alpha=ui.primary_metric_config.alpha * show_ui * not_record,
+        alpha=ui.primary_metric_config.alpha * show_ui,
         horizontal_align=HorizontalAlign.LEFT,
         background=True,
     )
@@ -92,7 +91,7 @@ def init_ui():
         anchor=box.tl + Vec2(0.715, -0.035) * ui.primary_metric_config.scale,
         pivot=Vec2(1, 1),
         dimensions=Vec2(0, 0.08) * ui.primary_metric_config.scale,
-        alpha=ui.primary_metric_config.alpha * show_ui * not_record,
+        alpha=ui.primary_metric_config.alpha * show_ui,
         horizontal_align=HorizontalAlign.RIGHT,
         background=False,
     )
@@ -100,7 +99,7 @@ def init_ui():
         anchor=box.tr - Vec2(gap, 0) - Vec2(0.15, 0) * ui.menu_config.scale,
         pivot=Vec2(1, 1),
         dimensions=Vec2(0.55, 0.15) * ui.secondary_metric_config.scale,
-        alpha=ui.secondary_metric_config.alpha * show_ui * not_record,
+        alpha=ui.secondary_metric_config.alpha * show_ui,
         horizontal_align=HorizontalAlign.LEFT,
         background=True,
     )
@@ -111,7 +110,7 @@ def init_ui():
         - Vec2(0.035, 0.035) * ui.secondary_metric_config.scale,
         pivot=Vec2(1, 1),
         dimensions=Vec2(0, 0.08) * ui.secondary_metric_config.scale,
-        alpha=ui.secondary_metric_config.alpha * show_ui * not_record,
+        alpha=ui.secondary_metric_config.alpha * show_ui,
         horizontal_align=HorizontalAlign.RIGHT,
         background=False,
     )
@@ -119,7 +118,7 @@ def init_ui():
         anchor=Vec2(Layout.field_w * 0.35, Layout.field_h * 0.0875),
         pivot=Vec2(0.5, 0.7),
         dimensions=Vec2(0, Layout.field_h * 0.14 * 0.9) * ui.combo_config.scale,
-        alpha=ui.combo_config.alpha * show_ui * custom_combo_number * not_record,
+        alpha=ui.combo_config.alpha * show_ui * custom_combo_number,
         horizontal_align=HorizontalAlign.CENTER,
         background=False,
     )
@@ -127,7 +126,7 @@ def init_ui():
         anchor=Vec2(Layout.field_w * 0.35, Layout.field_h * 0.0875),
         pivot=Vec2(0.5, -2.1),
         dimensions=Vec2(0, Layout.field_h * 0.14 * 0.175) * ui.combo_config.scale,
-        alpha=ui.combo_config.alpha * show_ui * custom_combo_label * not_record,
+        alpha=ui.combo_config.alpha * show_ui * custom_combo_label,
         horizontal_align=HorizontalAlign.CENTER,
         background=False,
     )
@@ -135,7 +134,7 @@ def init_ui():
         anchor=Vec2(0, Layout.field_h * -0.115),
         pivot=Vec2(0.5, 0.55),
         dimensions=Vec2(0, Layout.field_h * 0.04) * ui.judgment_config.scale,
-        alpha=ui.judgment_config.alpha * show_ui * custom_judgment * not_record,
+        alpha=ui.judgment_config.alpha * show_ui * custom_judgment,
         horizontal_align=HorizontalAlign.CENTER,
         background=False,
     )
@@ -143,7 +142,7 @@ def init_ui():
         anchor=box.bl,
         pivot=Vec2(0, 0),
         dimensions=Vec2(box.w, 0.15 * ui.progress_config.scale),
-        alpha=ui.progress_config.alpha * show_ui * not_record,
+        alpha=ui.progress_config.alpha * show_ui,
         horizontal_align=HorizontalAlign.CENTER,
         background=True,
     )
