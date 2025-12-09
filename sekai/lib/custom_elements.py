@@ -30,6 +30,8 @@ def transform_fixed_size(h, w):
 
 
 def draw_combo_label(ap: bool, z: float, glow_z=float):
+    if Options.record_mode:
+        return
     ui = runtime_ui()
 
     screen_center = Vec2(x=5.337, y=0.485)
@@ -47,6 +49,8 @@ def draw_combo_label(ap: bool, z: float, glow_z=float):
 
 
 def draw_combo_number(draw_time: float, ap: bool, combo: int, z: float, z2: float, z3: float):
+    if Options.record_mode:
+        return
     ui = runtime_ui()
 
     digit_count = 1 if combo == 0 else floor(log(combo, 10)) + 1  # noqa: FURB163
@@ -203,6 +207,9 @@ class ComboNumberLayout(Record):
 def draw_judgment_text(
     draw_time: float, judgment: Judgment, windows_bad: Interval, accuracy: float, check_pass: bool, z: float
 ):
+    if Options.record_mode:
+        return
+
     ui = runtime_ui()
 
     screen_center = Vec2(x=0, y=0.792)
@@ -219,6 +226,9 @@ def draw_judgment_text(
 
 
 def draw_judgment_accuracy(judgment: Judgment, accuracy: float, windows: JudgmentWindow, wrong_way: bool, z: float):
+    if Options.record_mode:
+        return
+
     ui = runtime_ui()
 
     screen_center = Vec2(x=0, y=0.723)
@@ -237,6 +247,9 @@ def draw_judgment_accuracy(judgment: Judgment, accuracy: float, windows: Judgmen
 
 
 def draw_damage_flash(draw_time: float, z: float):
+    if Options.record_mode:
+        return
+
     t = unlerp_clamped(draw_time, draw_time + 0.35, time())
     a = 0.768 * t**0.1 * (1 - t) ** 1.35
 

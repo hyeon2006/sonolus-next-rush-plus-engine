@@ -289,3 +289,14 @@ class Options:
         scope="Rush",
         default=False,
     )
+    skill_effect: bool = toggle_option(
+        name="Skill Effect",
+        scope="Rush",
+        default=True,
+    )
+    record_mode: bool = toggle_option(
+        name="Recording Mode",
+        description="Hides all UI elements for recording",
+        scope="Rush",
+        default=False,
+    )
