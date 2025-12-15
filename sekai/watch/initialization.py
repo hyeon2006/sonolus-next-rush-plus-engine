@@ -5,7 +5,16 @@ from sonolus.script.runtime import is_replay
 
 from sekai.lib import archetype_names
 from sekai.lib.buckets import init_buckets
-from sekai.lib.layer import LAYER_BACKGROUND_SIDE, LAYER_DAMAGE, LAYER_GAUGE, LAYER_JUDGMENT, LAYER_STAGE, get_z
+from sekai.lib.layer import (
+    LAYER_BACKGROUND_SIDE,
+    LAYER_DAMAGE,
+    LAYER_GAUGE,
+    LAYER_JUDGMENT,
+    LAYER_SKILL_BAR,
+    LAYER_SKILL_ETC,
+    LAYER_STAGE,
+    get_z,
+)
 from sekai.lib.layout import init_layout
 from sekai.lib.note import init_note_life, init_score
 from sekai.lib.particle import init_particles
@@ -38,6 +47,8 @@ class WatchInitialization(WatchArchetype):
         PrecalcLayer.fever_chance_cover = get_z(layer=LAYER_BACKGROUND_SIDE)
         PrecalcLayer.fever_chance_side = get_z(layer=LAYER_STAGE)
         PrecalcLayer.fever_chance_gauge = get_z(layer=LAYER_GAUGE)
+        PrecalcLayer.skill_bar = get_z(layer=LAYER_SKILL_BAR)
+        PrecalcLayer.skill_etc = get_z(layer=LAYER_SKILL_ETC)
 
         for note_archetype in WATCH_NOTE_ARCHETYPES:
             init_note_life(note_archetype)

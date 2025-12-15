@@ -5,7 +5,7 @@ from sonolus.script.runtime import is_replay, is_skip, time
 from sonolus.script.timing import beat_to_time
 
 from sekai.lib import archetype_names
-from sekai.lib.ease import EaseType, ease
+from sekai.lib.effect import SFX_DISTANCE, Effects
 from sekai.lib.events import (
     draw_fever_gauge,
     draw_fever_side_bar,
@@ -30,14 +30,13 @@ class Skill(WatchArchetype):
     name = archetype_names.SKILL
     z: float = entity_memory()
     z2: float = entity_memory()
-    z3: float = entity_memory()
     count: int = entity_memory()
+    sfx: bool = entity_memory()
 
     def preprocess(self):
         self.start_time = beat_to_time(self.beat)
-        self.z = custom_elements.PrecalcLayer.fever_chance_cover
-        self.z2 = custom_elements.PrecalcLayer.fever_chance_gauge
-        self.z3 = custom_elements.PrecalcLayer.fever_chance_cover
+        self.z = custom_elements.PrecalcLayer.skill_bar
+        self.z2 = custom_elements.PrecalcLayer.skill_etc
 
     def spawn_time(self):
         return self.start_time
@@ -48,12 +47,18 @@ class Skill(WatchArchetype):
     def update_parallel(self):
         if self.count == 0:
             self.count = SkillMemory.max_count
+        if not self.sfx:
+            Effects.skill.play(SFX_DISTANCE)
+            self.sfx = True
         draw_skill_bar(self.z, self.z2, time() - self.start_time, self.count)
 
     def update_sequential(self):
         if self.count:
             return
         SkillMemory.max_count += 1
+
+    def terminate(self):
+        self.sfx = False
 
 
 class FeverChance(WatchArchetype):
@@ -108,7 +113,7 @@ class FeverChance(WatchArchetype):
             self.checker = 1
         self.percentage = (
             clamp(
-                ease(EaseType.OUT_QUAD, note.FeverChanceEventCounter.fever_chance_current_combo / self.counter),
+                note.FeverChanceEventCounter.fever_chance_current_combo / self.counter,
                 0,
                 0.9,
             )
