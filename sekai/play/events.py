@@ -107,7 +107,7 @@ class FeverChance(PlayArchetype):
         self.percentage = clamp(
             note.FeverChanceEventCounter.fever_chance_current_combo / self.counter,
             0,
-            0.9,
+            0.9 if not note.FeverChanceEventCounter.fever_chance_cant_super_fever else 0.89,
         )
         Streams.fever_chance_counter[0][offset_adjusted_time()] = self.percentage
         if Options.fever_effect == 0:

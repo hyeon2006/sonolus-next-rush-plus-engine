@@ -114,7 +114,7 @@ class FeverChance(WatchArchetype):
             clamp(
                 note.FeverChanceEventCounter.fever_chance_current_combo / self.counter,
                 0,
-                0.9,
+                0.9 if not note.FeverChanceEventCounter.fever_chance_cant_super_fever else 0.89,
             )
             if not Streams.fever_chance_counter[0][-2]
             else Streams.fever_chance_counter[0][time()]
