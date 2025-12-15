@@ -26,6 +26,8 @@ class Effects:
     normal_trace: Effect = effect("Sekai Trace")
     critical_trace: Effect = effect("Sekai Critical Trace")
 
+    skill: Effect = effect("Sekai Skill")
+
 
 SFX_DISTANCE = 0.032
 

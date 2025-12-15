@@ -295,6 +295,7 @@ class BaseSkin:
     skill_bar: Sprite = sprite("Skill Bar")
     skill_level: Sprite = sprite("Skill Level")
     skill_percent: Sprite = sprite("Skill Percent")
+    skill_value: Sprite = sprite("Skill Value")
     skill_icon: SpriteGroup = sprite_group(f"Skill Icon {i}" for i in range(1, 6))
 
 
@@ -1046,6 +1047,7 @@ class ActiveSkin:
     skill_bar: Sprite
     skill_level: Sprite
     skill_percent: Sprite
+    skill_value: Sprite
     skill_icon: SkillIconSpriteSet
 
 
@@ -1476,3 +1478,4 @@ def init_skin():
     ActiveSkin.skill_icon = SkillIconSpriteSet(icon=BaseSkin.skill_icon)
     ActiveSkin.skill_level = BaseSkin.skill_level
     ActiveSkin.skill_percent = BaseSkin.skill_percent
+    ActiveSkin.skill_value = BaseSkin.skill_value

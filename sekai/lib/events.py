@@ -108,23 +108,54 @@ def draw_skill_bar(z: float, z2: float, time: float, num: int):
         return
     if not ActiveSkin.skill_bar.is_available:
         return
+
     enter_progress = unlerp_clamped(0, 0.25, time)
     exit_progress = unlerp_clamped(2.75, 3, time)
 
     anim = enter_progress - exit_progress
 
-    start_center = Vec2(x=-6.7, y=0.44)
-    target_center = Vec2(x=-6.5, y=0.44)
+    x = -6.5
+    y = 0.44
+    start_center = Vec2(x=x - 0.2, y=y)
+    target_center = Vec2(x=x, y=y)
     current_center = lerp(start_center, target_center, anim)
     h = 0.08
     w = h * 21
     layout = layout_combo_label(current_center, w, h)
     ActiveSkin.skill_bar.draw(layout, z, anim)
 
-    icon_start_center = Vec2(x=-7.5, y=0.457)
-    icon_target_center = Vec2(x=-7.3, y=0.457)
+    x = -7.3
+    y = 0.457
+    icon_start_center = Vec2(x=x - 0.2, y=y)
+    icon_target_center = Vec2(x=x, y=y)
     icon_current_center = lerp(icon_start_center, icon_target_center, anim)
     h = 0.045
     w = h * 7
     layout = layout_combo_label(icon_current_center, w, h)
     ActiveSkin.skill_icon.get_sprite(num).draw(layout, z2, anim)
+
+    y = 0.48
+    x = -5.37
+    text_start_center = Vec2(x=x - 0.2, y=y)
+    text_target_center = Vec2(x=x, y=y)
+    text_changing_center = Vec2(x=x + 0.2, y=y)
+
+    mid_progress = unlerp_clamped(1.5, 1.75, time)
+    current_start_pos = +Vec2
+    if time >= 1.5 and time < 2.75:
+        current_start_pos @= text_changing_center
+        final_anim = mid_progress
+    else:
+        current_start_pos @= text_start_center
+        if time < 1.5:
+            final_anim = enter_progress
+        else:
+            final_anim = mid_progress - exit_progress
+    text_current_center = lerp(current_start_pos, text_target_center, final_anim)
+    h = 0.027
+    w = h * 12.5
+    layout = layout_combo_label(text_current_center, w, h)
+    if time <= 1.5:
+        ActiveSkin.skill_level.draw(layout, z2, final_anim)
+    else:
+        ActiveSkin.skill_value.draw(layout, z2, final_anim)

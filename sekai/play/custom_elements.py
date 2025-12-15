@@ -24,6 +24,8 @@ class PrecalcLayer:
     fever_chance_cover: float
     fever_chance_side: float
     fever_chance_gauge: float
+    skill_bar: float
+    skill_etc: float
 
 
 def spawn_custom(

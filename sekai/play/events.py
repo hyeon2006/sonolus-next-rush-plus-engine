@@ -5,11 +5,12 @@ from sonolus.script.runtime import is_multiplayer, offset_adjusted_time, time
 from sonolus.script.timing import beat_to_time
 
 from sekai.lib import archetype_names
-from sekai.lib.ease import EaseType, ease
+from sekai.lib.effect import SFX_DISTANCE, Effects
 from sekai.lib.events import (
     draw_fever_gauge,
     draw_fever_side_bar,
     draw_fever_side_cover,
+    draw_skill_bar,
     spawn_fever_chance_particle,
     spawn_fever_start_particle,
 )
@@ -27,10 +28,15 @@ class Skill(PlayArchetype):
     beat: StandardImport.BEAT
     start_time: float = entity_memory()
     count: int = entity_memory()
+    sfx: bool = entity_memory()
+    z: float = entity_memory()
+    z2: float = entity_memory()
     name = archetype_names.SKILL
 
     def preprocess(self):
         self.start_time = beat_to_time(self.beat)
+        self.z = custom_elements.PrecalcLayer.skill_bar
+        self.z2 = custom_elements.PrecalcLayer.skill_etc
 
     def spawn_order(self):
         return self.start_time
@@ -41,9 +47,14 @@ class Skill(PlayArchetype):
     def update_parallel(self):
         if self.count == 0:
             self.count = SkillMemory.max_count
+        if not self.sfx:
+            Effects.skill.play(SFX_DISTANCE)
+            self.sfx = True
+        draw_skill_bar(self.z, self.z2, time() - self.start_time, self.count)
         if time() >= self.start_time + 3:
             self.despawn = True
 
+    @callback(order=3)
     def update_sequential(self):
         if self.count:
             return
@@ -70,8 +81,6 @@ class FeverChance(PlayArchetype):
             if note.FeverChanceEventCounter.fever_chance_time != 0
             else self.start_time
         )
-
-    def initialize(self):
         self.z = custom_elements.PrecalcLayer.fever_chance_cover
         self.z2 = custom_elements.PrecalcLayer.fever_chance_side
         self.z3 = custom_elements.PrecalcLayer.fever_chance_gauge
@@ -96,7 +105,7 @@ class FeverChance(PlayArchetype):
             spawn_fever_chance_particle()
             self.checker = True
         self.percentage = clamp(
-            ease(EaseType.OUT_QUAD, note.FeverChanceEventCounter.fever_chance_current_combo / self.counter),
+            note.FeverChanceEventCounter.fever_chance_current_combo / self.counter,
             0,
             0.9,
         )
@@ -106,6 +115,7 @@ class FeverChance(PlayArchetype):
         draw_fever_side_bar(self.z2, time() - self.start_time)
         draw_fever_gauge(self.z3, self.percentage)
 
+    @callback(order=3)
     def update_sequential(self):
         if self.checker:
             return
