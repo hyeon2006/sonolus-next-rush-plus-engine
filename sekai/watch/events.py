@@ -52,6 +52,7 @@ class Skill(WatchArchetype):
             self.sfx = True
         draw_skill_bar(self.z, self.z2, time() - self.start_time, self.count)
 
+    @callback(order=3)
     def update_sequential(self):
         if self.count:
             return
@@ -81,8 +82,6 @@ class FeverChance(WatchArchetype):
             if note.FeverChanceEventCounter.fever_chance_time != 0
             else self.start_time
         )
-
-    def initialize(self):
         self.z = custom_elements.PrecalcLayer.fever_chance_cover
         self.z2 = custom_elements.PrecalcLayer.fever_chance_side
         self.z3 = custom_elements.PrecalcLayer.fever_chance_gauge
@@ -125,6 +124,7 @@ class FeverChance(WatchArchetype):
         draw_fever_side_bar(self.z2, time() - self.start_time)
         draw_fever_gauge(self.z3, self.percentage)
 
+    @callback(order=3)
     def update_sequential(self):
         if self.checker:
             return
