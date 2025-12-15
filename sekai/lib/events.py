@@ -1,8 +1,10 @@
 from sonolus.script.interval import lerp, unlerp_clamped
+from sonolus.script.vec import Vec2
 
 from sekai.lib.layout import (
     LANE_B,
     LANE_T,
+    layout_combo_label,
     layout_fever_cover_left,
     layout_fever_cover_right,
     layout_fever_gauge_left,
@@ -20,7 +22,7 @@ from sekai.lib.skin import ActiveSkin
 def draw_fever_side_cover(z: float, time: float):
     if not ActiveSkin.background.is_available:
         return
-    if Options.hide_ui == 2:
+    if Options.hide_ui >= 3:
         return
     if Options.fever_effect == 2:
         return
@@ -34,7 +36,7 @@ def draw_fever_side_cover(z: float, time: float):
 def draw_fever_side_bar(z: float, time: float):
     if not ActiveSkin.sekai_stage_fever.is_available:
         return
-    if Options.hide_ui == 2:
+    if Options.hide_ui >= 3:
         return
     if Options.fever_effect == 2:
         return
@@ -46,7 +48,7 @@ def draw_fever_side_bar(z: float, time: float):
 def draw_fever_gauge(z: float, percentage: float):
     if not ActiveSkin.sekai_fever_gauge.available:
         return
-    if Options.hide_ui == 2:
+    if Options.hide_ui >= 3:
         return
     if Options.fever_effect == 2:
         return
@@ -58,7 +60,7 @@ def draw_fever_gauge(z: float, percentage: float):
 
 
 def spawn_fever_start_particle(cant_super_fever: bool):
-    if Options.hide_ui == 2:
+    if Options.hide_ui >= 3:
         return
     if Options.fever_effect == 2:
         return
@@ -86,7 +88,7 @@ def spawn_fever_start_particle(cant_super_fever: bool):
 
 
 def spawn_fever_chance_particle():
-    if Options.hide_ui == 2:
+    if Options.hide_ui >= 3:
         return
     if Options.fever_effect == 2:
         return
@@ -97,3 +99,32 @@ def spawn_fever_chance_particle():
     if Options.fever_effect == 0:
         ActiveParticles.fever_chance_lane.spawn(layout_lane1, 1, False)
         ActiveParticles.fever_chance_lane.spawn(layout_lane2, 1, False)
+
+
+def draw_skill_bar(z: float, z2: float, time: float, num: int):
+    if Options.hide_ui >= 3:
+        return
+    if not Options.skill_effect:
+        return
+    if not ActiveSkin.skill_bar.is_available:
+        return
+    enter_progress = unlerp_clamped(0, 0.25, time)
+    exit_progress = unlerp_clamped(2.75, 3, time)
+
+    anim = enter_progress - exit_progress
+
+    start_center = Vec2(x=-6.7, y=0.44)
+    target_center = Vec2(x=-6.5, y=0.44)
+    current_center = lerp(start_center, target_center, anim)
+    h = 0.08
+    w = h * 21
+    layout = layout_combo_label(current_center, w, h)
+    ActiveSkin.skill_bar.draw(layout, z, anim)
+
+    icon_start_center = Vec2(x=-7.5, y=0.457)
+    icon_target_center = Vec2(x=-7.3, y=0.457)
+    icon_current_center = lerp(icon_start_center, icon_target_center, anim)
+    h = 0.045
+    w = h * 7
+    layout = layout_combo_label(icon_current_center, w, h)
+    ActiveSkin.skill_icon.get_sprite(num).draw(layout, z2, anim)

@@ -1,4 +1,5 @@
 from sonolus.script.archetype import StandardImport, WatchArchetype, callback, entity_memory, imported
+from sonolus.script.globals import level_memory
 from sonolus.script.interval import clamp
 from sonolus.script.runtime import is_replay, is_skip, time
 from sonolus.script.timing import beat_to_time
@@ -9,6 +10,7 @@ from sekai.lib.events import (
     draw_fever_gauge,
     draw_fever_side_bar,
     draw_fever_side_cover,
+    draw_skill_bar,
     spawn_fever_chance_particle,
     spawn_fever_start_particle,
 )
@@ -17,19 +19,41 @@ from sekai.lib.streams import Streams
 from sekai.watch import custom_elements, note
 
 
+@level_memory
+class SkillMemory:
+    max_count: int
+
+
 class Skill(WatchArchetype):
     beat: StandardImport.BEAT
     start_time: float = entity_memory()
     name = archetype_names.SKILL
+    z: float = entity_memory()
+    z2: float = entity_memory()
+    z3: float = entity_memory()
+    count: int = entity_memory()
 
     def preprocess(self):
         self.start_time = beat_to_time(self.beat)
+        self.z = custom_elements.PrecalcLayer.fever_chance_cover
+        self.z2 = custom_elements.PrecalcLayer.fever_chance_gauge
+        self.z3 = custom_elements.PrecalcLayer.fever_chance_cover
 
     def spawn_time(self):
         return self.start_time
 
     def despawn_time(self):
-        return self.start_time + 1
+        return self.start_time + 3
+
+    def update_parallel(self):
+        if self.count == 0:
+            self.count = SkillMemory.max_count
+        draw_skill_bar(self.z, self.z2, time() - self.start_time, self.count)
+
+    def update_sequential(self):
+        if self.count:
+            return
+        SkillMemory.max_count += 1
 
 
 class FeverChance(WatchArchetype):

@@ -140,7 +140,7 @@ class Options:
         name="Hide UI",
         scope="Rush",
         default=0,
-        values=["None", "Sonolus", "All"],
+        values=["None", "Sonolus", "Sonolus + Custom Judgment", "All"],
     )
     show_lane: bool = toggle_option(
         name=StandardText.STAGE,

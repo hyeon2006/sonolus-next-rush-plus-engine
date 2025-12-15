@@ -1,4 +1,5 @@
 from sonolus.script.archetype import PlayArchetype, StandardImport, callback, entity_memory, imported
+from sonolus.script.globals import level_memory
 from sonolus.script.interval import clamp
 from sonolus.script.runtime import is_multiplayer, offset_adjusted_time, time
 from sonolus.script.timing import beat_to_time
@@ -17,9 +18,15 @@ from sekai.lib.streams import Streams
 from sekai.play import custom_elements, note
 
 
+@level_memory
+class SkillMemory:
+    max_count: int
+
+
 class Skill(PlayArchetype):
     beat: StandardImport.BEAT
     start_time: float = entity_memory()
+    count: int = entity_memory()
     name = archetype_names.SKILL
 
     def preprocess(self):
@@ -32,7 +39,15 @@ class Skill(PlayArchetype):
         return time() >= self.start_time
 
     def update_parallel(self):
-        self.despawn = True
+        if self.count == 0:
+            self.count = SkillMemory.max_count
+        if time() >= self.start_time + 3:
+            self.despawn = True
+
+    def update_sequential(self):
+        if self.count:
+            return
+        SkillMemory.max_count += 1
 
 
 class FeverChance(PlayArchetype):

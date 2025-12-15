@@ -30,7 +30,7 @@ def transform_fixed_size(h, w):
 
 
 def draw_combo_label(ap: bool, z: float, glow_z=float):
-    if Options.hide_ui == 2:
+    if Options.hide_ui >= 2:
         return
     if not ActiveSkin.combo_label.available:
         return
@@ -54,7 +54,7 @@ def draw_combo_label(ap: bool, z: float, glow_z=float):
 
 
 def draw_combo_number(draw_time: float, ap: bool, combo: int, z: float, z2: float, z3: float):
-    if Options.hide_ui == 2:
+    if Options.hide_ui >= 2:
         return
     if not ActiveSkin.combo_number.available:
         return
@@ -217,7 +217,7 @@ class ComboNumberLayout(Record):
 def draw_judgment_text(
     draw_time: float, judgment: Judgment, windows_bad: Interval, accuracy: float, check_pass: bool, z: float
 ):
-    if Options.hide_ui == 2:
+    if Options.hide_ui >= 2:
         return
     if not ActiveSkin.judgment.available:
         return
@@ -238,7 +238,7 @@ def draw_judgment_text(
 
 
 def draw_judgment_accuracy(judgment: Judgment, accuracy: float, windows: JudgmentWindow, wrong_way: bool, z: float):
-    if Options.hide_ui == 2:
+    if Options.hide_ui >= 2:
         return
     if not ActiveSkin.accuracy_warning.available:
         return
@@ -261,7 +261,7 @@ def draw_judgment_accuracy(judgment: Judgment, accuracy: float, windows: Judgmen
 
 
 def draw_damage_flash(draw_time: float, z: float):
-    if Options.hide_ui == 2:
+    if Options.hide_ui >= 2:
         return
     if not ActiveSkin.damage_flash.is_available:
         return
