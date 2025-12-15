@@ -37,6 +37,7 @@ class Skill(WatchArchetype):
         self.start_time = beat_to_time(self.beat)
         self.z = custom_elements.PrecalcLayer.skill_bar
         self.z2 = custom_elements.PrecalcLayer.skill_etc
+        Effects.skill.schedule(self.start_time, SFX_DISTANCE)
 
     def spawn_time(self):
         return self.start_time
@@ -47,9 +48,6 @@ class Skill(WatchArchetype):
     def update_parallel(self):
         if self.count == 0:
             self.count = SkillMemory.max_count
-        if not self.sfx:
-            Effects.skill.play(SFX_DISTANCE)
-            self.sfx = True
         if is_skip():
             self.sfx = False
         draw_skill_bar(self.z, self.z2, time() - self.start_time, self.count)
@@ -59,9 +57,6 @@ class Skill(WatchArchetype):
         if self.count:
             return
         SkillMemory.max_count += 1
-
-    def terminate(self):
-        self.sfx = False
 
 
 class FeverChance(WatchArchetype):
