@@ -153,7 +153,7 @@ def draw_skill_bar(z: float, z2: float, time: float, num: int):
             final_anim = mid_progress - exit_progress
     text_current_center = lerp(current_start_pos, text_target_center, final_anim)
     h = 0.027
-    w = h * 12.5
+    w = h * 13
     layout = layout_combo_label(text_current_center, w, h)
     if time <= 1.5:
         ActiveSkin.skill_level.draw(layout, z2, final_anim)
