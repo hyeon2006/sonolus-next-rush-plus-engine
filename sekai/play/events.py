@@ -28,7 +28,6 @@ class Skill(PlayArchetype):
     beat: StandardImport.BEAT
     start_time: float = entity_memory()
     count: int = entity_memory()
-    sfx: bool = entity_memory()
     z: float = entity_memory()
     z2: float = entity_memory()
     name = archetype_names.SKILL
@@ -46,10 +45,8 @@ class Skill(PlayArchetype):
 
     def update_parallel(self):
         if self.count == 0:
-            self.count = SkillMemory.max_count
-        if not self.sfx:
             Effects.skill.play(SFX_DISTANCE)
-            self.sfx = True
+            self.count = SkillMemory.max_count
         draw_skill_bar(self.z, self.z2, time() - self.start_time, self.count)
         if time() >= self.start_time + 3:
             self.despawn = True
