@@ -45,7 +45,7 @@ class Skill(PlayArchetype):
 
     def update_parallel(self):
         if self.count == 0:
-            if Options.hide_ui != 3:
+            if Options.hide_ui != 3 and Options.skill_effect:
                 Effects.skill.play(SFX_DISTANCE)
             self.count = SkillMemory.max_count
         draw_skill_bar(self.z, self.z2, time() - self.start_time, self.count)
