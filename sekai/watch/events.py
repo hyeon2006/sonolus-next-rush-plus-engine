@@ -37,7 +37,8 @@ class Skill(WatchArchetype):
         self.start_time = beat_to_time(self.beat)
         self.z = custom_elements.PrecalcLayer.skill_bar
         self.z2 = custom_elements.PrecalcLayer.skill_etc
-        Effects.skill.schedule(self.start_time, SFX_DISTANCE)
+        if Options.hide_ui != 3:
+            Effects.skill.schedule(self.start_time, SFX_DISTANCE)
 
     def spawn_time(self):
         return self.start_time
