@@ -292,6 +292,10 @@ class BaseSkin:
     flick_warning: Sprite = sprite("Flick Warning")
     damage_flash: Sprite = sprite("Damage Flash")
     auto_live: Sprite = sprite("Auto Live")
+    skill_bar: Sprite = sprite("Skill Bar")
+    skill_level: Sprite = sprite("Skill Level")
+    skill_percent: Sprite = sprite("Skill Percent")
+    skill_icon: SpriteGroup = sprite_group(f"Skill Icon {i}" for i in range(1, 6))
 
 
 EMPTY_SPRITE = Sprite(-1)
@@ -643,6 +647,19 @@ class FeverGaugeSpriteSet(Record):
     @property
     def available(self):
         return self.yellow.is_available
+
+
+class SkillIconSpriteSet(Record):
+    icon: SpriteGroup
+
+    def get_sprite(self, num: int):
+        result = +Sprite
+        result = self.icon[(num - 1) % 5]
+        return result
+
+    @property
+    def available(self):
+        return self.icon[0].is_available
 
 
 class NoteSpriteSet(Record):
@@ -1026,6 +1043,10 @@ class ActiveSkin:
     accuracy_warning: AccuracySpriteSet
     damage_flash: Sprite
     auto_live: Sprite
+    skill_bar: Sprite
+    skill_level: Sprite
+    skill_percent: Sprite
+    skill_icon: SkillIconSpriteSet
 
 
 def init_skin():
@@ -1451,3 +1472,7 @@ def init_skin():
     )
     ActiveSkin.damage_flash = BaseSkin.damage_flash
     ActiveSkin.auto_live = BaseSkin.auto_live
+    ActiveSkin.skill_bar = BaseSkin.skill_bar
+    ActiveSkin.skill_icon = SkillIconSpriteSet(icon=BaseSkin.skill_icon)
+    ActiveSkin.skill_level = BaseSkin.skill_level
+    ActiveSkin.skill_percent = BaseSkin.skill_percent
