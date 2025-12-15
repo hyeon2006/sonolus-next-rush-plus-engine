@@ -50,6 +50,8 @@ class Skill(WatchArchetype):
         if not self.sfx:
             Effects.skill.play(SFX_DISTANCE)
             self.sfx = True
+        if is_skip():
+            self.sfx = False
         draw_skill_bar(self.z, self.z2, time() - self.start_time, self.count)
 
     @callback(order=3)
