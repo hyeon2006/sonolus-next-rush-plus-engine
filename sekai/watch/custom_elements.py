@@ -1,4 +1,4 @@
-from sonolus.script.archetype import EntityRef, WatchArchetype, entity_memory
+from sonolus.script.archetype import EntityRef, WatchArchetype, callback, entity_memory
 from sonolus.script.globals import level_memory
 
 from sekai.lib import archetype_names
@@ -52,6 +52,7 @@ class ComboLabel(WatchArchetype):
             return
         draw_combo_label(ap=WatchBaseNote.at(self.note_index).ap, z=self.z, glow_z=self.glow_z)
 
+    @callback(order=3)
     def update_sequential(self):
         if self.checker:
             return

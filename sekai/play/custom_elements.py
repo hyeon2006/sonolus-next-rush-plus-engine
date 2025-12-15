@@ -1,4 +1,4 @@
-from sonolus.script.archetype import PlayArchetype, entity_memory
+from sonolus.script.archetype import PlayArchetype, callback, entity_memory
 from sonolus.script.bucket import Judgment, JudgmentWindow
 from sonolus.script.globals import level_memory
 from sonolus.script.interval import Interval
@@ -86,6 +86,7 @@ class ComboLabel(PlayArchetype):
             return
         draw_combo_label(ap=ComboLabelMemory.ap, z=self.z, glow_z=self.glow_z)
 
+    @callback(order=3)
     def update_sequential(self):
         if self.check:
             return
@@ -144,6 +145,7 @@ class ComboNumber(PlayArchetype):
             draw_time=self.spawn_time, ap=ComboNumberMemory.ap, combo=self.combo, z=self.z, z2=self.z2, z3=self.z3
         )
 
+    @callback(order=3)
     def update_sequential(self):
         if self.check:
             return
@@ -193,6 +195,7 @@ class JudgmentText(PlayArchetype):
             z=self.z,
         )
 
+    @callback(order=3)
     def update_sequential(self):
         if self.check:
             return
@@ -235,6 +238,7 @@ class JudgmentAccuracy(PlayArchetype):
             z=self.z,
         )
 
+    @callback(order=3)
     def update_sequential(self):
         if self.check:
             return
@@ -267,6 +271,7 @@ class DamageFlash(PlayArchetype):
             return
         draw_damage_flash(draw_time=self.spawn_time, z=self.z)
 
+    @callback(order=3)
     def update_sequential(self):
         if self.check:
             return
