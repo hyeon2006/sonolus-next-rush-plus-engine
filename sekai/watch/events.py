@@ -87,7 +87,6 @@ class FeverChance(WatchArchetype):
         self.z = custom_elements.PrecalcLayer.fever_chance_cover
         self.z2 = custom_elements.PrecalcLayer.fever_chance_side
         self.z3 = custom_elements.PrecalcLayer.fever_chance_gauge
-        self.percentage = 0
 
     def spawn_time(self):
         return self.start_time
