@@ -116,7 +116,7 @@ def draw_skill_bar(z: float, z2: float, time: float, num: int):
     anim = enter_progress - exit_progress
 
     x_ratio = -0.9 * aspect_ratio() + 1.8
-    y_ratio = -0.1125 * aspect_ratio() + 0.25
+    y_ratio = -0.1 * aspect_ratio() + 0.2333
 
     x = -6.5 + x_ratio
     y = 0.433 - y_ratio
