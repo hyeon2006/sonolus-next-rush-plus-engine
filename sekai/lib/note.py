@@ -723,7 +723,7 @@ def play_note_hit_effects(
         linear_particle = particles.get_linear(judgment)
         if linear_particle.is_available:
             layout = layout_linear_effect(lane, shear=0)
-            if linear_particle != particles.linear:
+            if linear_particle == particles.linear_good:
                 for slot_lane in iter_slot_lanes(lane, size):
                     layout @= layout_linear_effect(slot_lane, shear=0)
                     linear_particle.spawn(layout, duration=0.5 * Options.note_effect_duration)
@@ -732,7 +732,7 @@ def play_note_hit_effects(
         circular_particle = particles.get_circular(judgment)
         if circular_particle.is_available:
             layout = layout_circular_effect(lane, w=1.75, h=1.05)
-            if circular_particle != particles.circular:
+            if circular_particle == particles.circular_good:
                 for slot_lane in iter_slot_lanes(lane, size):
                     layout @= layout_circular_effect(slot_lane, w=1.75, h=1.05)
                 circular_particle.spawn(layout, duration=0.6 * Options.note_effect_duration)

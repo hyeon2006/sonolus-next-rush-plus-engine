@@ -168,12 +168,12 @@ class NoteParticleSet(Record):
             case Judgment.PERFECT:
                 result @= self.circular
             case Judgment.GREAT:
-                if self.circular_great != EMPTY_PARTICLE:
+                if self.circular_great != EMPTY_PARTICLE and self.circular_great.is_available:
                     result @= self.circular_great
                 else:
                     result @= self.circular
             case _:
-                if self.circular_good != EMPTY_PARTICLE:
+                if self.circular_good != EMPTY_PARTICLE and self.circular_good.is_available:
                     result @= self.circular_good
                 else:
                     result @= self.circular
@@ -185,12 +185,12 @@ class NoteParticleSet(Record):
             case Judgment.PERFECT:
                 result @= self.linear
             case Judgment.GREAT:
-                if self.linear_great != EMPTY_PARTICLE:
+                if self.linear_great != EMPTY_PARTICLE and self.linear_great.is_available:
                     result @= self.linear_great
                 else:
                     result @= self.linear
             case _:
-                if self.linear_good != EMPTY_PARTICLE:
+                if self.linear_good != EMPTY_PARTICLE and self.linear_good.is_available:
                     result @= self.linear_good
                 else:
                     result @= self.linear
@@ -202,12 +202,12 @@ class NoteParticleSet(Record):
             case Judgment.PERFECT:
                 result @= self.slot_linear
             case Judgment.GREAT:
-                if self.slot_linear_great != EMPTY_PARTICLE:
+                if self.slot_linear_great != EMPTY_PARTICLE and self.slot_linear_great.is_available:
                     result @= self.slot_linear_great
                 else:
                     result @= self.slot_linear
             case _:
-                if self.slot_linear_good != EMPTY_PARTICLE:
+                if self.slot_linear_good != EMPTY_PARTICLE and self.slot_linear_good.is_available:
                     result @= self.slot_linear_good
                 else:
                     result @= self.slot_linear
