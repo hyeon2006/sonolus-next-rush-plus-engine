@@ -115,10 +115,15 @@ def draw_skill_bar(z: float, z2: float, time: float, num: int):
 
     anim = enter_progress - exit_progress
 
-    x_ratio = -0.9 * aspect_ratio() + 1.8
-    y_ratio = -0.1 * aspect_ratio() + 0.2333
+    if aspect_ratio() < 16 / 9:
+        x_ratio = 2.025 * aspect_ratio() - 1.9
+    else:
+        x_ratio = -3.06 * aspect_ratio() + 7.14
 
-    x = -6.5 + x_ratio
+    raw_val = -0.225 * aspect_ratio() + 0.4
+    y_ratio = max(raw_val, 0)
+
+    x = -6.7 + x_ratio
     y = 0.433 - y_ratio
     start_center = Vec2(x=x - 0.2, y=y)
     target_center = Vec2(x=x, y=y)
@@ -128,7 +133,7 @@ def draw_skill_bar(z: float, z2: float, time: float, num: int):
     layout = layout_combo_label(current_center, w, h)
     ActiveSkin.skill_bar.draw(layout, z, anim)
 
-    x = -7.3 + x_ratio
+    x = -7.5 + x_ratio
     y = 0.45 - y_ratio
     icon_start_center = Vec2(x=x - 0.2, y=y)
     icon_target_center = Vec2(x=x, y=y)
@@ -138,7 +143,7 @@ def draw_skill_bar(z: float, z2: float, time: float, num: int):
     layout = layout_combo_label(icon_current_center, w, h)
     ActiveSkin.skill_icon.get_sprite(num).draw(layout, z2, anim)
 
-    x = -5.37 + x_ratio
+    x = -5.58 + x_ratio
     y = 0.474 - y_ratio
     text_start_center = Vec2(x=x - 0.2, y=y)
     text_target_center = Vec2(x=x, y=y)
