@@ -4,6 +4,7 @@ from sonolus.script.vec import Vec2
 from sekai.lib.layout import (
     LANE_B,
     LANE_T,
+    aspect_ratio,
     layout_combo_label,
     layout_fever_cover_left,
     layout_fever_cover_right,
@@ -114,8 +115,10 @@ def draw_skill_bar(z: float, z2: float, time: float, num: int):
 
     anim = enter_progress - exit_progress
 
-    x = -6.5
-    y = 0.44
+    ratio = -0.45 * aspect_ratio() + 0.8
+
+    x = -6.5 + ratio
+    y = 0.433
     start_center = Vec2(x=x - 0.2, y=y)
     target_center = Vec2(x=x, y=y)
     current_center = lerp(start_center, target_center, anim)
@@ -124,8 +127,8 @@ def draw_skill_bar(z: float, z2: float, time: float, num: int):
     layout = layout_combo_label(current_center, w, h)
     ActiveSkin.skill_bar.draw(layout, z, anim)
 
-    x = -7.3
-    y = 0.457
+    x = -7.3 + ratio
+    y = 0.45
     icon_start_center = Vec2(x=x - 0.2, y=y)
     icon_target_center = Vec2(x=x, y=y)
     icon_current_center = lerp(icon_start_center, icon_target_center, anim)
@@ -134,11 +137,11 @@ def draw_skill_bar(z: float, z2: float, time: float, num: int):
     layout = layout_combo_label(icon_current_center, w, h)
     ActiveSkin.skill_icon.get_sprite(num).draw(layout, z2, anim)
 
-    y = 0.48
-    x = -5.37
+    x = -5.37 + ratio
+    y = 0.474
     text_start_center = Vec2(x=x - 0.2, y=y)
     text_target_center = Vec2(x=x, y=y)
-    text_changing_center = Vec2(x=x + 0.2, y=y)
+    text_changing_center = Vec2(x=x + 0.1, y=y)
 
     mid_progress = unlerp_clamped(1.5, 1.75, time)
     current_start_pos = +Vec2
@@ -153,7 +156,7 @@ def draw_skill_bar(z: float, z2: float, time: float, num: int):
             final_anim = mid_progress - exit_progress
     text_current_center = lerp(current_start_pos, text_target_center, final_anim)
     h = 0.027
-    w = h * 13
+    w = h * 14
     layout = layout_combo_label(text_current_center, w, h)
     if time <= 1.5:
         ActiveSkin.skill_level.draw(layout, z2, final_anim)
