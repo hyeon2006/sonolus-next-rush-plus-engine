@@ -3,6 +3,8 @@ from sonolus.script.vec import Vec2
 
 from sekai.lib.layout import (
     LANE_B,
+    LANE_SCREEN_B,
+    LANE_SCREEN_T,
     LANE_T,
     Layout,
     aspect_ratio,
@@ -13,7 +15,7 @@ from sekai.lib.layout import (
     layout_fever_gauge_left,
     layout_fever_gauge_right,
     layout_fever_text,
-    layout_lane,
+    layout_lane_fever,
     layout_sekai_stage,
     layout_sekai_stage_t,
     perspective_rect,
@@ -80,17 +82,17 @@ def spawn_fever_start_particle(cant_super_fever: bool):
         return
     if cant_super_fever:
         layout_text = layout_fever_text()
-        layout_lane1 = layout_lane(-6, 1)
-        layout_lane2 = layout_lane(6, 1)
+        layout_lane1 = layout_lane_fever(-6, 1)
+        layout_lane2 = layout_lane_fever(6, 1)
         ActiveParticles.fever_start_text.spawn(layout_text, 1, False)
         if Options.fever_effect == 0:
             ActiveParticles.fever_start_lane.spawn(layout_lane1, 1, False)
             ActiveParticles.fever_start_lane.spawn(layout_lane2, 1, False)
     else:
         layout_text = layout_fever_text()
-        layout_lane1 = layout_lane(-6, 1)
-        layout_lane2 = layout_lane(6, 1)
-        mid = (LANE_T + LANE_B) / 2
+        layout_lane1 = layout_lane_fever(-6, 1)
+        layout_lane2 = layout_lane_fever(6, 1)
+        mid = (LANE_SCREEN_T + LANE_SCREEN_B) / 2
         layout_effect1 = perspective_rect(l=-6 - 0.5, r=-6 + 0.5, t=mid - 0.050075, b=mid + 0.050075)
         layout_effect2 = perspective_rect(l=6 - 0.5, r=6 + 0.5, t=mid - 0.050075, b=mid + 0.050075)
         ActiveParticles.super_fever_start_text.spawn(layout_text, 1, False)
@@ -107,8 +109,8 @@ def spawn_fever_chance_particle():
     if Options.fever_effect == 2:
         return
     layout_text = layout_fever_text()
-    layout_lane1 = layout_lane(-6, 0.5)
-    layout_lane2 = layout_lane(6, 0.5)
+    layout_lane1 = layout_lane_fever(-6, 0.5)
+    layout_lane2 = layout_lane_fever(6, 0.5)
     ActiveParticles.fever_chance_text.spawn(layout_text, 1, False)
     if Options.fever_effect == 0:
         ActiveParticles.fever_chance_lane.spawn(layout_lane1, 1, False)

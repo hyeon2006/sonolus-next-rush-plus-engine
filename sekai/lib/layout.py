@@ -228,11 +228,19 @@ def layout_sekai_stage_t() -> Quad:
 
 
 def layout_lane_by_edges(l: float, r: float) -> Quad:
-    return perspective_rect(l=l, r=r, t=LANE_T, b=LANE_SCREEN_B)
+    return perspective_rect(l=l, r=r, t=LANE_T, b=LANE_SCREEN_B - 0.1)
 
 
 def layout_lane(lane: float, size: float) -> Quad:
-    return layout_lane_by_edges(lane - (size + 0.01), lane + (size + 0.01))
+    return layout_lane_by_edges(lane - (size + 0.005), lane + (size + 0.005))
+
+
+def layout_lane_fever(lane: float, size: float) -> Quad:
+    return layout_lane_by_edges_fever(lane - size, lane + size)
+
+
+def layout_lane_by_edges_fever(l: float, r: float) -> Quad:
+    return perspective_rect(l=l, r=r, t=LANE_SCREEN_T, b=LANE_SCREEN_B)
 
 
 def layout_stage_cover() -> Quad:
