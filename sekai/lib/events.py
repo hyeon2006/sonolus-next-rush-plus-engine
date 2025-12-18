@@ -1,19 +1,24 @@
 from sonolus.script.interval import lerp, unlerp_clamped
+from sonolus.script.quad import Quad
 from sonolus.script.vec import Vec2
 
 from sekai.lib.layout import (
     LANE_B,
     LANE_T,
+    Layout,
     aspect_ratio,
     layout_combo_label,
     layout_fever_cover_left,
     layout_fever_cover_right,
+    layout_fever_cover_sky,
     layout_fever_gauge_left,
     layout_fever_gauge_right,
     layout_fever_text,
     layout_lane,
     layout_sekai_stage,
+    layout_sekai_stage_t,
     perspective_rect,
+    screen,
 )
 from sekai.lib.options import Options
 from sekai.lib.particle import ActiveParticles
@@ -33,6 +38,11 @@ def draw_fever_side_cover(z: float, time: float):
     ActiveSkin.background.draw(layout1, z, a=a)
     ActiveSkin.background.draw(layout2, z, a=a)
 
+    if screen().t < Layout.t:
+        return
+    layout_sky = layout_fever_cover_sky()
+    ActiveSkin.background.draw(layout_sky, z, a=a)
+
 
 def draw_fever_side_bar(z: float, time: float):
     if not ActiveSkin.sekai_stage_fever.is_available:
@@ -41,7 +51,11 @@ def draw_fever_side_bar(z: float, time: float):
         return
     if Options.fever_effect == 2:
         return
-    layout = layout_sekai_stage()
+    layout = +Quad
+    if screen().t < Layout.t:
+        layout @= layout_sekai_stage()
+    else:
+        layout @= layout_sekai_stage_t()
     a = unlerp_clamped(0, 0.25, time)
     ActiveSkin.sekai_stage_fever.draw(layout, z, a=a)
 
