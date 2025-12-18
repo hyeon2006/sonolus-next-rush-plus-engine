@@ -1,5 +1,4 @@
 from sonolus.script.interval import lerp, unlerp_clamped
-from sonolus.script.quad import Quad
 from sonolus.script.vec import Vec2
 
 from sekai.lib.layout import (
@@ -51,13 +50,13 @@ def draw_fever_side_bar(z: float, time: float):
         return
     if Options.fever_effect == 2:
         return
-    layout = +Quad
-    if screen().t < Layout.t:
-        layout @= layout_sekai_stage()
-    else:
-        layout @= layout_sekai_stage_t()
     a = unlerp_clamped(0, 0.25, time)
-    ActiveSkin.sekai_stage_fever.draw(layout, z, a=a)
+    if screen().t < Layout.t or not ActiveSkin.sekai_stage_fever_tablet.is_available:
+        layout = layout_sekai_stage()
+        ActiveSkin.sekai_stage_fever.draw(layout, z, a=a)
+    else:
+        layout = layout_sekai_stage_t()
+        ActiveSkin.sekai_stage_fever_tablet.draw(layout, z, a=a)
 
 
 def draw_fever_gauge(z: float, percentage: float):
@@ -130,11 +129,11 @@ def draw_skill_bar(z: float, z2: float, time: float, num: int):
     anim = enter_progress - exit_progress
 
     if aspect_ratio() < 16 / 9:
-        x_ratio = 2.025 * aspect_ratio() - 1.9
+        x_ratio = 1.7
     else:
         x_ratio = -3.06 * aspect_ratio() + 7.14
 
-    raw_val = -0.225 * aspect_ratio() + 0.4
+    raw_val = -0.405 * aspect_ratio() + 0.72
     y_ratio = max(raw_val, 0)
 
     x = -6.7 + x_ratio
