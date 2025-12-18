@@ -29,6 +29,7 @@ class BaseSkin:
     sekai_stage_cover: Sprite = sprite("Sekai Stage Cover")
 
     sekai_stage_fever: Sprite = sprite("Sekai Stage Fever")
+    sekai_stage_fever_tablet: Sprite = sprite("Sekai Stage Fever Tablet")
     sekai_fever_gauge_yellow: Sprite = sprite("Sekai Fever Gauge Yellow")
     sekai_fever_gauge_rainbow: Sprite = sprite("Sekai Fever Gauge Rainbow")
 
@@ -997,6 +998,7 @@ class ActiveSkin:
     sekai_stage_cover: Sprite
 
     sekai_stage_fever: Sprite
+    sekai_stage_fever_tablet: Sprite
     sekai_fever_gauge: FeverGaugeSpriteSet
 
     sim_line: Sprite
@@ -1065,6 +1067,7 @@ def init_skin():
     ActiveSkin.sekai_stage_cover = BaseSkin.sekai_stage_cover
 
     ActiveSkin.sekai_stage_fever = BaseSkin.sekai_stage_fever
+    ActiveSkin.sekai_stage_fever_tablet = BaseSkin.sekai_stage_fever_tablet
     ActiveSkin.sekai_fever_gauge = FeverGaugeSpriteSet(
         yellow=BaseSkin.sekai_fever_gauge_yellow, rainbow=BaseSkin.sekai_fever_gauge_rainbow
     )
