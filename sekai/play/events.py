@@ -36,6 +36,8 @@ class Skill(PlayArchetype):
         self.start_time = beat_to_time(self.beat)
         self.z = custom_elements.PrecalcLayer.skill_bar
         self.z2 = custom_elements.PrecalcLayer.skill_etc
+        if Options.hide_ui != 3 and Options.skill_effect:
+            Effects.skill.schedule(self.start_time, SFX_DISTANCE)
 
     def spawn_order(self):
         return self.start_time
@@ -45,8 +47,6 @@ class Skill(PlayArchetype):
 
     def update_parallel(self):
         if self.count == 0:
-            if Options.hide_ui != 3 and Options.skill_effect:
-                Effects.skill.play(SFX_DISTANCE)
             self.count = SkillMemory.max_count
         draw_skill_bar(self.z, self.z2, time() - self.start_time, self.count)
         if time() >= self.start_time + 3:
