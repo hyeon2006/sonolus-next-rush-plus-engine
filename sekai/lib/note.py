@@ -36,6 +36,7 @@ from sekai.lib.ease import EaseType, ease
 from sekai.lib.effect import EMPTY_EFFECT, SFX_DISTANCE, Effects, first_available_effect
 from sekai.lib.layer import (
     LAYER_NOTE_ARROW,
+    LAYER_NOTE_ARROW_CRITICAL,
     LAYER_NOTE_BODY,
     LAYER_NOTE_FLICK_BODY,
     LAYER_NOTE_SLIM_BODY,
@@ -503,6 +504,21 @@ def draw_note_arrow(
         case ArrowRenderType.FALLBACK:
             layout = layout_flick_arrow_fallback(lane, size, direction, travel, animation_progress)
             sprites.get_sprite(size, direction).draw(layout, z=z, a=a)
+
+
+def get_flick_layer(kind: NoteKind) -> int:
+    match kind:
+        case (
+            NoteKind.CRIT_FLICK
+            | NoteKind.CRIT_HEAD_FLICK
+            | NoteKind.CRIT_TAIL_FLICK
+            | NoteKind.CRIT_TRACE_FLICK
+            | NoteKind.CRIT_HEAD_TRACE_FLICK
+            | NoteKind.CRIT_TAIL_TRACE_FLICK
+        ):
+            return LAYER_NOTE_ARROW_CRITICAL
+        case _:
+            return LAYER_NOTE_ARROW
 
 
 def get_note_particles(kind: NoteKind, direction: FlickDirection) -> NoteParticleSet:
