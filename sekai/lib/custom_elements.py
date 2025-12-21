@@ -36,6 +36,8 @@ def draw_combo_label(ap: bool, z: float, glow_z=float):
         return
     if is_watch() and Options.auto_judgment and not is_replay():
         return
+    if not Options.custom_combo:
+        return
 
     ui = runtime_ui()
 
@@ -59,6 +61,8 @@ def draw_combo_number(draw_time: float, ap: bool, combo: int, z: float, z2: floa
     if not ActiveSkin.combo_number.available:
         return
     if is_watch() and Options.auto_judgment and not is_replay():
+        return
+    if not Options.custom_combo:
         return
 
     ui = runtime_ui()
@@ -221,6 +225,8 @@ def draw_judgment_text(
         return
     if not ActiveSkin.judgment.available:
         return
+    if not Options.custom_judgment:
+        return
 
     ui = runtime_ui()
 
@@ -241,6 +247,8 @@ def draw_judgment_accuracy(judgment: Judgment, accuracy: float, windows: Judgmen
     if Options.hide_ui >= 2:
         return
     if not ActiveSkin.accuracy_warning.available:
+        return
+    if not Options.custom_accuracy:
         return
 
     ui = runtime_ui()
@@ -264,6 +272,8 @@ def draw_damage_flash(draw_time: float, z: float):
     if Options.hide_ui >= 2:
         return
     if not ActiveSkin.damage_flash.is_available:
+        return
+    if not Options.custom_damage:
         return
 
     t = unlerp_clamped(draw_time, draw_time + 0.35, time())

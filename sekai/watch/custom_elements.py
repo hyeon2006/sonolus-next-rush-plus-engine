@@ -9,6 +9,7 @@ from sekai.lib.custom_elements import (
     draw_judgment_accuracy,
     draw_judgment_text,
 )
+from sekai.lib.options import Options
 from sekai.watch import note
 from sekai.watch.note import WatchBaseNote
 
@@ -84,6 +85,8 @@ class ComboNumber(WatchArchetype):
         self.z3 = PrecalcLayer.judgment2
 
     def spawn_time(self) -> float:
+        if not Options.custom_combo:
+            return 1e8
         return WatchBaseNote.at(self.note_index).hit_time
 
     def despawn_time(self):
@@ -115,6 +118,8 @@ class JudgmentText(WatchArchetype):
         self.z = PrecalcLayer.judgment
 
     def spawn_time(self) -> float:
+        if not Options.custom_judgment:
+            return 1e8
         return WatchBaseNote.at(self.note_index).hit_time
 
     def despawn_time(self):
@@ -144,6 +149,8 @@ class JudgmentAccuracy(WatchArchetype):
         self.z = PrecalcLayer.judgment
 
     def spawn_time(self) -> float:
+        if not Options.custom_accuracy:
+            return 1e8
         return WatchBaseNote.at(self.note_index).hit_time
 
     def despawn_time(self):
@@ -172,6 +179,8 @@ class DamageFlash(WatchArchetype):
         self.z = PrecalcLayer.damage
 
     def spawn_time(self) -> float:
+        if not Options.custom_damage:
+            return 1e8
         return WatchBaseNote.at(self.note_index).hit_time
 
     def despawn_time(self):
