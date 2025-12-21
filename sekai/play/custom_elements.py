@@ -12,6 +12,7 @@ from sekai.lib.custom_elements import (
     draw_judgment_accuracy,
     draw_judgment_text,
 )
+from sekai.lib.options import Options
 from sekai.play import note
 
 
@@ -84,6 +85,9 @@ class ComboLabel(PlayArchetype):
         if self.combo == 0:
             self.despawn = True
             return
+        if not Options.custom_combo:
+            self.despawn = True
+            return
         draw_combo_label(ap=ComboLabelMemory.ap, z=self.z, glow_z=self.glow_z)
 
     @callback(order=3)
@@ -141,6 +145,9 @@ class ComboNumber(PlayArchetype):
         if self.combo == 0:
             self.despawn = True
             return
+        if not Options.custom_combo:
+            self.despawn = True
+            return
         draw_combo_number(
             draw_time=self.spawn_time, ap=ComboNumberMemory.ap, combo=self.combo, z=self.z, z2=self.z2, z3=self.z3
         )
@@ -184,6 +191,9 @@ class JudgmentText(PlayArchetype):
             self.despawn = True
             return
         if time() >= self.spawn_time + 0.5:
+            self.despawn = True
+            return
+        if not Options.custom_judgment:
             self.despawn = True
             return
         draw_judgment_text(
@@ -230,6 +240,9 @@ class JudgmentAccuracy(PlayArchetype):
         if time() >= self.spawn_time + 0.5:
             self.despawn = True
             return
+        if not Options.custom_accuracy:
+            self.despawn = True
+            return
         draw_judgment_accuracy(
             judgment=self.judgment,
             accuracy=self.accuracy,
@@ -267,6 +280,9 @@ class DamageFlash(PlayArchetype):
             self.despawn = True
             return
         if time() >= self.spawn_time + 0.35:
+            self.despawn = True
+            return
+        if not Options.custom_damage:
             self.despawn = True
             return
         draw_damage_flash(draw_time=self.spawn_time, z=self.z)
