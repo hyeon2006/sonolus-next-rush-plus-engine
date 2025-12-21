@@ -280,10 +280,10 @@ def layout_hidden_cover() -> Quad:
 
 
 def layout_custom_tag() -> Quad:
-    h = 0.0684
+    h = -0.0264 / aspect_ratio() ** 2 + 0.0733
     w = h * 4.465
-    x = 8.711111 * aspect_ratio() / 2.045 / 5 - 0.1392 * aspect_ratio()
-    y = (-4.9 / 5) + 0.1335
+    x = (8.711111 * aspect_ratio() / 2.045 / 5) + (0.5936 / aspect_ratio() ** 2 - 0.4339)
+    y = (-4.9 / 5) + (-0.0885 / aspect_ratio() ** 2 + 0.1498)
     return Quad(
         bl=Vec2(x - w, y - h),
         br=Vec2(x + w, y - h),

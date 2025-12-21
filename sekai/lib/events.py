@@ -129,10 +129,7 @@ def draw_skill_bar(z: float, z2: float, time: float, num: int):
 
     anim = enter_progress - exit_progress
 
-    if aspect_ratio() < 16 / 9:
-        x_ratio = 1.7
-    else:
-        x_ratio = -3.06 * aspect_ratio() + 7.14
+    x_ratio = 0.7 - 0.7 * (aspect_ratio() - 1.3333) ** 3
 
     raw_val = -0.405 * aspect_ratio() + 0.72
     y_ratio = max(raw_val, 0)
