@@ -16,8 +16,6 @@ from sekai.lib.timescale import CompositeTime
 
 LANE_T = 47 / 850
 LANE_B = 1176 / 850
-LANE_SCREEN_T = (47 / 850) - (0.5 * 1176) / (1.15875 * 850)
-LANE_SCREEN_B = (47 / 850) + (1.5 * 1176) / (1.15875 * 850)
 
 LANE_HITBOX_L = -6
 LANE_HITBOX_R = 6
@@ -215,6 +213,13 @@ def perspective_rect(l: float, r: float, t: float, b: float, travel: float = 1.0
     )
 
 
+def get_perspective_y(target_y: float, travel: float = 1.0) -> float:
+    if Layout.h_scale == 0 or travel == 0:
+        return 0.0
+
+    return (target_y - Layout.t) / (Layout.h_scale * travel)
+
+
 def layout_sekai_stage() -> Quad:
     w = (2048 / 1420) * 12 / 2
     h = 1176 / 850
@@ -237,11 +242,11 @@ def layout_sekai_stage_t() -> Quad:
 
 
 def layout_lane_by_edges(l: float, r: float) -> Quad:
-    return perspective_rect(l=l, r=r, t=LANE_T, b=LANE_SCREEN_B - 0.1)
+    return perspective_rect(l=l, r=r, t=LANE_T, b=get_perspective_y(-1))
 
 
 def layout_lane(lane: float, size: float) -> Quad:
-    return layout_lane_by_edges(lane - (size + 0.005), lane + (size + 0.005))
+    return layout_lane_by_edges(lane - (size + 0.01), lane + (size + 0.01))
 
 
 def layout_lane_fever(lane: float, size: float) -> Quad:
@@ -249,7 +254,7 @@ def layout_lane_fever(lane: float, size: float) -> Quad:
 
 
 def layout_lane_by_edges_fever(l: float, r: float) -> Quad:
-    return perspective_rect(l=l, r=r, t=LANE_SCREEN_T, b=LANE_SCREEN_B)
+    return perspective_rect(l=l, r=r, t=get_perspective_y(1), b=get_perspective_y(-1))
 
 
 def layout_stage_cover() -> Quad:
@@ -630,7 +635,7 @@ def layout_combo_label(
 
 
 def layout_fever_cover_left() -> Quad:
-    p = perspective_rect(l=-6.5, r=0, t=0, b=LANE_SCREEN_B)
+    p = perspective_rect(l=-6.5, r=0, t=0, b=get_perspective_y(-1))
     safe_bl_x = min(screen().bl.x, p.bl.x)
 
     return Quad(
@@ -642,7 +647,7 @@ def layout_fever_cover_left() -> Quad:
 
 
 def layout_fever_cover_right() -> Quad:
-    p = perspective_rect(l=0, r=6.5, t=0, b=LANE_SCREEN_B)
+    p = perspective_rect(l=0, r=6.5, t=0, b=get_perspective_y(-1))
     safe_br_x = max(screen().br.x, p.br.x)
 
     return Quad(
@@ -654,7 +659,7 @@ def layout_fever_cover_right() -> Quad:
 
 
 def layout_fever_cover_sky() -> Quad:
-    p = perspective_rect(l=0, r=0, t=0, b=LANE_SCREEN_B)
+    p = perspective_rect(l=0, r=0, t=0, b=get_perspective_y(-1))
     return Quad(
         bl=Vec2(screen().bl.x, p.tl.y),
         br=Vec2(screen().br.x, p.tr.y),
@@ -664,11 +669,11 @@ def layout_fever_cover_sky() -> Quad:
 
 
 def layout_fever_gauge_left(t) -> Quad:
-    return perspective_rect(l=-6.5, r=-6, t=t, b=LANE_SCREEN_B)
+    return perspective_rect(l=-6.5, r=-6, t=t, b=get_perspective_y(-1))
 
 
 def layout_fever_gauge_right(t) -> Quad:
-    return perspective_rect(l=6, r=6.5, t=t, b=LANE_SCREEN_B)
+    return perspective_rect(l=6, r=6.5, t=t, b=get_perspective_y(-1))
 
 
 def layout_fever_text() -> Quad:
