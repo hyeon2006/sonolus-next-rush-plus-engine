@@ -250,6 +250,10 @@ def draw_judgment_accuracy(judgment: Judgment, accuracy: float, windows: Judgmen
         return
     if not Options.custom_accuracy:
         return
+    if not ActiveSkin.judgment.available:
+        return
+    if not Options.custom_judgment:
+        return
 
     ui = runtime_ui()
 
