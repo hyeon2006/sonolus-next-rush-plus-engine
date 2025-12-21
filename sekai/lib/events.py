@@ -3,11 +3,10 @@ from sonolus.script.vec import Vec2
 
 from sekai.lib.layout import (
     LANE_B,
-    LANE_SCREEN_B,
-    LANE_SCREEN_T,
     LANE_T,
     Layout,
     aspect_ratio,
+    get_perspective_y,
     layout_combo_label,
     layout_fever_cover_left,
     layout_fever_cover_right,
@@ -92,7 +91,7 @@ def spawn_fever_start_particle(cant_super_fever: bool):
         layout_text = layout_fever_text()
         layout_lane1 = layout_lane_fever(-6, 1)
         layout_lane2 = layout_lane_fever(6, 1)
-        mid = (LANE_SCREEN_T + LANE_SCREEN_B) / 2
+        mid = (get_perspective_y(1) + get_perspective_y(-1)) / 2
         layout_effect1 = perspective_rect(l=-6 - 0.5, r=-6 + 0.5, t=mid - 0.050075, b=mid + 0.050075)
         layout_effect2 = perspective_rect(l=6 - 0.5, r=6 + 0.5, t=mid - 0.050075, b=mid + 0.050075)
         ActiveParticles.super_fever_start_text.spawn(layout_text, 1, False)
