@@ -212,7 +212,10 @@ class WatchBaseNote(WatchArchetype):
     @property
     def hit_time(self) -> float:
         if is_replay() and self.is_scored:
-            return self.target_time + self.accuracy
+            if self.end_time == 0 and self.accuracy == 0 and self.judgment == Judgment.MISS:
+                # This is a note that's part of a partial replay that ended before this note was hit
+                return self.target_time + self.accuracy
+            return self.end_time
         else:
             return self.target_time
 
