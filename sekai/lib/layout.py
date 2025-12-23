@@ -682,6 +682,10 @@ def layout_fever_text() -> Quad:
     return transform_quad(rect)
 
 
+def layout_fever_border() -> Quad:
+    return Rect(t=1, b=-1, l=screen().l, r=screen().r)
+
+
 def layout_hitbox(
     l: float,
     r: float,
