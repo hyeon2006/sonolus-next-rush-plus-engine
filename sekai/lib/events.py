@@ -8,6 +8,7 @@ from sekai.lib.layout import (
     aspect_ratio,
     get_perspective_y,
     layout_combo_label,
+    layout_fever_border,
     layout_fever_cover_left,
     layout_fever_cover_right,
     layout_fever_cover_sky,
@@ -100,6 +101,8 @@ def spawn_fever_start_particle(cant_super_fever: bool):
             ActiveParticles.super_fever_start_lane.spawn(layout_lane2, 1, False)
             ActiveParticles.super_fever_start_effect.spawn(layout_effect1, 1, False)
             ActiveParticles.super_fever_start_effect.spawn(layout_effect2, 1, False)
+    layout_border = layout_fever_border()
+    ActiveParticles.fever_border.spawn(layout_border, 1, False)
 
 
 def spawn_fever_chance_particle():
