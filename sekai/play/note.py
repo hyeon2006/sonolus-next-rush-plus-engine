@@ -180,6 +180,10 @@ class BaseNote(PlayArchetype):
             return False
         return time() >= self.start_time
 
+    @property
+    def calc_time(self) -> float:
+        return self.target_time
+
     def update_sequential(self):
         if self.despawn:
             return
