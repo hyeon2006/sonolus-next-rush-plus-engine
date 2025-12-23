@@ -142,6 +142,7 @@ class BaseParticles:
     super_fever_start_text: Particle = particle("Sekai Super Fever Text")
     super_fever_start_lane: Particle = particle("Sekai Super Fever Lane")
     super_fever_start_effect: Particle = particle("Sekai Super Fever Effect")
+    fever_border: Particle = particle("Sekai Fever Border")
 
 
 EMPTY_PARTICLE = Particle(-1)
@@ -279,6 +280,7 @@ class ActiveParticles:
     super_fever_start_text: Particle
     super_fever_start_lane: Particle
     super_fever_start_effect: Particle
+    fever_border: Particle
 
 
 def init_particles():
@@ -760,3 +762,4 @@ def init_particles():
     ActiveParticles.super_fever_start_text @= BaseParticles.super_fever_start_text
     ActiveParticles.super_fever_start_lane @= BaseParticles.super_fever_start_lane
     ActiveParticles.super_fever_start_effect @= BaseParticles.super_fever_start_effect
+    ActiveParticles.fever_border @= BaseParticles.fever_border
