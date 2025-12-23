@@ -111,7 +111,7 @@ class FeverChance(PlayArchetype):
         if not is_multiplayer() and not Options.forced_fever_chance and not self.force:
             self.despawn = True
             return
-        Streams.fever_chance_counter[0][-2] = 1
+        Streams.fever_chance_counter[self.index][-2] = 1
         if time() >= Fever.fever_start_time:
             if self.percentage >= 0.78:
                 spawn_fever_start_particle(Fever.fever_chance_cant_super_fever)
@@ -125,7 +125,7 @@ class FeverChance(PlayArchetype):
             0,
             0.9 if not Fever.fever_chance_cant_super_fever else 0.89,
         )
-        Streams.fever_chance_counter[0][offset_adjusted_time()] = self.percentage
+        Streams.fever_chance_counter[self.index][offset_adjusted_time()] = self.percentage
         if Options.fever_effect == 0:
             draw_fever_side_cover(self.z, time() - self.start_time)
         draw_fever_side_bar(self.z2, time() - self.start_time)

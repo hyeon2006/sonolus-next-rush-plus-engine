@@ -29,7 +29,7 @@ def transform_fixed_size(h, w):
     return height, width
 
 
-def draw_combo_label(ap: bool, z: float, glow_z=float):
+def draw_combo_label(ap: bool, z: float, z1: float, combo: int):
     if Options.hide_ui >= 2:
         return
     if not ActiveSkin.combo_label.available:
@@ -37,6 +37,8 @@ def draw_combo_label(ap: bool, z: float, glow_z=float):
     if is_watch() and Options.auto_judgment and not is_replay():
         return
     if not Options.custom_combo:
+        return
+    if combo == 0:
         return
 
     ui = runtime_ui()
@@ -49,13 +51,13 @@ def draw_combo_label(ap: bool, z: float, glow_z=float):
     a = ui.combo_config.alpha * 0.8 * (cos(time() * pi) + 1) / 2
     layout = layout_combo_label(screen_center, w=w / 2, h=h / 2)
     if ap or not Options.ap_effect:
-        ActiveSkin.combo_label.get_sprite(ComboType.NORMAL).draw(quad=layout, z=z, a=ui.combo_config.alpha)
+        ActiveSkin.combo_label.get_sprite(ComboType.NORMAL).draw(quad=layout, z=z1, a=ui.combo_config.alpha)
     else:
-        ActiveSkin.combo_label.get_sprite(ComboType.AP).draw(quad=layout, z=z, a=ui.combo_config.alpha)
-        ActiveSkin.combo_label.get_sprite(ComboType.GLOW).draw(quad=layout, z=glow_z, a=a)
+        ActiveSkin.combo_label.get_sprite(ComboType.AP).draw(quad=layout, z=z1, a=ui.combo_config.alpha)
+        ActiveSkin.combo_label.get_sprite(ComboType.GLOW).draw(quad=layout, z=z, a=a)
 
 
-def draw_combo_number(draw_time: float, ap: bool, combo: int, z: float, z2: float, z3: float):
+def draw_combo_number(draw_time: float, ap: bool, combo: int, z: float, z1: float, z2: float):
     if Options.hide_ui >= 2:
         return
     if not ActiveSkin.combo_number.available:
@@ -63,6 +65,8 @@ def draw_combo_number(draw_time: float, ap: bool, combo: int, z: float, z2: floa
     if is_watch() and Options.auto_judgment and not is_replay():
         return
     if not Options.custom_combo:
+        return
+    if combo == 0:
         return
 
     ui = runtime_ui()
@@ -127,7 +131,7 @@ def draw_combo_number(draw_time: float, ap: bool, combo: int, z: float, z2: floa
             start_x=start_x2,
         ),
     )
-    drawing_combo.draw_number(z=z, z2=z2, z3=z3)
+    drawing_combo.draw_number(z=z, z1=z1, z2=z2)
 
 
 class CoreConfig(Record):
@@ -172,7 +176,7 @@ class ComboNumberLayout(Record):
             )
         )
 
-    def draw_number(self, z, z2, z3):
+    def draw_number(self, z, z1, z2):
         s_inv = 1 - self.layout1.scale
         s2_inv = 1 - self.layout2.scale
 
@@ -201,20 +205,20 @@ class ComboNumberLayout(Record):
 
             if not self.core.ap and Options.ap_effect:
                 ActiveSkin.combo_number.get_sprite(combo=digit, combo_type=ComboType.GLOW).draw(
-                    quad=digit_layout, z=z3, a=self.alpha.a3
+                    quad=digit_layout, z=z2, a=self.alpha.a3
                 )
                 ActiveSkin.combo_number.get_sprite(combo=digit, combo_type=ComboType.AP).draw(
-                    quad=digit_layout2, z=z2, a=self.alpha.a2
+                    quad=digit_layout2, z=z, a=self.alpha.a2
                 )
                 ActiveSkin.combo_number.get_sprite(combo=digit, combo_type=ComboType.AP).draw(
-                    quad=digit_layout, z=z, a=self.alpha.a
+                    quad=digit_layout, z=z1, a=self.alpha.a
                 )
             else:
                 ActiveSkin.combo_number.get_sprite(combo=digit, combo_type=ComboType.NORMAL).draw(
-                    quad=digit_layout2, z=z2, a=self.alpha.a2
+                    quad=digit_layout2, z=z, a=self.alpha.a2
                 )
                 ActiveSkin.combo_number.get_sprite(combo=digit, combo_type=ComboType.NORMAL).draw(
-                    quad=digit_layout, z=z, a=self.alpha.a
+                    quad=digit_layout, z=z1, a=self.alpha.a
                 )
 
 
@@ -226,6 +230,8 @@ def draw_judgment_text(
     if not ActiveSkin.judgment.available:
         return
     if not Options.custom_judgment:
+        return
+    if time() >= draw_time + 0.5:
         return
 
     ui = runtime_ui()

@@ -7,7 +7,6 @@ from sonolus.script.archetype import (
     StandardImport,
     WatchArchetype,
     entity_data,
-    get_archetype_by_name,
     imported,
     shared_memory,
 )
@@ -43,6 +42,7 @@ from sekai.lib.options import Options
 from sekai.lib.particle import BaseParticles
 from sekai.lib.timescale import group_hide_notes, group_scaled_time, group_time_to_scaled_time
 from sekai.play.note import derive_note_archetypes
+from sekai.watch.custom_elements import spawn_custom
 from sekai.watch.particle_manager import ParticleManager
 
 MIN_START_TIME = 0.0161  # Executes the terminate process with a guaranteed minimum duration.
@@ -158,7 +158,14 @@ class WatchBaseNote(WatchArchetype):
         self.result.target_time = self.target_time
 
         if self.is_scored:
-            self.spawn_custom()
+            spawn_custom(
+                self.next_ref,
+                self.next_ref_accuracy,
+                self.next_ref_damage_flash,
+                self.index,
+                self.judgment,
+                self.played_hit_effects,
+            )
 
         if self.played_hit_effects or not is_replay():
             self.spawn_critical_lane()
@@ -175,30 +182,6 @@ class WatchBaseNote(WatchArchetype):
             particles = get_note_particles(self.kind, self.direction)
             if particles.lane.id == BaseParticles.critical_flick_note_lane_linear.id:
                 ParticleManager.spawn(lane=self.lane, size=self.size, target_time=self.calc_time, particles=particles)
-
-    def spawn_custom(self):
-        get_archetype_by_name("ComboLabel").spawn(
-            next_ref=self.next_ref,
-            note_index=self.index,
-        )
-        get_archetype_by_name("ComboNumber").spawn(
-            next_ref=self.next_ref,
-            note_index=self.index,
-        )
-        get_archetype_by_name("JudgmentText").spawn(
-            next_ref=self.next_ref,
-            note_index=self.index,
-        )
-        if self.judgment != Judgment.PERFECT and self.played_hit_effects and is_replay():
-            get_archetype_by_name("JudgmentAccuracy").spawn(
-                next_ref=self.next_ref_accuracy,
-                note_index=self.index,
-            )
-        if self.judgment == Judgment.MISS and is_replay():
-            get_archetype_by_name("DamageFlash").spawn(
-                next_ref=self.next_ref_damage_flash,
-                note_index=self.index,
-            )
 
     def spawn_time(self) -> float:
         if self.kind == NoteKind.ANCHOR:
