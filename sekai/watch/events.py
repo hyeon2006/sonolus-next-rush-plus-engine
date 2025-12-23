@@ -128,8 +128,8 @@ class FeverChance(WatchArchetype):
                 0,
                 0.9 if not Fever.fever_chance_cant_super_fever else 0.89,
             )
-            if not Streams.fever_chance_counter[0][-2]
-            else Streams.fever_chance_counter[0][time()]
+            if not Streams.fever_chance_counter[self.index][-2]
+            else Streams.fever_chance_counter[self.index][time()]
         )
         if Options.fever_effect == 0:
             draw_fever_side_cover(self.z, time() - self.start_time)

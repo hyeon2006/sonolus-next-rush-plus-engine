@@ -23,8 +23,8 @@ from sekai.lib.skin import init_skin
 from sekai.lib.stage import schedule_lane_sfx
 from sekai.lib.streams import Streams
 from sekai.lib.ui import init_ui
+from sekai.watch import note
 from sekai.watch.events import Fever, Skill
-from sekai.watch.note import WATCH_NOTE_ARCHETYPES, WatchBaseNote
 from sekai.watch.stage import WatchScheduledLaneEffect, WatchStage
 
 
@@ -64,7 +64,7 @@ class WatchInitialization(WatchArchetype):
         LayerCache.skill_bar = get_z(layer=LAYER_SKILL_BAR)
         LayerCache.skill_etc = get_z(layer=LAYER_SKILL_ETC)
 
-        for note_archetype in WATCH_NOTE_ARCHETYPES:
+        for note_archetype in note.WATCH_NOTE_ARCHETYPES:
             init_note_life(note_archetype)
 
         WatchStage.spawn()
@@ -84,7 +84,7 @@ def sorted_linked_list():
     note_head, note_length, skill_head, skill_length = initial_list(entity_count)
 
     if note_length > 0:
-        sorted_note_head = sort_entities(note_head, WatchBaseNote)
+        sorted_note_head = sort_entities(note_head, note.WatchBaseNote)
         setting_combo(sorted_note_head.index)
 
     if skill_length > 0:
@@ -98,7 +98,7 @@ def initial_list(entity_count):
     skill_head = 0
     skill_length = 0
 
-    note_id = WatchBaseNote._compile_time_id()
+    note_id = note.WatchBaseNote._compile_time_id()
     skill_id = Skill._compile_time_id()
     for i in range(entity_count):
         entity_index = entity_count - 1 - i
@@ -106,10 +106,10 @@ def initial_list(entity_count):
         mro = WatchArchetype._get_mro_id_array(info.archetype_id)
         is_note = note_id in mro
         is_skill = skill_id in mro
-        if (is_note and WatchBaseNote.at(entity_index).is_scored) or is_skill:
+        if (is_note and note.WatchBaseNote.at(entity_index).is_scored) or is_skill:
             if is_note:
-                WatchBaseNote.at(entity_index).init_data()
-                WatchBaseNote.at(entity_index).next_ref.index = note_head
+                note.WatchBaseNote.at(entity_index).init_data()
+                note.WatchBaseNote.at(entity_index).next_ref.index = note_head
                 note_head = entity_index
                 note_length += 1
             elif is_skill:
@@ -137,38 +137,38 @@ def setting_combo(head: int) -> None:
     accuracy = head
     damage_flash = head
     while ptr > 0:
-        judgment = WatchBaseNote.at(ptr).judgment
+        judgment = note.WatchBaseNote.at(ptr).judgment
         if is_replay() and judgment in (Judgment.GOOD, Judgment.MISS):
             combo = 0
-            if Fever.fever_chance_time <= WatchBaseNote.at(ptr).calc_time < Fever.fever_start_time:
+            if Fever.fever_chance_time <= note.WatchBaseNote.at(ptr).calc_time < Fever.fever_start_time:
                 Fever.fever_chance_cant_super_fever = True
         else:
             combo += 1
-        WatchBaseNote.at(ptr).combo = combo
+        note.WatchBaseNote.at(ptr).combo = combo
 
         if is_replay() and judgment != Judgment.PERFECT:
             ap = True
         if is_replay() and ap:
-            WatchBaseNote.at(ptr).at(ptr).ap = True
+            note.WatchBaseNote.at(ptr).at(ptr).ap = True
 
-        if is_replay() and judgment != Judgment.PERFECT and WatchBaseNote.at(ptr).at(ptr).played_hit_effects:
-            WatchBaseNote.at(ptr).at(accuracy).next_ref_accuracy.index = ptr
+        if is_replay() and judgment != Judgment.PERFECT and note.WatchBaseNote.at(ptr).at(ptr).played_hit_effects:
+            note.WatchBaseNote.at(ptr).at(accuracy).next_ref_accuracy.index = ptr
             accuracy = ptr
 
         if is_replay() and judgment == Judgment.MISS:
-            WatchBaseNote.at(ptr).at(damage_flash).next_ref_damage_flash.index = ptr
+            note.WatchBaseNote.at(ptr).at(damage_flash).next_ref_damage_flash.index = ptr
             damage_flash = ptr
 
         count += 1
-        WatchBaseNote.at(ptr).count = count
-        if Fever.fever_chance_time <= WatchBaseNote.at(ptr).calc_time < Fever.fever_start_time:
+        note.WatchBaseNote.at(ptr).count = count
+        if Fever.fever_chance_time <= note.WatchBaseNote.at(ptr).calc_time < Fever.fever_start_time:
             Fever.fever_first_count = (
-                min(WatchBaseNote.at(ptr).count, Fever.fever_first_count)
+                min(note.WatchBaseNote.at(ptr).count, Fever.fever_first_count)
                 if Fever.fever_first_count != 0
-                else WatchBaseNote.at(ptr).count
+                else note.WatchBaseNote.at(ptr).count
             )
-            Fever.fever_last_count = max(WatchBaseNote.at(ptr).count, Fever.fever_last_count)
-        ptr = WatchBaseNote.at(ptr).next_ref.index
+            Fever.fever_last_count = max(note.WatchBaseNote.at(ptr).count, Fever.fever_last_count)
+        ptr = note.WatchBaseNote.at(ptr).next_ref.index
 
 
 def count_skill(head: int) -> None:
