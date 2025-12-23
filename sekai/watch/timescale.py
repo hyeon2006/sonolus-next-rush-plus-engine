@@ -12,6 +12,7 @@ from sonolus.script.runtime import time
 
 from sekai.lib import archetype_names
 from sekai.lib.timescale import (
+    CompositeTime,
     ScaledTimeToFirstTime,
     TimeToLastChangeIndex,
     TimeToScaledTime,
@@ -35,7 +36,7 @@ class WatchTimescaleGroup(WatchArchetype):
 
     first_ref: EntityRef[WatchTimescaleChange] = imported(name="first")
 
-    current_scaled_time: float = shared_memory()
+    current_scaled_time: CompositeTime = shared_memory()
     last_change: EntityRef[WatchTimescaleChange] = shared_memory()
     hide_notes: bool = shared_memory()
 

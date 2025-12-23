@@ -13,20 +13,8 @@ from sekai.lib.custom_elements import (
     draw_judgment_text,
 )
 from sekai.lib.options import Options
-from sekai.play import note
-
-
-@level_memory
-class PrecalcLayer:
-    judgment: float
-    judgment1: float
-    judgment2: float
-    damage: float
-    fever_chance_cover: float
-    fever_chance_side: float
-    fever_chance_gauge: float
-    skill_bar: float
-    skill_etc: float
+from sekai.play import initialization
+from sekai.play.events import Fever
 
 
 def spawn_custom(
@@ -38,9 +26,8 @@ def spawn_custom(
     check_pass: bool,
     target_time: float,
 ):
-    ComboLabel.spawn(target_time=target_time, judgment=judgment)
-    ComboNumber.spawn(spawn_time=time(), judgment=judgment)
-    JudgmentText.spawn(
+    ComboJudge.spawn(
+        target_time=target_time,
         spawn_time=time(),
         judgment=judgment,
         windows_bad=windows_bad,
@@ -60,142 +47,41 @@ def spawn_custom(
 
 
 @level_memory
-class ComboLabelMemory:
+class ComboJudgeMemory:
     ap: bool
     combo_check: int
 
 
-class ComboLabel(PlayArchetype):
+class ComboJudge(PlayArchetype):
     target_time: float = entity_memory()
-    judgment: Judgment = entity_memory()
-    check: bool = entity_memory()
-    combo: int = entity_memory()
-    z: float = entity_memory()
-    glow_z: float = entity_memory()
-    name = archetype_names.COMBO_LABEL
-
-    def initialize(self):
-        self.z = PrecalcLayer.judgment1
-        self.glow_z = PrecalcLayer.judgment
-
-    def update_parallel(self):
-        if self.combo != ComboLabelMemory.combo_check:
-            self.despawn = True
-            return
-        if self.combo == 0:
-            self.despawn = True
-            return
-        if not Options.custom_combo:
-            self.despawn = True
-            return
-        draw_combo_label(ap=ComboLabelMemory.ap, z=self.z, glow_z=self.glow_z)
-
-    @callback(order=3)
-    def update_sequential(self):
-        if self.check:
-            return
-        self.check = True
-        if self.judgment in (Judgment.MISS, Judgment.GOOD):
-            ComboLabelMemory.combo_check = 0
-            self.combo = ComboLabelMemory.combo_check
-            if (
-                note.FeverChanceEventCounter.fever_chance_time
-                <= self.target_time
-                < note.FeverChanceEventCounter.fever_start_time
-            ):
-                note.FeverChanceEventCounter.fever_chance_cant_super_fever = True
-        else:
-            ComboLabelMemory.combo_check += 1
-            self.combo = ComboLabelMemory.combo_check
-            if (
-                note.FeverChanceEventCounter.fever_chance_time
-                <= self.target_time
-                < note.FeverChanceEventCounter.fever_start_time
-            ):
-                note.FeverChanceEventCounter.fever_chance_current_combo += 1
-        if self.judgment != Judgment.PERFECT:
-            ComboLabelMemory.ap = True
-
-
-@level_memory
-class ComboNumberMemory:
-    ap: bool
-    combo_check: int
-
-
-class ComboNumber(PlayArchetype):
-    spawn_time: float = entity_memory()
-    judgment: Judgment = entity_memory()
-    check: bool = entity_memory()
-    combo: int = entity_memory()
-    z: float = entity_memory()
-    z2: float = entity_memory()
-    z3: float = entity_memory()
-    name = archetype_names.COMBO_NUMBER
-
-    def initialize(self):
-        self.z = PrecalcLayer.judgment1
-        self.z2 = PrecalcLayer.judgment
-        self.z3 = PrecalcLayer.judgment2
-
-    def update_parallel(self):
-        if self.combo != ComboNumberMemory.combo_check:
-            self.despawn = True
-            return
-        if self.combo == 0:
-            self.despawn = True
-            return
-        if not Options.custom_combo:
-            self.despawn = True
-            return
-        draw_combo_number(
-            draw_time=self.spawn_time, ap=ComboNumberMemory.ap, combo=self.combo, z=self.z, z2=self.z2, z3=self.z3
-        )
-
-    @callback(order=3)
-    def update_sequential(self):
-        if self.check:
-            return
-        self.check = True
-        if self.judgment in (Judgment.MISS, Judgment.GOOD):
-            ComboNumberMemory.combo_check = 0
-            self.combo = ComboNumberMemory.combo_check
-        else:
-            ComboNumberMemory.combo_check += 1
-            self.combo = ComboNumberMemory.combo_check
-        if self.judgment != Judgment.PERFECT:
-            ComboNumberMemory.ap = True
-
-
-@level_memory
-class JudgmentTextMemory:
-    combo_check: int
-
-
-class JudgmentText(PlayArchetype):
     spawn_time: float = entity_memory()
     judgment: Judgment = entity_memory()
     accuracy: Judgment = entity_memory()
+    windows: JudgmentWindow = entity_memory()
     windows_bad: Interval = entity_memory()
+    wrong_way: bool = entity_memory()
     check_pass: bool = entity_memory()
-    z: float = entity_memory()
+
     check: bool = entity_memory()
     combo: int = entity_memory()
-    name = archetype_names.JUDGMENT_TEXT
+    z: float = entity_memory()
+    z1: float = entity_memory()
+    z2: float = entity_memory()
+    name = archetype_names.COMBO_JUDGE
 
     def initialize(self):
-        self.z = PrecalcLayer.judgment
+        self.z = initialization.LayerCache.judgment
+        self.z1 = initialization.LayerCache.judgment1
+        self.z2 = initialization.LayerCache.judgment2
 
     def update_parallel(self):
-        if self.combo != JudgmentTextMemory.combo_check:
+        if self.combo != ComboJudgeMemory.combo_check:
             self.despawn = True
             return
-        if time() >= self.spawn_time + 0.5:
-            self.despawn = True
-            return
-        if not Options.custom_judgment:
-            self.despawn = True
-            return
+        draw_combo_label(ap=ComboJudgeMemory.ap, z=self.z, z1=self.z1, combo=self.combo)
+        draw_combo_number(
+            draw_time=self.spawn_time, ap=ComboJudgeMemory.ap, combo=self.combo, z=self.z, z1=self.z1, z2=self.z2
+        )
         draw_judgment_text(
             draw_time=self.spawn_time,
             judgment=self.judgment,
@@ -210,8 +96,30 @@ class JudgmentText(PlayArchetype):
         if self.check:
             return
         self.check = True
-        JudgmentTextMemory.combo_check += 1
-        self.combo = JudgmentTextMemory.combo_check
+        if self.judgment in (Judgment.MISS, Judgment.GOOD):
+            ComboJudgeMemory.combo_check = 0
+            self.combo = ComboJudgeMemory.combo_check
+        else:
+            ComboJudgeMemory.combo_check += 1
+            self.combo = ComboJudgeMemory.combo_check
+        if self.judgment != Judgment.PERFECT:
+            ComboJudgeMemory.ap = True
+
+        self.check_fever_count()
+
+    def check_fever_count(self):
+        if self.judgment in (Judgment.MISS, Judgment.GOOD):
+            ComboJudgeMemory.combo_check = 0
+            self.combo = ComboJudgeMemory.combo_check
+            if Fever.fever_chance_time <= self.target_time < Fever.fever_start_time:
+                Fever.fever_chance_cant_super_fever = True
+        else:
+            ComboJudgeMemory.combo_check += 1
+            self.combo = ComboJudgeMemory.combo_check
+            if Fever.fever_chance_time <= self.target_time < Fever.fever_start_time:
+                Fever.fever_chance_current_combo += 1
+        if self.judgment != Judgment.PERFECT:
+            ComboJudgeMemory.ap = True
 
 
 @level_memory
@@ -231,7 +139,7 @@ class JudgmentAccuracy(PlayArchetype):
     name = archetype_names.JUDGMENT_ACCURACY
 
     def initialize(self):
-        self.z = PrecalcLayer.judgment
+        self.z = initialization.LayerCache.judgment
 
     def update_parallel(self):
         if self.combo != JudgmentAccuracyMemory.combo_check:
@@ -273,7 +181,7 @@ class DamageFlash(PlayArchetype):
     name = archetype_names.DAMAGE_FLASH
 
     def initialize(self):
-        self.z = PrecalcLayer.damage
+        self.z = initialization.LayerCache.damage
 
     def update_parallel(self):
         if self.combo != DamageFlashMemory.combo_check:
@@ -297,9 +205,7 @@ class DamageFlash(PlayArchetype):
 
 
 CUSTOM_ARCHETYPES = (
-    ComboLabel,
-    ComboNumber,
-    JudgmentText,
+    ComboJudge,
     JudgmentAccuracy,
     DamageFlash,
 )

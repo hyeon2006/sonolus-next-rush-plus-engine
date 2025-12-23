@@ -50,7 +50,7 @@ from sekai.lib.note import (
 )
 from sekai.lib.options import Options
 from sekai.lib.particle import BaseParticles
-from sekai.lib.timescale import group_hide_notes, group_scaled_time, group_time_to_scaled_time
+from sekai.lib.timescale import CompositeTime, group_hide_notes, group_scaled_time, group_time_to_scaled_time
 from sekai.play import input_manager
 from sekai.play.custom_elements import spawn_custom
 from sekai.play.particle_manager import ParticleManager
@@ -80,7 +80,7 @@ class BaseNote(PlayArchetype):
     target_time: float = entity_data()
     visual_start_time: float = entity_data()
     start_time: float = entity_data()
-    target_scaled_time: float = entity_data()
+    target_scaled_time: CompositeTime = entity_data()
     judgment_window: JudgmentWindow = entity_data()
     judgment_window_bad: Interval = shared_memory()
     input_interval: Interval = entity_data()
@@ -180,6 +180,10 @@ class BaseNote(PlayArchetype):
         if self.kind == NoteKind.ANCHOR:
             return False
         return time() >= self.start_time
+
+    @property
+    def calc_time(self) -> float:
+        return self.target_time
 
     def update_sequential(self):
         if self.despawn:
@@ -741,16 +745,6 @@ class BaseNote(PlayArchetype):
 class NoteMemory:
     active_tap_input_notes: VarArray[EntityRef[BaseNote], Dim[256]]
     active_release_input_notes: VarArray[EntityRef[BaseNote], Dim[256]]
-
-
-@level_memory
-class FeverChanceEventCounter:
-    fever_chance_time: float
-    fever_start_time: float
-    fever_chance_current_combo: int
-    fever_chance_cant_super_fever: bool
-    fever_last_count: int
-    fever_first_count: int
 
 
 NormalTapNote = BaseNote.derive(archetype_names.NORMAL_TAP_NOTE, is_scored=True, key=NoteKind.NORM_TAP)

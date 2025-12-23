@@ -1,11 +1,22 @@
-from sonolus.script.archetype import PlayArchetype, StandardImport, callback, entity_memory, imported
+from __future__ import annotations
+
+from sonolus.script.archetype import (
+    EntityRef,
+    PlayArchetype,
+    StandardImport,
+    callback,
+    entity_data,
+    entity_memory,
+    imported,
+    shared_memory,
+)
 from sonolus.script.globals import level_memory
 from sonolus.script.interval import clamp
 from sonolus.script.runtime import is_multiplayer, offset_adjusted_time, time
 from sonolus.script.timing import beat_to_time
 
 from sekai.lib import archetype_names
-from sekai.lib.effect import SFX_DISTANCE, Effects
+from sekai.lib.effect import Effects
 from sekai.lib.events import (
     draw_fever_gauge,
     draw_fever_side_bar,
@@ -16,28 +27,29 @@ from sekai.lib.events import (
 )
 from sekai.lib.options import Options
 from sekai.lib.streams import Streams
-from sekai.play import custom_elements, note
-
-
-@level_memory
-class SkillMemory:
-    max_count: int
+from sekai.play import initialization
 
 
 class Skill(PlayArchetype):
     beat: StandardImport.BEAT
-    start_time: float = entity_memory()
-    count: int = entity_memory()
+    type: bool = imported(name="type")
+    level: bool = imported(name="level")
+    start_time: float = entity_data()
+    count: int = shared_memory()
+    next_ref: EntityRef[Skill] = entity_data()
     z: float = entity_memory()
     z2: float = entity_memory()
     name = archetype_names.SKILL
 
+    @callback(order=-2)
     def preprocess(self):
         self.start_time = beat_to_time(self.beat)
-        self.z = custom_elements.PrecalcLayer.skill_bar
-        self.z2 = custom_elements.PrecalcLayer.skill_etc
         if Options.hide_ui != 3 and Options.skill_effect:
-            Effects.skill.schedule(self.start_time, SFX_DISTANCE)
+            Effects.skill.schedule(self.start_time)
+
+    def initialize(self):
+        self.z = initialization.LayerCache.skill_bar
+        self.z2 = initialization.LayerCache.skill_etc
 
     def spawn_order(self):
         return self.start_time
@@ -46,17 +58,23 @@ class Skill(PlayArchetype):
         return time() >= self.start_time
 
     def update_parallel(self):
-        if self.count == 0:
-            self.count = SkillMemory.max_count
         draw_skill_bar(self.z, self.z2, time() - self.start_time, self.count)
         if time() >= self.start_time + 3:
             self.despawn = True
 
-    @callback(order=3)
-    def update_sequential(self):
-        if self.count:
-            return
-        SkillMemory.max_count += 1
+    @property
+    def calc_time(self) -> float:
+        return self.start_time
+
+
+@level_memory
+class Fever:
+    fever_chance_time: float
+    fever_start_time: float
+    fever_chance_current_combo: int
+    fever_chance_cant_super_fever: bool
+    fever_last_count: int
+    fever_first_count: int
 
 
 class FeverChance(PlayArchetype):
@@ -74,16 +92,14 @@ class FeverChance(PlayArchetype):
     @callback(order=-2)
     def preprocess(self):
         self.start_time = beat_to_time(self.beat)
-        note.FeverChanceEventCounter.fever_chance_time = (
-            min(self.start_time, note.FeverChanceEventCounter.fever_chance_time)
-            if note.FeverChanceEventCounter.fever_chance_time != 0
-            else self.start_time
+        Fever.fever_chance_time = (
+            min(self.start_time, Fever.fever_chance_time) if Fever.fever_chance_time != 0 else self.start_time
         )
 
     def initialize(self):
-        self.z = custom_elements.PrecalcLayer.fever_chance_cover
-        self.z2 = custom_elements.PrecalcLayer.fever_chance_side
-        self.z3 = custom_elements.PrecalcLayer.fever_chance_gauge
+        self.z = initialization.LayerCache.fever_chance_cover
+        self.z2 = initialization.LayerCache.fever_chance_side
+        self.z3 = initialization.LayerCache.fever_chance_gauge
 
     def spawn_order(self):
         return self.start_time
@@ -95,21 +111,21 @@ class FeverChance(PlayArchetype):
         if not is_multiplayer() and not Options.forced_fever_chance and not self.force:
             self.despawn = True
             return
-        Streams.fever_chance_counter[0][-2] = 1
-        if time() >= note.FeverChanceEventCounter.fever_start_time:
+        Streams.fever_chance_counter[self.index][-2] = 1
+        if time() >= Fever.fever_start_time:
             if self.percentage >= 0.78:
-                spawn_fever_start_particle(note.FeverChanceEventCounter.fever_chance_cant_super_fever)
+                spawn_fever_start_particle(Fever.fever_chance_cant_super_fever)
             self.despawn = True
             return
-        if time() >= note.FeverChanceEventCounter.fever_chance_time and not self.checker:
+        if time() >= Fever.fever_chance_time and not self.checker:
             spawn_fever_chance_particle()
             self.checker = True
         self.percentage = clamp(
-            note.FeverChanceEventCounter.fever_chance_current_combo / self.counter,
+            Fever.fever_chance_current_combo / self.counter,
             0,
-            0.9 if not note.FeverChanceEventCounter.fever_chance_cant_super_fever else 0.89,
+            0.9 if not Fever.fever_chance_cant_super_fever else 0.89,
         )
-        Streams.fever_chance_counter[0][offset_adjusted_time()] = self.percentage
+        Streams.fever_chance_counter[self.index][offset_adjusted_time()] = self.percentage
         if Options.fever_effect == 0:
             draw_fever_side_cover(self.z, time() - self.start_time)
         draw_fever_side_bar(self.z2, time() - self.start_time)
@@ -119,7 +135,7 @@ class FeverChance(PlayArchetype):
     def update_sequential(self):
         if self.checker:
             return
-        self.counter = note.FeverChanceEventCounter.fever_last_count - note.FeverChanceEventCounter.fever_first_count
+        self.counter = Fever.fever_last_count - Fever.fever_first_count
 
 
 class FeverStart(PlayArchetype):
@@ -130,10 +146,8 @@ class FeverStart(PlayArchetype):
     @callback(order=-2)
     def preprocess(self):
         self.start_time = beat_to_time(self.beat)
-        note.FeverChanceEventCounter.fever_start_time = (
-            min(self.start_time, note.FeverChanceEventCounter.fever_start_time)
-            if note.FeverChanceEventCounter.fever_start_time != 0
-            else self.start_time
+        Fever.fever_start_time = (
+            min(self.start_time, Fever.fever_start_time) if Fever.fever_start_time != 0 else self.start_time
         )
 
     def spawn_order(self):

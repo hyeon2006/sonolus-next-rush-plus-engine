@@ -86,7 +86,7 @@ from sekai.lib.slot_effect import (
     draw_slot_effect,
     draw_slot_glow_effect,
 )
-from sekai.lib.timescale import group_scaled_time_to_first_time, group_scaled_time_to_first_time_2
+from sekai.lib.timescale import CompositeTime, group_scaled_time_to_first_time, group_scaled_time_to_first_time_2
 
 
 class NoteKind(IntEnum):
@@ -220,11 +220,13 @@ def mirror_flick_direction(direction: FlickDirection) -> FlickDirection:
 
 def get_visual_spawn_time(
     timescale_group: int | EntityRef,
-    target_scaled_time: float,
+    target_scaled_time: CompositeTime | float,
 ):
+    if isinstance(target_scaled_time, CompositeTime):
+        target_scaled_time = target_scaled_time.total
     return min(
-        group_scaled_time_to_first_time(timescale_group, target_scaled_time - preempt_time()),
-        group_scaled_time_to_first_time_2(timescale_group, target_scaled_time + preempt_time()),
+        group_scaled_time_to_first_time(timescale_group, target_scaled_time - preempt_time() * 1.1),
+        group_scaled_time_to_first_time_2(timescale_group, target_scaled_time + preempt_time() * 1.1),
         -2 if 0 <= progress_to(target_scaled_time, -2) <= 2 else 1e8,
     )
 
