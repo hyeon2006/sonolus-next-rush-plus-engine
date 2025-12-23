@@ -165,17 +165,17 @@ class WatchBaseNote(WatchArchetype):
             self.spawn_critical_lane()
 
     def get_min_start_time(self):
-        if self.hit_time - self.visual_start_time > MIN_START_TIME:
+        if self.calc_time - self.visual_start_time > MIN_START_TIME:
             return self.visual_start_time
         else:
             self.not_render = True
-            return self.hit_time - MIN_START_TIME
+            return self.calc_time - MIN_START_TIME
 
     def spawn_critical_lane(self):
         if Options.lane_effect_enabled:
             particles = get_note_particles(self.kind, self.direction)
             if particles.lane.id == BaseParticles.critical_flick_note_lane_linear.id:
-                ParticleManager.spawn(lane=self.lane, size=self.size, target_time=self.hit_time, particles=particles)
+                ParticleManager.spawn(lane=self.lane, size=self.size, target_time=self.calc_time, particles=particles)
 
     def spawn_custom(self):
         get_archetype_by_name("ComboLabel").spawn(
@@ -207,10 +207,10 @@ class WatchBaseNote(WatchArchetype):
         return self.start_time
 
     def despawn_time(self) -> float:
-        return self.hit_time
+        return self.calc_time
 
     @property
-    def hit_time(self) -> float:
+    def calc_time(self) -> float:
         if is_replay() and self.is_scored:
             if self.end_time == 0 and self.accuracy == 0 and self.judgment == Judgment.MISS:
                 # This is a note that's part of a partial replay that ended before this note was hit

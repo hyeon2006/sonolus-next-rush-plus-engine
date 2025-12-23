@@ -23,6 +23,7 @@ from sekai.lib.stage import schedule_lane_sfx
 from sekai.lib.streams import Streams
 from sekai.lib.ui import init_ui
 from sekai.watch.custom_elements import PrecalcLayer
+from sekai.watch.events import Skill
 from sekai.watch.note import WATCH_NOTE_ARCHETYPES, FeverChanceEventCounter, WatchBaseNote
 from sekai.watch.stage import WatchScheduledLaneEffect, WatchStage
 
@@ -67,37 +68,50 @@ def sorted_linked_list():
     entity_count = 0
     while entity_info_at(entity_count).index == entity_count:
         entity_count += 1
-    list_head, list_length = initial_list(entity_count)
+    note_head, note_length, skill_head, skill_length = initial_list(entity_count)
 
-    if list_length == 0:
-        return
+    if note_length > 0:
+        sorted_note_head = sort_entities(note_head, WatchBaseNote)
+        setting_combo(sorted_note_head.index)
 
-    sorted_list_head = sort_entities(list_head)
-
-    setting_combo(sorted_list_head.index)
+    if skill_length > 0:
+        sorted_skill_head = sort_entities(skill_head, Skill)
+        count_skill(sorted_skill_head.index)
 
 
 def initial_list(entity_count):
-    list_head = 0
-    list_length = 0
-    watch_note_id = WatchBaseNote._compile_time_id()
+    note_head = 0
+    note_length = 0
+    skill_head = 0
+    skill_length = 0
+
+    note_id = WatchBaseNote._compile_time_id()
+    skill_id = Skill._compile_time_id()
     for i in range(entity_count):
         entity_index = entity_count - 1 - i
         info = entity_info_at(entity_index)
-        is_watch_note = watch_note_id in WatchBaseNote._get_mro_id_array(info.archetype_id)
-        if is_watch_note and WatchBaseNote.at(entity_index).is_scored:
-            WatchBaseNote.at(entity_index).init_data()
-            list_length += 1
-            WatchBaseNote.at(entity_index).next_ref.index = list_head
-            list_head = entity_index
-    return list_head, list_length
+        mro = WatchArchetype._get_mro_id_array(info.archetype_id)
+        is_note = note_id in mro
+        is_skill = skill_id in mro
+        if (is_note and WatchBaseNote.at(entity_index).is_scored) or is_skill:
+            if is_note:
+                WatchBaseNote.at(entity_index).init_data()
+                WatchBaseNote.at(entity_index).next_ref.index = note_head
+                note_head = entity_index
+                note_length += 1
+            elif is_skill:
+                Skill.at(entity_index).next_ref.index = skill_head
+                skill_head = entity_index
+                skill_length += 1
+
+    return note_head, note_length, skill_head, skill_length
 
 
-def sort_entities(index: int):
-    head = WatchBaseNote.at(index)
+def sort_entities(index: int, entity_cls):
+    head = entity_cls.at(index)
     return sort_linked_entities(
         head.ref(),
-        get_value=lambda head: head.hit_time,
+        get_value=lambda head: head.calc_time,
         get_next_ref=lambda head: head.next_ref,
     )
 
@@ -115,7 +129,7 @@ def setting_combo(head: int) -> None:
             combo = 0
             if (
                 FeverChanceEventCounter.fever_chance_time
-                <= WatchBaseNote.at(ptr).hit_time
+                <= WatchBaseNote.at(ptr).calc_time
                 < FeverChanceEventCounter.fever_start_time
             ):
                 FeverChanceEventCounter.fever_chance_cant_super_fever = True
@@ -140,7 +154,7 @@ def setting_combo(head: int) -> None:
         WatchBaseNote.at(ptr).count = count
         if (
             FeverChanceEventCounter.fever_chance_time
-            <= WatchBaseNote.at(ptr).hit_time
+            <= WatchBaseNote.at(ptr).calc_time
             < FeverChanceEventCounter.fever_start_time
         ):
             FeverChanceEventCounter.fever_first_count = (
@@ -152,3 +166,12 @@ def setting_combo(head: int) -> None:
                 WatchBaseNote.at(ptr).count, FeverChanceEventCounter.fever_last_count
             )
         ptr = WatchBaseNote.at(ptr).next_ref.index
+
+
+def count_skill(head: int) -> None:
+    ptr = head
+    count = 0
+    while ptr > 0:
+        Skill.at(ptr).count = count
+        count += 1
+        ptr = Skill.at(ptr).next_ref.index

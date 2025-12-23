@@ -1,11 +1,21 @@
-from sonolus.script.archetype import StandardImport, WatchArchetype, callback, entity_memory, imported
-from sonolus.script.globals import level_memory
+from __future__ import annotations
+
+from sonolus.script.archetype import (
+    EntityRef,
+    StandardImport,
+    WatchArchetype,
+    callback,
+    entity_data,
+    entity_memory,
+    imported,
+    shared_memory,
+)
 from sonolus.script.interval import clamp
 from sonolus.script.runtime import is_replay, is_skip, time
 from sonolus.script.timing import beat_to_time
 
 from sekai.lib import archetype_names
-from sekai.lib.effect import SFX_DISTANCE, Effects
+from sekai.lib.effect import Effects
 from sekai.lib.events import (
     draw_fever_gauge,
     draw_fever_side_bar,
@@ -19,26 +29,26 @@ from sekai.lib.streams import Streams
 from sekai.watch import custom_elements, note
 
 
-@level_memory
-class SkillMemory:
-    max_count: int
-
-
 class Skill(WatchArchetype):
     beat: StandardImport.BEAT
-    start_time: float = entity_memory()
+    type: bool = imported(name="type")
+    level: bool = imported(name="level")
+    start_time: float = entity_data()
     name = archetype_names.SKILL
     z: float = entity_memory()
     z2: float = entity_memory()
-    count: int = entity_memory()
-    sfx: bool = entity_memory()
+    count: int = shared_memory()
+    next_ref: EntityRef[Skill] = entity_data()
 
+    @callback(order=-2)
     def preprocess(self):
         self.start_time = beat_to_time(self.beat)
+        if Options.hide_ui != 3 and Options.skill_effect:
+            Effects.skill.schedule(self.start_time)
+
+    def initialize(self):
         self.z = custom_elements.PrecalcLayer.skill_bar
         self.z2 = custom_elements.PrecalcLayer.skill_etc
-        if Options.hide_ui != 3 and Options.skill_effect:
-            Effects.skill.schedule(self.start_time, SFX_DISTANCE)
 
     def spawn_time(self):
         return self.start_time
@@ -47,17 +57,11 @@ class Skill(WatchArchetype):
         return self.start_time + 3
 
     def update_parallel(self):
-        if self.count == 0:
-            self.count = SkillMemory.max_count
-        if is_skip():
-            self.sfx = False
         draw_skill_bar(self.z, self.z2, time() - self.start_time, self.count)
 
-    @callback(order=3)
-    def update_sequential(self):
-        if self.count:
-            return
-        SkillMemory.max_count += 1
+    @property
+    def calc_time(self) -> float:
+        return self.start_time
 
 
 class FeverChance(WatchArchetype):

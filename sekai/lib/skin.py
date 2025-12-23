@@ -656,7 +656,7 @@ class SkillIconSpriteSet(Record):
 
     def get_sprite(self, num: int):
         result = +Sprite
-        result = self.icon[(num - 1) % 5]
+        result = self.icon[(num) % 5]
         return result
 
     @property

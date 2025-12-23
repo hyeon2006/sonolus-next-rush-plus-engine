@@ -40,11 +40,11 @@ class ComboLabel(WatchArchetype):
         self.glow_z = PrecalcLayer.judgment
 
     def spawn_time(self) -> float:
-        return WatchBaseNote.at(self.note_index).hit_time
+        return WatchBaseNote.at(self.note_index).calc_time
 
     def despawn_time(self):
         if self.next_ref.index > 0:
-            return self.next_ref.get().hit_time
+            return self.next_ref.get().calc_time
         else:
             return 1e8
 
@@ -59,7 +59,7 @@ class ComboLabel(WatchArchetype):
             return
         if (
             note.FeverChanceEventCounter.fever_chance_time
-            <= WatchBaseNote.at(self.note_index).hit_time
+            <= WatchBaseNote.at(self.note_index).calc_time
             < note.FeverChanceEventCounter.fever_start_time
         ):
             note.FeverChanceEventCounter.fever_chance_current_combo = (
@@ -87,11 +87,11 @@ class ComboNumber(WatchArchetype):
     def spawn_time(self) -> float:
         if not Options.custom_combo:
             return 1e8
-        return WatchBaseNote.at(self.note_index).hit_time
+        return WatchBaseNote.at(self.note_index).calc_time
 
     def despawn_time(self):
         if self.next_ref.index > 0:
-            return self.next_ref.get().hit_time
+            return self.next_ref.get().calc_time
         else:
             return 1e8
 
@@ -120,13 +120,16 @@ class JudgmentText(WatchArchetype):
     def spawn_time(self) -> float:
         if not Options.custom_judgment:
             return 1e8
-        return WatchBaseNote.at(self.note_index).hit_time
+        return WatchBaseNote.at(self.note_index).calc_time
 
     def despawn_time(self):
-        if self.next_ref.index > 0 and WatchBaseNote.at(self.note_index).hit_time + 0.5 >= self.next_ref.get().hit_time:
-            return self.next_ref.get().hit_time
+        if (
+            self.next_ref.index > 0
+            and WatchBaseNote.at(self.note_index).calc_time + 0.5 >= self.next_ref.get().calc_time
+        ):
+            return self.next_ref.get().calc_time
         else:
-            return WatchBaseNote.at(self.note_index).hit_time + 0.5
+            return WatchBaseNote.at(self.note_index).calc_time + 0.5
 
     def update_parallel(self):
         draw_judgment_text(
@@ -151,13 +154,16 @@ class JudgmentAccuracy(WatchArchetype):
     def spawn_time(self) -> float:
         if not Options.custom_accuracy:
             return 1e8
-        return WatchBaseNote.at(self.note_index).hit_time
+        return WatchBaseNote.at(self.note_index).calc_time
 
     def despawn_time(self):
-        if self.next_ref.index > 0 and WatchBaseNote.at(self.note_index).hit_time + 0.5 >= self.next_ref.get().hit_time:
-            return self.next_ref.get().hit_time
+        if (
+            self.next_ref.index > 0
+            and WatchBaseNote.at(self.note_index).calc_time + 0.5 >= self.next_ref.get().calc_time
+        ):
+            return self.next_ref.get().calc_time
         else:
-            return WatchBaseNote.at(self.note_index).hit_time + 0.5
+            return WatchBaseNote.at(self.note_index).calc_time + 0.5
 
     def update_parallel(self):
         draw_judgment_accuracy(
@@ -181,16 +187,16 @@ class DamageFlash(WatchArchetype):
     def spawn_time(self) -> float:
         if not Options.custom_damage:
             return 1e8
-        return WatchBaseNote.at(self.note_index).hit_time
+        return WatchBaseNote.at(self.note_index).calc_time
 
     def despawn_time(self):
         if (
             self.next_ref.index > 0
-            and WatchBaseNote.at(self.note_index).hit_time + 0.35 >= self.next_ref.get().hit_time
+            and WatchBaseNote.at(self.note_index).calc_time + 0.35 >= self.next_ref.get().calc_time
         ):
-            return self.next_ref.get().hit_time
+            return self.next_ref.get().calc_time
         else:
-            return WatchBaseNote.at(self.note_index).hit_time + 0.35
+            return WatchBaseNote.at(self.note_index).calc_time + 0.35
 
     def update_parallel(self):
         draw_damage_flash(draw_time=self.spawn_time(), z=self.z)
