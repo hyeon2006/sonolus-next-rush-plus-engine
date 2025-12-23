@@ -1,5 +1,4 @@
 from sonolus.script.archetype import EntityRef, WatchArchetype, callback, entity_memory
-from sonolus.script.globals import level_memory
 
 from sekai.lib import archetype_names
 from sekai.lib.custom_elements import (
@@ -10,21 +9,8 @@ from sekai.lib.custom_elements import (
     draw_judgment_text,
 )
 from sekai.lib.options import Options
-from sekai.watch import note
+from sekai.watch import initialization, note
 from sekai.watch.note import WatchBaseNote
-
-
-@level_memory
-class PrecalcLayer:
-    judgment: float
-    judgment1: float
-    judgment2: float
-    damage: float
-    fever_chance_cover: float
-    fever_chance_side: float
-    fever_chance_gauge: float
-    skill_bar: float
-    skill_etc: float
 
 
 class ComboLabel(WatchArchetype):
@@ -36,8 +22,8 @@ class ComboLabel(WatchArchetype):
     name = archetype_names.COMBO_LABEL
 
     def initialize(self):
-        self.z = PrecalcLayer.judgment1
-        self.glow_z = PrecalcLayer.judgment
+        self.z = initialization.LayerCache.judgment1
+        self.glow_z = initialization.LayerCache.judgment
 
     def spawn_time(self) -> float:
         return WatchBaseNote.at(self.note_index).calc_time
@@ -80,9 +66,9 @@ class ComboNumber(WatchArchetype):
     name = archetype_names.COMBO_NUMBER
 
     def initialize(self):
-        self.z = PrecalcLayer.judgment1
-        self.z2 = PrecalcLayer.judgment
-        self.z3 = PrecalcLayer.judgment2
+        self.z = initialization.LayerCache.judgment1
+        self.z2 = initialization.LayerCache.judgment
+        self.z3 = initialization.LayerCache.judgment2
 
     def spawn_time(self) -> float:
         if not Options.custom_combo:
@@ -115,7 +101,7 @@ class JudgmentText(WatchArchetype):
     name = archetype_names.JUDGMENT_TEXT
 
     def initialize(self):
-        self.z = PrecalcLayer.judgment
+        self.z = initialization.LayerCache.judgment
 
     def spawn_time(self) -> float:
         if not Options.custom_judgment:
@@ -149,7 +135,7 @@ class JudgmentAccuracy(WatchArchetype):
     name = archetype_names.JUDGMENT_ACCURACY
 
     def initialize(self):
-        self.z = PrecalcLayer.judgment
+        self.z = initialization.LayerCache.judgment
 
     def spawn_time(self) -> float:
         if not Options.custom_accuracy:
@@ -182,7 +168,7 @@ class DamageFlash(WatchArchetype):
     name = archetype_names.DAMAGE_FLASH
 
     def initialize(self):
-        self.z = PrecalcLayer.damage
+        self.z = initialization.LayerCache.damage
 
     def spawn_time(self) -> float:
         if not Options.custom_damage:

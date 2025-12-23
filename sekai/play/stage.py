@@ -19,7 +19,7 @@ from sekai.lib.layer import (
 from sekai.lib.layout import layout_hitbox
 from sekai.lib.stage import draw_stage_and_accessories, play_lane_hit_effects
 from sekai.lib.streams import Streams
-from sekai.play.input_manager import is_allowed_empty
+from sekai.play import input_manager
 
 
 class Stage(PlayArchetype):
@@ -57,7 +57,7 @@ class Stage(PlayArchetype):
         for touch in touches():
             if not total_hitbox.contains_point(touch.position):
                 continue
-            if not is_allowed_empty(touch):
+            if not input_manager.is_allowed_empty(touch):
                 continue
             lane = (touch.position.x - total_hitbox.l) / w_scale - 7
             rounded_lane = clamp(round(lane - 0.5) + 0.5, -5.5, 5.5)

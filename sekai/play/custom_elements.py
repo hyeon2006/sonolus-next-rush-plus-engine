@@ -13,20 +13,7 @@ from sekai.lib.custom_elements import (
     draw_judgment_text,
 )
 from sekai.lib.options import Options
-from sekai.play import note
-
-
-@level_memory
-class PrecalcLayer:
-    judgment: float
-    judgment1: float
-    judgment2: float
-    damage: float
-    fever_chance_cover: float
-    fever_chance_side: float
-    fever_chance_gauge: float
-    skill_bar: float
-    skill_etc: float
+from sekai.play import initialization, note
 
 
 def spawn_custom(
@@ -75,8 +62,8 @@ class ComboLabel(PlayArchetype):
     name = archetype_names.COMBO_LABEL
 
     def initialize(self):
-        self.z = PrecalcLayer.judgment1
-        self.glow_z = PrecalcLayer.judgment
+        self.z = initialization.LayerCache.judgment1
+        self.glow_z = initialization.LayerCache.judgment
 
     def update_parallel(self):
         if self.combo != ComboLabelMemory.combo_check:
@@ -134,9 +121,9 @@ class ComboNumber(PlayArchetype):
     name = archetype_names.COMBO_NUMBER
 
     def initialize(self):
-        self.z = PrecalcLayer.judgment1
-        self.z2 = PrecalcLayer.judgment
-        self.z3 = PrecalcLayer.judgment2
+        self.z = initialization.LayerCache.judgment1
+        self.z2 = initialization.LayerCache.judgment
+        self.z3 = initialization.LayerCache.judgment2
 
     def update_parallel(self):
         if self.combo != ComboNumberMemory.combo_check:
@@ -184,7 +171,7 @@ class JudgmentText(PlayArchetype):
     name = archetype_names.JUDGMENT_TEXT
 
     def initialize(self):
-        self.z = PrecalcLayer.judgment
+        self.z = initialization.LayerCache.judgment
 
     def update_parallel(self):
         if self.combo != JudgmentTextMemory.combo_check:
@@ -231,7 +218,7 @@ class JudgmentAccuracy(PlayArchetype):
     name = archetype_names.JUDGMENT_ACCURACY
 
     def initialize(self):
-        self.z = PrecalcLayer.judgment
+        self.z = initialization.LayerCache.judgment
 
     def update_parallel(self):
         if self.combo != JudgmentAccuracyMemory.combo_check:
@@ -273,7 +260,7 @@ class DamageFlash(PlayArchetype):
     name = archetype_names.DAMAGE_FLASH
 
     def initialize(self):
-        self.z = PrecalcLayer.damage
+        self.z = initialization.LayerCache.damage
 
     def update_parallel(self):
         if self.combo != DamageFlashMemory.combo_check:
