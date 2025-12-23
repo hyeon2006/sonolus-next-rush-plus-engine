@@ -26,7 +26,7 @@ from sekai.lib.events import (
 )
 from sekai.lib.options import Options
 from sekai.lib.streams import Streams
-from sekai.watch import custom_elements, note
+from sekai.watch import initialization, note
 
 
 class Skill(WatchArchetype):
@@ -47,8 +47,8 @@ class Skill(WatchArchetype):
             Effects.skill.schedule(self.start_time)
 
     def initialize(self):
-        self.z = custom_elements.PrecalcLayer.skill_bar
-        self.z2 = custom_elements.PrecalcLayer.skill_etc
+        self.z = initialization.LayerCache.skill_bar
+        self.z2 = initialization.LayerCache.skill_etc
 
     def spawn_time(self):
         return self.start_time
@@ -86,9 +86,9 @@ class FeverChance(WatchArchetype):
         )
 
     def initialize(self):
-        self.z = custom_elements.PrecalcLayer.fever_chance_cover
-        self.z2 = custom_elements.PrecalcLayer.fever_chance_side
-        self.z3 = custom_elements.PrecalcLayer.fever_chance_gauge
+        self.z = initialization.LayerCache.fever_chance_cover
+        self.z2 = initialization.LayerCache.fever_chance_side
+        self.z3 = initialization.LayerCache.fever_chance_gauge
 
     def spawn_time(self):
         return self.start_time

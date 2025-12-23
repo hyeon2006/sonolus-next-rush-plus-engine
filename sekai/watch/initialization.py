@@ -1,6 +1,7 @@
 from sonolus.script.archetype import WatchArchetype, callback, entity_info_at, imported
 from sonolus.script.bucket import Judgment
 from sonolus.script.containers import sort_linked_entities
+from sonolus.script.globals import level_memory
 from sonolus.script.runtime import is_replay
 
 from sekai.lib import archetype_names
@@ -22,10 +23,22 @@ from sekai.lib.skin import init_skin
 from sekai.lib.stage import schedule_lane_sfx
 from sekai.lib.streams import Streams
 from sekai.lib.ui import init_ui
-from sekai.watch.custom_elements import PrecalcLayer
 from sekai.watch.events import Skill
 from sekai.watch.note import WATCH_NOTE_ARCHETYPES, FeverChanceEventCounter, WatchBaseNote
 from sekai.watch.stage import WatchScheduledLaneEffect, WatchStage
+
+
+@level_memory
+class LayerCache:
+    judgment: float
+    judgment1: float
+    judgment2: float
+    damage: float
+    fever_chance_cover: float
+    fever_chance_side: float
+    fever_chance_gauge: float
+    skill_bar: float
+    skill_etc: float
 
 
 class WatchInitialization(WatchArchetype):
@@ -41,15 +54,15 @@ class WatchInitialization(WatchArchetype):
         init_buckets()
         init_score()
 
-        PrecalcLayer.judgment = get_z(layer=LAYER_JUDGMENT)
-        PrecalcLayer.judgment1 = get_z(layer=LAYER_JUDGMENT, etc=1)
-        PrecalcLayer.judgment2 = get_z(layer=LAYER_JUDGMENT, etc=2)
-        PrecalcLayer.damage = get_z(layer=LAYER_DAMAGE)
-        PrecalcLayer.fever_chance_cover = get_z(layer=LAYER_BACKGROUND_SIDE)
-        PrecalcLayer.fever_chance_side = get_z(layer=LAYER_STAGE)
-        PrecalcLayer.fever_chance_gauge = get_z(layer=LAYER_GAUGE)
-        PrecalcLayer.skill_bar = get_z(layer=LAYER_SKILL_BAR)
-        PrecalcLayer.skill_etc = get_z(layer=LAYER_SKILL_ETC)
+        LayerCache.judgment = get_z(layer=LAYER_JUDGMENT)
+        LayerCache.judgment1 = get_z(layer=LAYER_JUDGMENT, etc=1)
+        LayerCache.judgment2 = get_z(layer=LAYER_JUDGMENT, etc=2)
+        LayerCache.damage = get_z(layer=LAYER_DAMAGE)
+        LayerCache.fever_chance_cover = get_z(layer=LAYER_BACKGROUND_SIDE)
+        LayerCache.fever_chance_side = get_z(layer=LAYER_STAGE)
+        LayerCache.fever_chance_gauge = get_z(layer=LAYER_GAUGE)
+        LayerCache.skill_bar = get_z(layer=LAYER_SKILL_BAR)
+        LayerCache.skill_etc = get_z(layer=LAYER_SKILL_ETC)
 
         for note_archetype in WATCH_NOTE_ARCHETYPES:
             init_note_life(note_archetype)

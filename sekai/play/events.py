@@ -26,7 +26,7 @@ from sekai.lib.events import (
 )
 from sekai.lib.options import Options
 from sekai.lib.streams import Streams
-from sekai.play import custom_elements, note
+from sekai.play import initialization, note
 
 
 class Skill(PlayArchetype):
@@ -47,8 +47,8 @@ class Skill(PlayArchetype):
             Effects.skill.schedule(self.start_time)
 
     def initialize(self):
-        self.z = custom_elements.PrecalcLayer.skill_bar
-        self.z2 = custom_elements.PrecalcLayer.skill_etc
+        self.z = initialization.LayerCache.skill_bar
+        self.z2 = initialization.LayerCache.skill_etc
 
     def spawn_order(self):
         return self.start_time
@@ -88,9 +88,9 @@ class FeverChance(PlayArchetype):
         )
 
     def initialize(self):
-        self.z = custom_elements.PrecalcLayer.fever_chance_cover
-        self.z2 = custom_elements.PrecalcLayer.fever_chance_side
-        self.z3 = custom_elements.PrecalcLayer.fever_chance_gauge
+        self.z = initialization.LayerCache.fever_chance_cover
+        self.z2 = initialization.LayerCache.fever_chance_side
+        self.z3 = initialization.LayerCache.fever_chance_gauge
 
     def spawn_order(self):
         return self.start_time
