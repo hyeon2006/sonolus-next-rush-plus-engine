@@ -41,7 +41,7 @@ from sekai.lib.note import (
 )
 from sekai.lib.options import Options
 from sekai.lib.particle import BaseParticles
-from sekai.lib.timescale import group_hide_notes, group_scaled_time, group_time_to_scaled_time
+from sekai.lib.timescale import CompositeTime, group_hide_notes, group_scaled_time, group_time_to_scaled_time
 from sekai.play.note import derive_note_archetypes
 from sekai.watch.particle_manager import ParticleManager
 
@@ -70,7 +70,7 @@ class WatchBaseNote(WatchArchetype):
     target_time: float = entity_data()
     visual_start_time: float = entity_data()
     start_time: float = entity_data()
-    target_scaled_time: float = entity_data()
+    target_scaled_time: CompositeTime = entity_data()
     not_render: float = entity_data()
 
     active_connector_info: ActiveConnectorInfo = shared_memory()
