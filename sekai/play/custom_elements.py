@@ -108,18 +108,11 @@ class ComboJudge(PlayArchetype):
         self.check_fever_count()
 
     def check_fever_count(self):
-        if self.judgment in (Judgment.MISS, Judgment.GOOD):
-            ComboJudgeMemory.combo_check = 0
-            self.combo = ComboJudgeMemory.combo_check
-            if Fever.fever_chance_time <= self.target_time < Fever.fever_start_time:
+        if Fever.fever_chance_time <= self.target_time < Fever.fever_start_time:
+            if self.judgment in (Judgment.MISS, Judgment.GOOD):
                 Fever.fever_chance_cant_super_fever = True
-        else:
-            ComboJudgeMemory.combo_check += 1
-            self.combo = ComboJudgeMemory.combo_check
-            if Fever.fever_chance_time <= self.target_time < Fever.fever_start_time:
+            else:
                 Fever.fever_chance_current_combo += 1
-        if self.judgment != Judgment.PERFECT:
-            ComboJudgeMemory.ap = True
 
 
 @level_memory
