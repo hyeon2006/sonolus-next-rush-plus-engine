@@ -20,7 +20,7 @@ from sekai.lib.particle import init_particles
 from sekai.lib.skin import init_skin
 from sekai.lib.ui import init_ui
 from sekai.play import input_manager, note, stage
-from sekai.play.events import Skill
+from sekai.play.events import Fever, Skill
 
 
 @level_memory
@@ -135,19 +135,13 @@ def setting_count(head: int) -> None:
     while ptr > 0:
         count += 1
         note.BaseNote.at(ptr).count += count
-        if (
-            note.FeverChanceEventCounter.fever_chance_time
-            <= note.BaseNote.at(ptr).target_time
-            < note.FeverChanceEventCounter.fever_start_time
-        ):
-            note.FeverChanceEventCounter.fever_first_count = (
-                min(note.BaseNote.at(ptr).count, note.FeverChanceEventCounter.fever_first_count)
-                if note.FeverChanceEventCounter.fever_first_count != 0
+        if Fever.fever_chance_time <= note.BaseNote.at(ptr).target_time < Fever.fever_start_time:
+            Fever.fever_first_count = (
+                min(note.BaseNote.at(ptr).count, Fever.fever_first_count)
+                if Fever.fever_first_count != 0
                 else note.BaseNote.at(ptr).count
             )
-            note.FeverChanceEventCounter.fever_last_count = max(
-                note.BaseNote.at(ptr).count, note.FeverChanceEventCounter.fever_last_count
-            )
+            Fever.fever_last_count = max(note.BaseNote.at(ptr).count, Fever.fever_last_count)
 
         ptr = note.BaseNote.at(ptr).next_ref.index
 

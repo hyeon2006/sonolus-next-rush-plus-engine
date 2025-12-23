@@ -9,7 +9,8 @@ from sekai.lib.custom_elements import (
     draw_judgment_text,
 )
 from sekai.lib.options import Options
-from sekai.watch import initialization, note
+from sekai.watch import initialization
+from sekai.watch.events import Fever
 from sekai.watch.note import WatchBaseNote
 
 
@@ -43,14 +44,8 @@ class ComboLabel(WatchArchetype):
     def update_sequential(self):
         if self.checker:
             return
-        if (
-            note.FeverChanceEventCounter.fever_chance_time
-            <= WatchBaseNote.at(self.note_index).calc_time
-            < note.FeverChanceEventCounter.fever_start_time
-        ):
-            note.FeverChanceEventCounter.fever_chance_current_combo = (
-                WatchBaseNote.at(self.note_index).count - note.FeverChanceEventCounter.fever_first_count
-            )
+        if Fever.fever_chance_time <= WatchBaseNote.at(self.note_index).calc_time < Fever.fever_start_time:
+            Fever.fever_chance_current_combo = WatchBaseNote.at(self.note_index).count - Fever.fever_first_count
             self.checker = True
 
     def terminate(self):

@@ -10,6 +10,7 @@ from sonolus.script.archetype import (
     imported,
     shared_memory,
 )
+from sonolus.script.globals import level_memory
 from sonolus.script.interval import clamp
 from sonolus.script.runtime import is_multiplayer, offset_adjusted_time, time
 from sonolus.script.timing import beat_to_time
@@ -26,7 +27,7 @@ from sekai.lib.events import (
 )
 from sekai.lib.options import Options
 from sekai.lib.streams import Streams
-from sekai.play import initialization, note
+from sekai.play import initialization
 
 
 class Skill(PlayArchetype):
@@ -66,6 +67,16 @@ class Skill(PlayArchetype):
         return self.start_time
 
 
+@level_memory
+class Fever:
+    fever_chance_time: float
+    fever_start_time: float
+    fever_chance_current_combo: int
+    fever_chance_cant_super_fever: bool
+    fever_last_count: int
+    fever_first_count: int
+
+
 class FeverChance(PlayArchetype):
     beat: StandardImport.BEAT
     force: bool = imported(name="force")
@@ -81,10 +92,8 @@ class FeverChance(PlayArchetype):
     @callback(order=-2)
     def preprocess(self):
         self.start_time = beat_to_time(self.beat)
-        note.FeverChanceEventCounter.fever_chance_time = (
-            min(self.start_time, note.FeverChanceEventCounter.fever_chance_time)
-            if note.FeverChanceEventCounter.fever_chance_time != 0
-            else self.start_time
+        Fever.fever_chance_time = (
+            min(self.start_time, Fever.fever_chance_time) if Fever.fever_chance_time != 0 else self.start_time
         )
 
     def initialize(self):
@@ -103,18 +112,18 @@ class FeverChance(PlayArchetype):
             self.despawn = True
             return
         Streams.fever_chance_counter[0][-2] = 1
-        if time() >= note.FeverChanceEventCounter.fever_start_time:
+        if time() >= Fever.fever_start_time:
             if self.percentage >= 0.78:
-                spawn_fever_start_particle(note.FeverChanceEventCounter.fever_chance_cant_super_fever)
+                spawn_fever_start_particle(Fever.fever_chance_cant_super_fever)
             self.despawn = True
             return
-        if time() >= note.FeverChanceEventCounter.fever_chance_time and not self.checker:
+        if time() >= Fever.fever_chance_time and not self.checker:
             spawn_fever_chance_particle()
             self.checker = True
         self.percentage = clamp(
-            note.FeverChanceEventCounter.fever_chance_current_combo / self.counter,
+            Fever.fever_chance_current_combo / self.counter,
             0,
-            0.9 if not note.FeverChanceEventCounter.fever_chance_cant_super_fever else 0.89,
+            0.9 if not Fever.fever_chance_cant_super_fever else 0.89,
         )
         Streams.fever_chance_counter[0][offset_adjusted_time()] = self.percentage
         if Options.fever_effect == 0:
@@ -126,7 +135,7 @@ class FeverChance(PlayArchetype):
     def update_sequential(self):
         if self.checker:
             return
-        self.counter = note.FeverChanceEventCounter.fever_last_count - note.FeverChanceEventCounter.fever_first_count
+        self.counter = Fever.fever_last_count - Fever.fever_first_count
 
 
 class FeverStart(PlayArchetype):
@@ -137,10 +146,8 @@ class FeverStart(PlayArchetype):
     @callback(order=-2)
     def preprocess(self):
         self.start_time = beat_to_time(self.beat)
-        note.FeverChanceEventCounter.fever_start_time = (
-            min(self.start_time, note.FeverChanceEventCounter.fever_start_time)
-            if note.FeverChanceEventCounter.fever_start_time != 0
-            else self.start_time
+        Fever.fever_start_time = (
+            min(self.start_time, Fever.fever_start_time) if Fever.fever_start_time != 0 else self.start_time
         )
 
     def spawn_order(self):

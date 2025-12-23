@@ -23,8 +23,8 @@ from sekai.lib.skin import init_skin
 from sekai.lib.stage import schedule_lane_sfx
 from sekai.lib.streams import Streams
 from sekai.lib.ui import init_ui
-from sekai.watch.events import Skill
-from sekai.watch.note import WATCH_NOTE_ARCHETYPES, FeverChanceEventCounter, WatchBaseNote
+from sekai.watch.events import Fever, Skill
+from sekai.watch.note import WATCH_NOTE_ARCHETYPES, WatchBaseNote
 from sekai.watch.stage import WatchScheduledLaneEffect, WatchStage
 
 
@@ -140,12 +140,8 @@ def setting_combo(head: int) -> None:
         judgment = WatchBaseNote.at(ptr).judgment
         if is_replay() and judgment in (Judgment.GOOD, Judgment.MISS):
             combo = 0
-            if (
-                FeverChanceEventCounter.fever_chance_time
-                <= WatchBaseNote.at(ptr).calc_time
-                < FeverChanceEventCounter.fever_start_time
-            ):
-                FeverChanceEventCounter.fever_chance_cant_super_fever = True
+            if Fever.fever_chance_time <= WatchBaseNote.at(ptr).calc_time < Fever.fever_start_time:
+                Fever.fever_chance_cant_super_fever = True
         else:
             combo += 1
         WatchBaseNote.at(ptr).combo = combo
@@ -165,19 +161,13 @@ def setting_combo(head: int) -> None:
 
         count += 1
         WatchBaseNote.at(ptr).count = count
-        if (
-            FeverChanceEventCounter.fever_chance_time
-            <= WatchBaseNote.at(ptr).calc_time
-            < FeverChanceEventCounter.fever_start_time
-        ):
-            FeverChanceEventCounter.fever_first_count = (
-                min(WatchBaseNote.at(ptr).count, FeverChanceEventCounter.fever_first_count)
-                if FeverChanceEventCounter.fever_first_count != 0
+        if Fever.fever_chance_time <= WatchBaseNote.at(ptr).calc_time < Fever.fever_start_time:
+            Fever.fever_first_count = (
+                min(WatchBaseNote.at(ptr).count, Fever.fever_first_count)
+                if Fever.fever_first_count != 0
                 else WatchBaseNote.at(ptr).count
             )
-            FeverChanceEventCounter.fever_last_count = max(
-                WatchBaseNote.at(ptr).count, FeverChanceEventCounter.fever_last_count
-            )
+            Fever.fever_last_count = max(WatchBaseNote.at(ptr).count, Fever.fever_last_count)
         ptr = WatchBaseNote.at(ptr).next_ref.index
 
 
