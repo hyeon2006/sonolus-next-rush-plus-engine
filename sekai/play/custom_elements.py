@@ -13,7 +13,8 @@ from sekai.lib.custom_elements import (
     draw_judgment_text,
 )
 from sekai.lib.options import Options
-from sekai.play import initialization, note
+from sekai.play import initialization
+from sekai.play.events import Fever
 
 
 def spawn_custom(
@@ -85,21 +86,13 @@ class ComboLabel(PlayArchetype):
         if self.judgment in (Judgment.MISS, Judgment.GOOD):
             ComboLabelMemory.combo_check = 0
             self.combo = ComboLabelMemory.combo_check
-            if (
-                note.FeverChanceEventCounter.fever_chance_time
-                <= self.target_time
-                < note.FeverChanceEventCounter.fever_start_time
-            ):
-                note.FeverChanceEventCounter.fever_chance_cant_super_fever = True
+            if Fever.fever_chance_time <= self.target_time < Fever.fever_start_time:
+                Fever.fever_chance_cant_super_fever = True
         else:
             ComboLabelMemory.combo_check += 1
             self.combo = ComboLabelMemory.combo_check
-            if (
-                note.FeverChanceEventCounter.fever_chance_time
-                <= self.target_time
-                < note.FeverChanceEventCounter.fever_start_time
-            ):
-                note.FeverChanceEventCounter.fever_chance_current_combo += 1
+            if Fever.fever_chance_time <= self.target_time < Fever.fever_start_time:
+                Fever.fever_chance_current_combo += 1
         if self.judgment != Judgment.PERFECT:
             ComboLabelMemory.ap = True
 

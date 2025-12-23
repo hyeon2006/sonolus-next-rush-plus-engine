@@ -747,16 +747,6 @@ class NoteMemory:
     active_release_input_notes: VarArray[EntityRef[BaseNote], Dim[256]]
 
 
-@level_memory
-class FeverChanceEventCounter:
-    fever_chance_time: float
-    fever_start_time: float
-    fever_chance_current_combo: int
-    fever_chance_cant_super_fever: bool
-    fever_last_count: int
-    fever_first_count: int
-
-
 NormalTapNote = BaseNote.derive(archetype_names.NORMAL_TAP_NOTE, is_scored=True, key=NoteKind.NORM_TAP)
 CriticalTapNote = BaseNote.derive(archetype_names.CRITICAL_TAP_NOTE, is_scored=True, key=NoteKind.CRIT_TAP)
 NormalFlickNote = BaseNote.derive(archetype_names.NORMAL_FLICK_NOTE, is_scored=True, key=NoteKind.NORM_FLICK)
