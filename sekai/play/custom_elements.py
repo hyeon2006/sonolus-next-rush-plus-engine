@@ -50,6 +50,7 @@ def spawn_custom(
 class ComboJudgeMemory:
     ap: bool
     combo_check: int
+    latest_judge_id: int
 
 
 class ComboJudge(PlayArchetype):
@@ -61,6 +62,7 @@ class ComboJudge(PlayArchetype):
     windows_bad: Interval = entity_memory()
     wrong_way: bool = entity_memory()
     check_pass: bool = entity_memory()
+    my_judge_id: int = entity_memory()
 
     check: bool = entity_memory()
     combo: int = entity_memory()
@@ -75,6 +77,9 @@ class ComboJudge(PlayArchetype):
         self.z2 = initialization.LayerCache.judgment2
 
     def update_parallel(self):
+        if self.my_judge_id != ComboJudgeMemory.latest_judge_id:
+            self.despawn = True
+            return
         if self.combo != ComboJudgeMemory.combo_check:
             self.despawn = True
             return
@@ -96,6 +101,8 @@ class ComboJudge(PlayArchetype):
         if self.check:
             return
         self.check = True
+        ComboJudgeMemory.latest_judge_id += 1
+        self.my_judge_id = ComboJudgeMemory.latest_judge_id
         if self.judgment in (Judgment.MISS, Judgment.GOOD):
             ComboJudgeMemory.combo_check = 0
             self.combo = ComboJudgeMemory.combo_check
