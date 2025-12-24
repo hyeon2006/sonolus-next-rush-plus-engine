@@ -80,9 +80,6 @@ class ComboJudge(PlayArchetype):
         if self.my_judge_id != ComboJudgeMemory.latest_judge_id:
             self.despawn = True
             return
-        if self.combo != ComboJudgeMemory.combo_check:
-            self.despawn = True
-            return
         draw_combo_label(ap=ComboJudgeMemory.ap, z=self.z, z1=self.z1, combo=self.combo)
         draw_combo_number(
             draw_time=self.spawn_time, ap=ComboJudgeMemory.ap, combo=self.combo, z=self.z, z1=self.z1, z2=self.z2
@@ -101,14 +98,17 @@ class ComboJudge(PlayArchetype):
         if self.check:
             return
         self.check = True
+
         ComboJudgeMemory.latest_judge_id += 1
         self.my_judge_id = ComboJudgeMemory.latest_judge_id
+
         if self.judgment in (Judgment.MISS, Judgment.GOOD):
             ComboJudgeMemory.combo_check = 0
             self.combo = ComboJudgeMemory.combo_check
         else:
             ComboJudgeMemory.combo_check += 1
             self.combo = ComboJudgeMemory.combo_check
+
         if self.judgment != Judgment.PERFECT:
             ComboJudgeMemory.ap = True
 
