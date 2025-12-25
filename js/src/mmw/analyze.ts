@@ -1,4 +1,4 @@
-import BinarySeeker from '@sevenc-nanashi/binaryseeker'
+import { BinarySeeker } from "../lib/binaryseeker/mod.js";
 
 const FlickType = ['none', 'up', 'left', 'right'] as const
 type FlickType = (typeof FlickType)[number]
