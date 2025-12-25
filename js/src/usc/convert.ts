@@ -443,8 +443,18 @@ export const uscToLevelData = (usc: USC, offset = 0): LevelData => {
         let headMidpointIntermediate: IntermediateEntity | null = null
         const guideConnectors: IntermediateEntity[] = []
 
+        const stepSize = Math.max(1, connections.length - 1)
+        let stepIdx = 0
+
         for (const midpointNote of connections) {
             const timeScaleGroupRef = timeScaleGroupIntermediates[midpointNote.timeScaleGroup ?? 0]
+
+            let segmentAlpha = 1
+            if (guideNote.fade === 'out') {
+                segmentAlpha = 1 - 0.8 * (stepIdx / stepSize)
+            } else if (guideNote.fade === 'in') {
+                segmentAlpha = 1 - 0.8 * ((stepSize - stepIdx) / stepSize)
+            }
 
             const midpointIntermediate = createIntermediate('AnchorNote', {
                 '#BEAT': midpointNote.beat,
@@ -453,9 +463,9 @@ export const uscToLevelData = (usc: USC, offset = 0): LevelData => {
                 direction: SONOLUS_DIRECTIONS.up,
                 isAttached: 0,
                 connectorEase: SONOLUS_CONNECTOR_EASES[mapUscEaseToSonolusEase(midpointNote.ease)],
-                isSeparator: 0,
+                isSeparator: 1,
                 segmentKind: SONOLUS_GUIDE_COLORS[guideNote.color],
-                segmentAlpha: 1,
+                segmentAlpha: segmentAlpha,
                 '#TIMESCALE_GROUP': timeScaleGroupRef,
             })
 
@@ -472,6 +482,8 @@ export const uscToLevelData = (usc: USC, offset = 0): LevelData => {
                 prevMidpointIntermediate.data['next'] = midpointIntermediate
             }
             prevMidpointIntermediate = midpointIntermediate
+
+            stepIdx++
         }
 
         if (!headMidpointIntermediate || !prevMidpointIntermediate) {
@@ -483,17 +495,6 @@ export const uscToLevelData = (usc: USC, offset = 0): LevelData => {
             connectorIntermediate.data['segmentTail'] = prevMidpointIntermediate
             connectorIntermediate.data['activeHead'] = headMidpointIntermediate
             connectorIntermediate.data['activeTail'] = prevMidpointIntermediate
-        }
-
-        switch (guideNote.fade) {
-            case 'in':
-                headMidpointIntermediate.data['segmentAlpha'] = 0
-                break
-            case 'out':
-                prevMidpointIntermediate.data['segmentAlpha'] = 0
-                break
-            case 'none':
-                break
         }
     }
 
