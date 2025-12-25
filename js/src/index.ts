@@ -1,6 +1,7 @@
 import { DatabaseEngineItem } from '@sonolus/core'
 
 export { susToUSC } from './sus/convert.js'
+export { mmwsToUSC } from './mmw/convert.js'
 export { uscToLevelData } from './usc/convert.js'
 export * from './usc/index.js'
 
