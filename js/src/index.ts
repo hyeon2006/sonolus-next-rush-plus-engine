@@ -1,8 +1,66 @@
-import { DatabaseEngineItem } from '@sonolus/core'
+import { DatabaseEngineItem, LevelData } from '@sonolus/core'
+import { mmwsToUSC } from './mmw/convert.js'
+import { susToUSC } from './sus/convert.js'
+import { uscToLevelData } from './usc/convert.js'
+import { USC } from './usc/index.js'
 
-export { susToUSC } from './sus/convert.js'
-export { uscToLevelData } from './usc/convert.js'
+export { susToUSC, mmwsToUSC, uscToLevelData }
 export * from './usc/index.js'
+
+export const convertToLevelData = (
+    input: string | Uint8Array | USC | LevelData,
+    offset = 0,
+): LevelData => {
+    if (isLevelData(input)) {
+        return input
+    }
+
+    let usc: USC
+
+    if (isUSC(input)) {
+        usc = input
+    } else if (input instanceof Uint8Array) {
+        usc = mmwsToUSC(input)
+    } else if (typeof input === 'string') {
+        try {
+            const parsed = JSON.parse(input)
+            if (isLevelData(parsed)) {
+                return parsed
+            }
+            if (isUSC(parsed)) {
+                usc = parsed
+            } else {
+                usc = susToUSC(input)
+            }
+        } catch {
+            usc = susToUSC(input)
+        }
+    } else {
+        throw new Error(
+            'Unsupported input type: Input must be string(SUS/USC/LevelData), Uint8Array(MMWS), or USC/LevelData object.',
+        )
+    }
+
+    return uscToLevelData(usc, offset)
+}
+
+function isUSC(data: unknown): data is USC {
+    return (
+        typeof data === 'object' &&
+        data !== null &&
+        'objects' in data &&
+        Array.isArray((data as any).objects)
+    )
+}
+
+function isLevelData(data: unknown): data is LevelData {
+    return (
+        typeof data === 'object' &&
+        data !== null &&
+        'entities' in data &&
+        Array.isArray((data as any).entities)
+    )
+}
 
 export const version = '0.0.0'
 
