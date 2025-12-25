@@ -33,6 +33,7 @@
     "build": "tsc -p . && node ./build.js"
   },
   "dependencies": {
+    "@sevenc-nanashi/binaryseeker": "npm:@jsr/sevenc-nanashi__binaryseeker@^1.2.1",
     "@sonolus/core": "~7.14.2"
   },
   "devDependencies": {
