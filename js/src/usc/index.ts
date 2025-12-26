@@ -110,7 +110,15 @@ export type USCGuideNote = {
     fade: USCFade
     midpoints: USCGuideMidpointNote[]
 }
+export const SkillTypes = {
+    heal: 0,
+    score: 1,
+    judgment: 2,
+} as const
 export type USCEvent = {
     type: 'skill' | 'feverChance' | 'feverStart'
+    force?: boolean
+    types?: number
+    level?: number
     beat: number
 }
