@@ -1,4 +1,5 @@
 import { DatabaseEngineItem, LevelData } from '@sonolus/core'
+import { detectMMWSType } from './mmw/analyze.js'
 import { mmwsToUSC } from './mmw/convert.js'
 import { susToUSC } from './sus/convert.js'
 import { uscToLevelData } from './usc/convert.js'
@@ -21,6 +22,8 @@ export const convertToLevelData = (
         usc = input
     } else if (input instanceof Uint8Array) {
         usc = mmwsToUSC(input)
+        if (detectMMWSType(input) == 'MMWS') return uscToLevelData(usc, offset, true, true)
+        else if (detectMMWSType(input) == 'CCMMWS') return uscToLevelData(usc, offset, false, false)
     } else if (typeof input === 'string') {
         try {
             const parsed = JSON.parse(input)
@@ -29,6 +32,7 @@ export const convertToLevelData = (
             }
             if (isUSC(parsed)) {
                 usc = parsed
+                return uscToLevelData(usc, offset, false, false)
             } else {
                 usc = susToUSC(input)
             }
@@ -41,9 +45,10 @@ export const convertToLevelData = (
         )
     }
 
-    return uscToLevelData(usc, offset)
+    return uscToLevelData(usc, offset, true, true)
 }
 
+/** Check if it is USC */
 function isUSC(data: unknown): data is USC {
     return (
         typeof data === 'object' &&
@@ -53,6 +58,7 @@ function isUSC(data: unknown): data is USC {
     )
 }
 
+/** Check if it is Level Data */
 function isLevelData(data: unknown): data is LevelData {
     return (
         typeof data === 'object' &&

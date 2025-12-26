@@ -56,7 +56,13 @@ const SONOLUS_GUIDE_COLORS = {
 
 const EPSILON = 1e-6
 
-export const uscToLevelData = (usc: USC, offset = 0): LevelData => {
+/** Convert a USC to a Level Data (Next Sekai) */
+export const uscToLevelData = (
+    usc: USC,
+    offset = 0,
+    smoothGuideFade = false,
+    useGuideLayer = false,
+): LevelData => {
     const allUscObjects: USCObject[] = usc.objects ?? []
 
     const allIntermediateEntities: IntermediateEntity[] = []
@@ -450,10 +456,16 @@ export const uscToLevelData = (usc: USC, offset = 0): LevelData => {
             const timeScaleGroupRef = timeScaleGroupIntermediates[midpointNote.timeScaleGroup ?? 0]
 
             let segmentAlpha = 1
-            if (guideNote.fade === 'out') {
-                segmentAlpha = 1 - 0.8 * (stepIdx / stepSize)
-            } else if (guideNote.fade === 'in') {
-                segmentAlpha = 1 - 0.8 * ((stepSize - stepIdx) / stepSize)
+            let isSeparator = 0
+
+            if (smoothGuideFade) {
+                isSeparator = 1
+
+                if (guideNote.fade === 'out') {
+                    segmentAlpha = 1 - 0.8 * (stepIdx / stepSize)
+                } else if (guideNote.fade === 'in') {
+                    segmentAlpha = 1 - 0.8 * ((stepSize - stepIdx) / stepSize)
+                }
             }
 
             const midpointIntermediate = createIntermediate('AnchorNote', {
@@ -463,9 +475,10 @@ export const uscToLevelData = (usc: USC, offset = 0): LevelData => {
                 direction: SONOLUS_DIRECTIONS.up,
                 isAttached: 0,
                 connectorEase: SONOLUS_CONNECTOR_EASES[mapUscEaseToSonolusEase(midpointNote.ease)],
-                isSeparator: 1,
+                isSeparator: isSeparator,
                 segmentKind: SONOLUS_GUIDE_COLORS[guideNote.color],
                 segmentAlpha: segmentAlpha,
+                segmentLayer: useGuideLayer ? 1 : 0,
                 '#TIMESCALE_GROUP': timeScaleGroupRef,
             })
 
@@ -495,6 +508,19 @@ export const uscToLevelData = (usc: USC, offset = 0): LevelData => {
             connectorIntermediate.data['segmentTail'] = prevMidpointIntermediate
             connectorIntermediate.data['activeHead'] = headMidpointIntermediate
             connectorIntermediate.data['activeTail'] = prevMidpointIntermediate
+        }
+
+        if (!smoothGuideFade) {
+            switch (guideNote.fade) {
+                case 'in':
+                    headMidpointIntermediate!.data['segmentAlpha'] = 0
+                    break
+                case 'out':
+                    prevMidpointIntermediate!.data['segmentAlpha'] = 0
+                    break
+                case 'none':
+                    break
+            }
         }
     }
 
