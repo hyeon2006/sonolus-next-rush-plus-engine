@@ -104,6 +104,14 @@ export type Score = {
     numLayers: number
 }
 
+/** Detect MMWS Type */
+export const detectMMWSType = (mmws: Uint8Array): string => {
+    const buffer = new BinarySeeker(mmws.buffer)
+    const header = buffer.readString()
+
+    return header
+}
+
 export const analyze = (mmws: Uint8Array): Score => {
     const buffer = new BinarySeeker(mmws.buffer)
     const header = buffer.readString()
