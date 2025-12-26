@@ -11,6 +11,7 @@ import {
     USCConnectionEndNote,
     USCConnectionAttachNote,
     USCGuideMidpointNote,
+    USCEvent,
 } from '../usc/index.js'
 
 const FlickDirection = {
@@ -49,6 +50,7 @@ type PJSKNote = {
     tickType?: number
     nextNode?: number
     prevNode?: number
+    isEvent?: boolean
 }
 
 type PJSKData = {
@@ -93,6 +95,27 @@ export const pjskToUSC = (json: string | PJSKData): USC => {
                     beat: note.beat,
                     timeScale: note.speed ?? 1,
                 })
+                break
+
+            case 'Skill':
+                objects.push({
+                    type: 'skill',
+                    beat: note.beat,
+                } as USCEvent)
+                break
+
+            case 'FeverChance':
+                objects.push({
+                    type: 'feverChance',
+                    beat: note.beat,
+                } as USCEvent)
+                break
+
+            case 'FeverStart':
+                objects.push({
+                    type: 'feverStart',
+                    beat: note.beat,
+                } as USCEvent)
                 break
 
             case 'Tap':
