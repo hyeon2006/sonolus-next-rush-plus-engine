@@ -1,8 +1,13 @@
 import { DatabaseEngineItem, LevelData } from '@sonolus/core'
+import { detectMMWSType } from './mmw/analyze.js'
 import { mmwsToUSC } from './mmw/convert.js'
 import { susToUSC } from './sus/convert.js'
 import { uscToLevelData } from './usc/convert.js'
 import { USC } from './usc/index.js'
+import { isUSC } from './usc/analyze.js'
+import { isLevelData } from './LevelData/analyze.js'
+import { isPJSK } from './pjsk/analyze.js'
+import { pjskToUSC } from './pjsk/convert.js'
 
 export { susToUSC, mmwsToUSC, uscToLevelData }
 export * from './usc/index.js'
@@ -21,6 +26,8 @@ export const convertToLevelData = (
         usc = input
     } else if (input instanceof Uint8Array) {
         usc = mmwsToUSC(input)
+        if (detectMMWSType(input) == 'MMWS') return uscToLevelData(usc, offset, true, true)
+        else if (detectMMWSType(input) == 'CCMMWS') return uscToLevelData(usc, offset, false, false)
     } else if (typeof input === 'string') {
         try {
             const parsed = JSON.parse(input)
@@ -29,6 +36,9 @@ export const convertToLevelData = (
             }
             if (isUSC(parsed)) {
                 usc = parsed
+                return uscToLevelData(usc, offset, false, false)
+            } else if (isPJSK(parsed)) {
+                usc = pjskToUSC(parsed)
             } else {
                 usc = susToUSC(input)
             }
@@ -41,25 +51,7 @@ export const convertToLevelData = (
         )
     }
 
-    return uscToLevelData(usc, offset)
-}
-
-function isUSC(data: unknown): data is USC {
-    return (
-        typeof data === 'object' &&
-        data !== null &&
-        'objects' in data &&
-        Array.isArray((data as any).objects)
-    )
-}
-
-function isLevelData(data: unknown): data is LevelData {
-    return (
-        typeof data === 'object' &&
-        data !== null &&
-        'entities' in data &&
-        Array.isArray((data as any).entities)
-    )
+    return uscToLevelData(usc, offset, true, true)
 }
 
 export const version = '0.0.0'

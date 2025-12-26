@@ -1,4 +1,4 @@
-import { BinarySeeker } from "../lib/binaryseeker/mod.js";
+import { BinarySeeker } from '../lib/binaryseeker/mod.js'
 
 const FlickType = ['none', 'up', 'left', 'right'] as const
 type FlickType = (typeof FlickType)[number]
@@ -102,6 +102,14 @@ export type Score = {
         layer: number
     }[]
     numLayers: number
+}
+
+/** Detect MMWS Type */
+export const detectMMWSType = (mmws: Uint8Array): string => {
+    const buffer = new BinarySeeker(mmws.buffer)
+    const header = buffer.readString()
+
+    return header
 }
 
 export const analyze = (mmws: Uint8Array): Score => {
