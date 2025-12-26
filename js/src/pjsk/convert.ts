@@ -130,7 +130,7 @@ export const pjskToUSC = (json: string | PJSKData): USC => {
                 } as USCSingleNote)
                 break
 
-            case 'HoldStart':
+            case 'HoldStart': {
                 const chain: PJSKNote[] = []
                 let current: PJSKNote | undefined = note
 
@@ -222,6 +222,7 @@ export const pjskToUSC = (json: string | PJSKData): USC => {
                     } as USCSlideNote)
                 }
                 break
+            }
         }
     }
 
