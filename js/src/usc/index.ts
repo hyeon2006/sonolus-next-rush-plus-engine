@@ -82,6 +82,7 @@ export type USCSlideNote = {
         USCConnectionEndNote,
     ]
 }
+
 export const USCColor = {
     neutral: 0,
     red: 1,
@@ -92,6 +93,7 @@ export const USCColor = {
     cyan: 6,
     black: 7,
 }
+
 export type USCColor = keyof typeof USCColor
 
 export type USCGuideMidpointNote = BaseUSCNote & {
@@ -103,22 +105,28 @@ export const USCFade = {
     out: 0,
     none: 1,
 }
+
 export type USCFade = keyof typeof USCFade
+
 export type USCGuideNote = {
     type: 'guide'
     color: USCColor
     fade: USCFade
     midpoints: USCGuideMidpointNote[]
 }
+
 export const SkillTypes = {
     heal: 0,
     score: 1,
     judgment: 2,
 } as const
+
+export type SkillTypes = keyof typeof USCColor
+
 export type USCEvent = {
     type: 'skill' | 'feverChance' | 'feverStart'
     force?: boolean
-    types?: number
+    types?: SkillTypes
     level?: number
     beat: number
 }
