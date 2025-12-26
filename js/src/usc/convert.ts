@@ -11,6 +11,7 @@ import {
     USCConnectionEndNote,
     USCConnectionStartNote,
     USCEvent,
+    SkillTypes
 } from './index.js'
 
 type IntermediateEntity = {
