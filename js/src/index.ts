@@ -6,6 +6,8 @@ import { uscToLevelData } from './usc/convert.js'
 import { USC } from './usc/index.js'
 import { isUSC } from './usc/analyze.js'
 import { isLevelData } from './LevelData/analyze.js'
+import { isPJSK } from './pjsk/analyze.js'
+import { pjskToUSC } from './pjsk/convert.js'
 
 export { susToUSC, mmwsToUSC, uscToLevelData }
 export * from './usc/index.js'
@@ -35,6 +37,8 @@ export const convertToLevelData = (
             if (isUSC(parsed)) {
                 usc = parsed
                 return uscToLevelData(usc, offset, false, false)
+            } else if (isPJSK(parsed)) {
+                usc = pjskToUSC(parsed)
             } else {
                 usc = susToUSC(input)
             }
