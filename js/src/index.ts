@@ -4,6 +4,8 @@ import { mmwsToUSC } from './mmw/convert.js'
 import { susToUSC } from './sus/convert.js'
 import { uscToLevelData } from './usc/convert.js'
 import { USC } from './usc/index.js'
+import { isUSC } from './usc/analyze.js'
+import { isLevelData } from './LevelData/analyze.js'
 
 export { susToUSC, mmwsToUSC, uscToLevelData }
 export * from './usc/index.js'
@@ -46,26 +48,6 @@ export const convertToLevelData = (
     }
 
     return uscToLevelData(usc, offset, true, true)
-}
-
-/** Check if it is USC */
-function isUSC(data: unknown): data is USC {
-    return (
-        typeof data === 'object' &&
-        data !== null &&
-        'objects' in data &&
-        Array.isArray((data as any).objects)
-    )
-}
-
-/** Check if it is Level Data */
-function isLevelData(data: unknown): data is LevelData {
-    return (
-        typeof data === 'object' &&
-        data !== null &&
-        'entities' in data &&
-        Array.isArray((data as any).entities)
-    )
 }
 
 export const version = '0.0.0'
