@@ -121,7 +121,7 @@ export const SkillTypes = {
     judgment: 2,
 } as const
 
-export type SkillTypes = keyof typeof USCColor
+export type SkillTypes = keyof typeof SkillTypes
 
 export type USCEvent = {
     type: 'skill' | 'feverChance' | 'feverStart'
