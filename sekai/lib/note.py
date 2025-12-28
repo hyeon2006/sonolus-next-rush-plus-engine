@@ -32,7 +32,7 @@ from sekai.lib.buckets import (
     TRACE_NORMAL_WINDOW,
     Buckets,
 )
-from sekai.lib.connector import ActiveConnectorKind, ConnectorKind
+from sekai.lib.connector import ActiveConnectorKind, ConnectorKind, get_active_connector_z_offset
 from sekai.lib.ease import EaseType, ease
 from sekai.lib.effect import EMPTY_EFFECT, SFX_DISTANCE, Effects, first_available_effect
 from sekai.lib.layer import (
@@ -338,8 +338,9 @@ def draw_slide_note_head(
         case _:
             assert_never(connector_kind)
     sprite_set = get_note_sprite_set(kind, FlickDirection.UP_OMNI)
-    draw_note_body(sprite_set.body, kind, lane, size, 1.0, target_time)
-    draw_note_tick(sprite_set.tick, lane, 1.0, target_time)
+    etc = get_active_connector_z_offset(connector_kind, False)
+    draw_note_body(sprite_set.body, kind, lane, size, 1.0, target_time, etc)
+    draw_note_tick(sprite_set.tick, lane, 1.0, target_time, etc)
 
 
 def note_kind_as_normal(kind: NoteKind) -> NoteKind:
@@ -508,10 +509,12 @@ def get_note_body_layer(kind: NoteKind) -> int:
             return LAYER_NOTE_BODY
 
 
-def draw_note_body(sprites: BodySpriteSet, kind: NoteKind, lane: float, size: float, travel: float, target_time: float):
+def draw_note_body(
+    sprites: BodySpriteSet, kind: NoteKind, lane: float, size: float, travel: float, target_time: float, etc: int = 0
+):
     layer = get_note_body_layer(kind)
     a = get_alpha(target_time)
-    z = get_z(layer, time=target_time, lane=lane)
+    z = get_z(layer, time=target_time, lane=lane, etc=etc)
     match sprites.render_type:
         case BodyRenderType.NORMAL:
             left_layout, middle_layout, right_layout = layout_regular_note_body(lane, size, travel)
@@ -531,9 +534,9 @@ def draw_note_body(sprites: BodySpriteSet, kind: NoteKind, lane: float, size: fl
             sprites.middle.draw(layout, z=z, a=a)
 
 
-def draw_note_tick(sprite: Sprite, lane: float, travel: float, target_time: float):
+def draw_note_tick(sprite: Sprite, lane: float, travel: float, target_time: float, etc: int = 0):
     a = get_alpha(target_time)
-    z = get_z(LAYER_NOTE_TICK, time=target_time, lane=lane)
+    z = get_z(LAYER_NOTE_TICK, time=target_time, lane=lane, etc=etc)
     layout = layout_tick(lane, travel)
     sprite.draw(layout, z=z, a=a)
 
