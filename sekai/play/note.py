@@ -338,8 +338,12 @@ class BaseNote(PlayArchetype):
         )
 
     def should_do_delayed_trigger(self) -> bool:
-        # Don't trigger if we haven't reached the target time yet.
-        if offset_adjusted_time() < self.target_time:
+        # Don't trigger if the previous frame was before the target time.
+        # This gives the regular touch handling a chance to trigger on time the first time we pass the target time.
+        if (
+            offset_adjusted_time() - delta_time() <= self.target_time
+            and time() < self.input_interval.end
+        ):
             return False
 
         # Don't trigger if we never had a touch recorded.
