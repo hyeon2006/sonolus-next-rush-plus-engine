@@ -110,6 +110,12 @@ class BaseNote(PlayArchetype):
     end_time: float = exported()
     played_hit_effects: bool = exported()
 
+    # cache
+    hitbox: Rect = entity_memory()
+    target_angle: float = entity_memory()
+    direction_check_needed: bool = entity_memory()
+    attach_frac: float = shared_memory()
+
     def init_data(self):
         if self.data_init_done:
             return
@@ -163,6 +169,7 @@ class BaseNote(PlayArchetype):
             self.size = size
             self.visual_start_time = min(attach_head.visual_start_time, attach_tail.visual_start_time)
             self.start_time = min(self.visual_start_time, self.input_interval.start)
+            self.attach_frac = unlerp_clamped(attach_head.target_time, attach_tail.target_time, self.target_time)
 
         if is_head(self.kind):
             self.active_connector_info.input_lane = self.lane
@@ -170,6 +177,30 @@ class BaseNote(PlayArchetype):
 
         if self.is_scored:
             schedule_note_auto_sfx(self.effect_kind, self.target_time)
+
+        # caching
+        leniency = get_leniency(self.kind)
+        self.hitbox = layout_hitbox(self.lane - self.size - leniency, self.lane + self.size + leniency)
+
+        match self.direction:
+            case FlickDirection.UP_OMNI | FlickDirection.DOWN_OMNI:
+                self.direction_check_needed = False
+                self.target_angle = 0
+            case FlickDirection.UP_LEFT:
+                self.direction_check_needed = True
+                self.target_angle = pi / 2 + 1
+            case FlickDirection.UP_RIGHT:
+                self.direction_check_needed = True
+                self.target_angle = pi / 2 - 1
+            case FlickDirection.DOWN_LEFT:
+                self.direction_check_needed = True
+                self.target_angle = -pi / 2 - 1
+            case FlickDirection.DOWN_RIGHT:
+                self.direction_check_needed = True
+                self.target_angle = -pi / 2 + 1
+            case _:
+                self.direction_check_needed = False
+                self.target_angle = 0
 
     def spawn_order(self) -> float:
         if self.kind == NoteKind.ANCHOR:
@@ -340,10 +371,7 @@ class BaseNote(PlayArchetype):
     def should_do_delayed_trigger(self) -> bool:
         # Don't trigger if the previous frame was before the target time.
         # This gives the regular touch handling a chance to trigger on time the first time we pass the target time.
-        if (
-            offset_adjusted_time() - delta_time() <= self.target_time
-            and time() < self.input_interval.end
-        ):
+        if offset_adjusted_time() - delta_time() <= self.target_time and time() < self.input_interval.end:
             return False
 
         # Don't trigger if we never had a touch recorded.
@@ -600,21 +628,11 @@ class BaseNote(PlayArchetype):
         )
 
     def check_direction_matches(self, angle: float) -> bool:
+        if not self.direction_check_needed:
+            return True
+
         leniency = pi / 2
-        match self.direction:
-            case FlickDirection.UP_OMNI | FlickDirection.DOWN_OMNI:
-                return True
-            case FlickDirection.UP_LEFT:
-                target_angle = pi / 2 + 1
-            case FlickDirection.UP_RIGHT:
-                target_angle = pi / 2 - 1
-            case FlickDirection.DOWN_LEFT:
-                target_angle = -pi / 2 - 1
-            case FlickDirection.DOWN_RIGHT:
-                target_angle = -pi / 2 + 1
-            case _:
-                assert_never(self.direction)
-        angle_diff = abs((angle - target_angle + pi) % (2 * pi) - pi)
+        angle_diff = abs((angle - self.target_angle + pi) % (2 * pi) - pi)
         return angle_diff <= leniency
 
     def judge(self, actual_time: float):
@@ -683,8 +701,7 @@ class BaseNote(PlayArchetype):
         self.should_play_hit_effects = True
 
     def get_full_hitbox(self) -> Rect:
-        leniency = get_leniency(self.kind)
-        return layout_hitbox(self.lane - self.size - leniency, self.lane + self.size + leniency)
+        return self.hitbox
 
     @property
     def progress(self) -> float:
@@ -703,7 +720,7 @@ class BaseNote(PlayArchetype):
                 else unlerp_clamped(attach_head.target_time, attach_tail.target_time, time())
             )
             tail_frac = 1.0
-            frac = unlerp_clamped(attach_head.target_time, attach_tail.target_time, self.target_time)
+            frac = self.attach_frac
             return remap_clamped(head_frac, tail_frac, head_progress, tail_progress, frac)
         else:
             return progress_to(self.target_scaled_time, group_scaled_time(self.timescale_group))
@@ -711,18 +728,14 @@ class BaseNote(PlayArchetype):
     @property
     def head_ease_frac(self) -> float:
         if self.is_attached:
-            return unlerp_clamped(
-                self.attach_head_ref.get().target_time, self.attach_tail_ref.get().target_time, self.target_time
-            )
+            return self.attach_frac
         else:
             return 0.0
 
     @property
     def tail_ease_frac(self) -> float:
         if self.is_attached:
-            return unlerp_clamped(
-                self.attach_head_ref.get().target_time, self.attach_tail_ref.get().target_time, self.target_time
-            )
+            return self.attach_frac
         else:
             return 1.0
 
