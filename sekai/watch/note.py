@@ -89,6 +89,9 @@ class WatchBaseNote(WatchArchetype):
     judgment: StandardImport.JUDGMENT = imported()
     accuracy: StandardImport.ACCURACY = imported()
 
+    # cache
+    attach_frac: float = shared_memory()
+
     def init_data(self):
         if self.data_init_done:
             return
@@ -138,6 +141,7 @@ class WatchBaseNote(WatchArchetype):
             self.size = size
             self.visual_start_time = min(attach_head.visual_start_time, attach_tail.visual_start_time)
             self.start_time = self.get_min_start_time()
+            self.attach_frac = unlerp_clamped(attach_head.target_time, attach_tail.target_time, self.target_time)
 
         if is_replay():
             if self.played_hit_effects:
@@ -237,7 +241,7 @@ class WatchBaseNote(WatchArchetype):
                 else unlerp_clamped(attach_head.target_time, attach_tail.target_time, time())
             )
             tail_frac = 1.0
-            frac = unlerp_clamped(attach_head.target_time, attach_tail.target_time, self.target_time)
+            frac = self.attach_frac
             return remap_clamped(head_frac, tail_frac, head_progress, tail_progress, frac)
         else:
             return progress_to(self.target_scaled_time, group_scaled_time(self.timescale_group))
@@ -245,18 +249,14 @@ class WatchBaseNote(WatchArchetype):
     @property
     def head_ease_frac(self) -> float:
         if self.is_attached:
-            return unlerp_clamped(
-                self.attach_head_ref.get().target_time, self.attach_tail_ref.get().target_time, self.target_time
-            )
+            return self.attach_frac
         else:
             return 0.0
 
     @property
     def tail_ease_frac(self) -> float:
         if self.is_attached:
-            return unlerp_clamped(
-                self.attach_head_ref.get().target_time, self.attach_tail_ref.get().target_time, self.target_time
-            )
+            return self.attach_frac
         else:
             return 1.0
 
