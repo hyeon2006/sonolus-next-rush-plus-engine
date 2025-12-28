@@ -2,6 +2,7 @@ from sonolus.script.archetype import PlayArchetype, callback, entity_memory
 from sonolus.script.array import Dim
 from sonolus.script.containers import VarArray
 from sonolus.script.interval import clamp
+from sonolus.script.quad import Rect
 from sonolus.script.runtime import offset_adjusted_time, touches
 
 from sekai.lib import archetype_names
@@ -32,6 +33,8 @@ class Stage(PlayArchetype):
     z_layer_background_cover: float = entity_memory()
     z_layer_stage: float = entity_memory()
     z_layer_stage_cover: float = entity_memory()
+    total_hitbox: Rect = entity_memory()
+    w_scale: float = entity_memory()
 
     def spawn_order(self) -> float:
         return -1e8
@@ -48,25 +51,25 @@ class Stage(PlayArchetype):
         self.z_layer_background_cover = get_z(LAYER_BACKGROUND_COVER)
         self.z_layer_stage = get_z(LAYER_STAGE)
         self.z_layer_stage_cover = get_z(LAYER_STAGE_COVER)
+        self.total_hitbox = layout_hitbox(-7, 7)
+        self.w_scale = (self.total_hitbox.r - self.total_hitbox.l) / 14
 
     @callback(order=2)
     def touch(self):
-        total_hitbox = layout_hitbox(-7, 7)
-        w_scale = (total_hitbox.r - total_hitbox.l) / 14
         empty_lanes = VarArray[float, Dim[16]].new()
         for touch in touches():
-            if not total_hitbox.contains_point(touch.position):
+            if not self.total_hitbox.contains_point(touch.position):
                 continue
             if not input_manager.is_allowed_empty(touch):
                 continue
-            lane = (touch.position.x - total_hitbox.l) / w_scale - 7
+            lane = (touch.position.x - self.total_hitbox.l) / self.w_scale - 7
             rounded_lane = clamp(round(lane - 0.5) + 0.5, -5.5, 5.5)
             if touch.started:
                 play_lane_hit_effects(rounded_lane)
                 if not empty_lanes.is_full():
                     empty_lanes.append(rounded_lane)
             else:
-                prev_lane = (touch.prev_position.x - total_hitbox.l) / w_scale - 7
+                prev_lane = (touch.prev_position.x - self.total_hitbox.l) / self.w_scale - 7
                 prev_rounded_lane = clamp(round(prev_lane - 0.5) + 0.5, -5.5, 5.5)
                 if rounded_lane != prev_rounded_lane:
                     play_lane_hit_effects(rounded_lane)
