@@ -264,7 +264,7 @@ class BaseNote(PlayArchetype):
         # This gives the regular touch handling a chance to trigger on time the first time we pass the target time.
         if (
             offset_adjusted_time() - delta_time() <= self.target_time
-            and offset_adjusted_time() < self.input_interval.end
+            and time() < self.input_interval.end
         ):
             return False
 
