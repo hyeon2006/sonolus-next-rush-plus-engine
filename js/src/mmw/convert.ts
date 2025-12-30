@@ -239,6 +239,27 @@ export const ucmmwsToLevelData = (mmws: Uint8Array): LevelData => {
         data: [],
     })
 
+    for (const skillTick of score.events.skills) {
+        entities.push({
+            archetype: 'Skill',
+            data: [{ name: '#BEAT', value: skillTick / ticksPerBeat }],
+        })
+    }
+
+    if (score.events.fever.start > 0) {
+        entities.push({
+            archetype: 'FeverChance',
+            data: [{ name: '#BEAT', value: score.events.fever.start / ticksPerBeat }],
+        })
+    }
+
+    if (score.events.fever.end > 0) {
+        entities.push({
+            archetype: 'FeverStart',
+            data: [{ name: '#BEAT', value: score.events.fever.end / ticksPerBeat }],
+        })
+    }
+
     for (const bpm of score.events.bpmChanges) {
         entities.push({
             archetype: 'BPMChange',
