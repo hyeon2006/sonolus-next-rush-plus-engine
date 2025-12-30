@@ -11,6 +11,7 @@ import {
     USCSlideNote,
 } from '../usc/index.js'
 import { EaseType, analyze } from './analyze.js'
+import { type LevelData } from '@sonolus/core'
 
 const mmwsEaseToUSCEase = {
     linear: 'linear',
@@ -72,7 +73,7 @@ export const mmwsToUSC = (mmws: Uint8Array): USC => {
             size: tap.width / 2,
             trace: tap.flags.friction,
         }
-        if (tap.flickType !== 'none') {
+        if (tap.flickType === 'up' || tap.flickType === 'left' || tap.flickType === 'right') {
             uscTap.direction = tap.flickType
         }
         usc.objects.push(uscTap)
@@ -101,7 +102,11 @@ export const mmwsToUSC = (mmws: Uint8Array): USC => {
             size: hold.end.width / 2,
             judgeType: hold.flags.endHidden ? 'none' : hold.end.flags.friction ? 'trace' : 'normal',
         }
-        if (hold.end.flickType !== 'none') {
+        if (
+            hold.end.flickType === 'up' ||
+            hold.end.flickType === 'left' ||
+            hold.end.flickType === 'right'
+        ) {
             uscEndNote.direction = hold.end.flickType
         }
 
@@ -180,3 +185,223 @@ export const mmwsToUSC = (mmws: Uint8Array): USC => {
  * Convert CCMMWS to a USC
  */
 export const ccmmwsToUSC = mmwsToUSC
+
+const laneToSonolusLane = ({ lane, width }: { lane: number; width: number }): number => {
+    return lane - 6 + width / 2
+}
+
+const flickTypeToDirection = (type: string): number => {
+    switch (type) {
+        case 'up':
+            return 0
+        case 'left':
+            return 1
+        case 'right':
+            return 2
+        case 'down':
+            return 3
+        case 'down_left':
+            return 4
+        case 'down_right':
+            return 5
+        default:
+            return 0
+    }
+}
+
+const resolveArchetype = (baseName: string, isDummy: boolean): string => {
+    return isDummy ? `Fake${baseName}` : baseName
+}
+
+const resolveConnectorKind = (isCritical: boolean, isDummy: boolean): number => {
+    if (isDummy) {
+        return isCritical ? 52 : 51
+    }
+    return isCritical ? 1 : 0
+}
+
+/**
+ * Convert UCMMWS to a LevelData
+ */
+export const ucmmwsToLevelData = (mmws: Uint8Array): LevelData => {
+    const score = analyze(mmws)
+
+    const entities: LevelData['entities'] = []
+    const ticksPerBeat = 480
+
+    entities.push({
+        archetype: 'Initialization',
+        data: [],
+    })
+
+    entities.push({
+        archetype: 'Stage',
+        data: [],
+    })
+
+    for (const bpm of score.events.bpmChanges) {
+        entities.push({
+            archetype: 'BPMChange',
+            data: [
+                { name: 'beat', value: bpm.tick / ticksPerBeat },
+                { name: 'bpm', value: bpm.bpm },
+            ],
+        })
+    }
+
+    for (const hs of score.events.hispeedChanges) {
+        const data = [
+            { name: 'beat', value: hs.tick / ticksPerBeat },
+            { name: 'timeScale', value: hs.speed },
+        ]
+
+        if (hs.skip !== undefined && hs.skip !== 0) {
+            data.push({ name: '#TIMESCALE_SKIP', value: hs.skip })
+        }
+        if (hs.ease !== undefined) {
+            data.push({ name: '#TIMESCALE_EASE', value: hs.ease })
+        }
+        if (hs.hideNotes !== undefined) {
+            data.push({ name: 'hideNotes', value: hs.hideNotes ? 1 : 0 })
+        }
+
+        entities.push({
+            archetype: 'TimeScaleChange',
+            data: data,
+        })
+    }
+
+    for (const tap of score.taps) {
+        const isDummy = !!tap.flags.dummy
+        const isCritical = tap.flags.critical
+        const isFlick = tap.flickType !== 'none'
+
+        let baseArchetype = ''
+        if (isFlick) {
+            baseArchetype = isCritical ? 'CriticalFlickNote' : 'NormalFlickNote'
+        } else {
+            baseArchetype = isCritical ? 'CriticalTapNote' : 'NormalTapNote'
+        }
+
+        const archetype = resolveArchetype(baseArchetype, isDummy)
+
+        const data = [
+            { name: 'beat', value: tap.tick / ticksPerBeat },
+            { name: 'lane', value: laneToSonolusLane(tap) },
+            { name: 'size', value: tap.width },
+            { name: 'timeScaleGroup', value: tap.layer },
+        ]
+
+        if (isFlick) {
+            data.push({ name: 'direction', value: flickTypeToDirection(tap.flickType) })
+        }
+
+        entities.push({
+            archetype,
+            data,
+        })
+    }
+
+    for (const hold of score.holds) {
+        const isDummy = !!hold.flags.dummy
+        const isCritical = hold.start.flags.critical
+
+        const headBase = isCritical ? 'CriticalHeadTapNote' : 'NormalHeadTapNote'
+        const headArchetype = resolveArchetype(headBase, isDummy)
+
+        const headIndex = entities.length
+        entities.push({
+            archetype: headArchetype,
+            data: [
+                { name: 'beat', value: hold.start.tick / ticksPerBeat },
+                { name: 'lane', value: laneToSonolusLane(hold.start) },
+                { name: 'size', value: hold.start.width },
+                { name: 'timeScaleGroup', value: hold.start.layer },
+            ],
+        })
+
+        let prevIndex = headIndex
+
+        for (const step of hold.steps) {
+            if (step.type === 'visible') {
+                const tickBase = isCritical ? 'CriticalTickNote' : 'NormalTickNote'
+                const tickArchetype = resolveArchetype(tickBase, isDummy)
+
+                const tickIndex = entities.length
+                entities.push({
+                    archetype: tickArchetype,
+                    data: [
+                        { name: 'beat', value: step.tick / ticksPerBeat },
+                        { name: 'lane', value: laneToSonolusLane(step) },
+                        { name: 'size', value: step.width },
+                        { name: 'timeScaleGroup', value: step.layer },
+                    ],
+                })
+
+                entities.push({
+                    archetype: 'Connector',
+                    data: [
+                        { name: 'head', value: prevIndex },
+                        { name: 'tail', value: tickIndex },
+                        { name: 'kind', value: resolveConnectorKind(isCritical, isDummy) },
+                    ],
+                })
+                prevIndex = tickIndex
+            }
+        }
+
+        const isTailFlick = hold.end.flickType !== 'none'
+        let tailBase = ''
+        if (isTailFlick) {
+            tailBase = isCritical ? 'CriticalTailFlickNote' : 'NormalTailFlickNote'
+        } else {
+            tailBase = isCritical ? 'CriticalTailTapNote' : 'NormalTailTapNote'
+        }
+        const tailArchetype = resolveArchetype(tailBase, isDummy)
+
+        const tailIndex = entities.length
+        const tailData = [
+            { name: 'beat', value: hold.end.tick / ticksPerBeat },
+            { name: 'lane', value: laneToSonolusLane(hold.end) },
+            { name: 'size', value: hold.end.width },
+            { name: 'timeScaleGroup', value: hold.end.layer },
+        ]
+        if (isTailFlick) {
+            tailData.push({ name: 'direction', value: flickTypeToDirection(hold.end.flickType) })
+        }
+
+        entities.push({
+            archetype: tailArchetype,
+            data: tailData,
+        })
+
+        entities.push({
+            archetype: 'Connector',
+            data: [
+                { name: 'head', value: prevIndex },
+                { name: 'tail', value: tailIndex },
+                { name: 'kind', value: resolveConnectorKind(isCritical, isDummy) },
+            ],
+        })
+    }
+
+    for (const damage of score.damages) {
+        const isDummy = !!damage.flags.dummy
+        const archetype = resolveArchetype('DamageNote', isDummy)
+
+        entities.push({
+            archetype,
+            data: [
+                { name: 'beat', value: damage.tick / ticksPerBeat },
+                { name: 'lane', value: laneToSonolusLane(damage) },
+                { name: 'size', value: damage.width },
+                { name: 'timeScaleGroup', value: damage.layer },
+            ],
+        })
+    }
+
+    return {
+        bgmOffset: score.metadata.musicOffset / 1000,
+        entities,
+    }
+}

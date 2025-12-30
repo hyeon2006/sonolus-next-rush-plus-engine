@@ -1,6 +1,7 @@
 import { DatabaseEngineItem, LevelData } from '@sonolus/core'
 import { detectMMWSType } from './mmw/analyze.js'
 import { mmwsToUSC } from './mmw/convert.js'
+import { ucmmwsToLevelData } from './mmw/convert.js'
 import { susToUSC } from './sus/convert.js'
 import { uscToLevelData } from './usc/convert.js'
 import { USC } from './usc/index.js'
@@ -9,7 +10,7 @@ import { isLevelData } from './LevelData/analyze.js'
 import { isPJSK } from './pjsk/analyze.js'
 import { pjskToUSC } from './pjsk/convert.js'
 
-export { susToUSC, mmwsToUSC, uscToLevelData }
+export { susToUSC, mmwsToUSC, uscToLevelData, ucmmwsToLevelData }
 export * from './usc/index.js'
 
 export const convertToLevelData = (
@@ -25,9 +26,22 @@ export const convertToLevelData = (
     if (isUSC(input)) {
         usc = input
     } else if (input instanceof Uint8Array) {
-        usc = mmwsToUSC(input)
-        if (detectMMWSType(input) == 'MMWS') return uscToLevelData(usc, offset, true, true)
-        else if (detectMMWSType(input) == 'CCMMWS') return uscToLevelData(usc, offset, false, false)
+        const type = detectMMWSType(input)
+
+        if (type === 'UCMMWS') {
+            return ucmmwsToLevelData(input)
+        }
+
+        if (type === 'MMWS' || type === 'CCMMWS') {
+            usc = mmwsToUSC(input)
+
+            if (type === 'MMWS') {
+                return uscToLevelData(usc, offset, true, true)
+            } else {
+                return uscToLevelData(usc, offset, false, false)
+            }
+        }
+        throw new Error('Unsupported Uint8Array type for MMWS')
     } else if (typeof input === 'string') {
         try {
             const parsed = JSON.parse(input)

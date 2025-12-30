@@ -1,6 +1,6 @@
 import { BinarySeeker } from '../lib/binaryseeker/mod.js'
 
-const FlickType = ['none', 'up', 'left', 'right'] as const
+const FlickType = ['none', 'up', 'left', 'right', 'down', 'down_left', 'down_right'] as const
 type FlickType = (typeof FlickType)[number]
 const StepType = ['visible', 'hidden', 'ignored'] as const
 type StepType = (typeof StepType)[number]
@@ -30,6 +30,9 @@ export type Score = {
             tick: number
             speed: number
             layer: number
+            skip?: number
+            ease?: number
+            hideNotes?: boolean
         }[]
         skills: number[]
         fever: {
@@ -45,6 +48,7 @@ export type Score = {
         flags: {
             critical: boolean
             friction: boolean
+            dummy?: boolean
         }
         layer: number
     }[]
@@ -53,6 +57,7 @@ export type Score = {
             startHidden: boolean
             endHidden: boolean
             guide: boolean
+            dummy?: boolean
         }
         start: {
             tick: number
@@ -97,6 +102,7 @@ export type Score = {
         flags: {
             critical: boolean
             friction: boolean
+            dummy?: boolean
         }
 
         layer: number
@@ -115,16 +121,28 @@ export const detectMMWSType = (mmws: Uint8Array): string => {
 export const analyze = (mmws: Uint8Array): Score => {
     const buffer = new BinarySeeker(mmws.buffer)
     const header = buffer.readString()
-    if (header !== 'MMWS' && header !== 'CCMMWS') {
+    if (header !== 'MMWS' && header !== 'CCMMWS' && header !== 'UCMMWS') {
         throw new Error('Invalid MMWS file')
     }
-    const version = buffer.readInt16LE()
-    let cyanvasVersion = buffer.readInt16LE()
-    if (version < 3) {
-        throw new Error('Unsupported MMWS version')
+
+    let version = 0
+    let cyanvasVersion = 0
+    let untitledVersion = 0
+
+    if (header === 'UCMMWS') {
+        untitledVersion = buffer.readInt32LE()
+        cyanvasVersion = 6
+        version = 4
+    } else if (header === 'CCMMWS') {
+        cyanvasVersion = Math.max(buffer.readInt16LE(), 1)
+        version = buffer.readInt16LE()
+    } else {
+        version = buffer.readInt16LE()
+        cyanvasVersion = buffer.readInt16LE()
     }
-    if (header === 'CCMMWS' && cyanvasVersion === 0) {
-        cyanvasVersion = 1
+
+    if (version < 3 && header !== 'UCMMWS') {
+        throw new Error('Unsupported MMWS version')
     }
 
     const metadataPointer = buffer.readUInt32LE()
@@ -133,7 +151,6 @@ export const analyze = (mmws: Uint8Array): Score => {
     const holdsPointer = buffer.readUInt32LE()
     const damagesPointer = cyanvasVersion > 0 ? buffer.readUInt32LE() : 0
     const layersPointer = cyanvasVersion >= 4 ? buffer.readUInt32LE() : 0
-    // const waypointsPointer = cyanvasVersion >= 5 ? buffer.readUInt32LE() : 0
 
     buffer.seek(metadataPointer)
     const metadata = {
@@ -142,7 +159,10 @@ export const analyze = (mmws: Uint8Array): Score => {
         artist: buffer.readString(),
         musicFile: buffer.readString(),
         musicOffset: buffer.readFloat32LE(),
-        jacketFile: buffer.readString(),
+        jacketFile: version >= 2 ? buffer.readString() : '',
+    }
+    if (cyanvasVersion >= 1) {
+        buffer.readInt32LE()
     }
 
     buffer.seek(eventsPointer)
@@ -171,20 +191,44 @@ export const analyze = (mmws: Uint8Array): Score => {
             bpm: buffer.readFloat32LE(),
         })
     }
-    const hispeedChangesCount = buffer.readInt32LE()
-    for (let i = 0; i < hispeedChangesCount; i++) {
-        events.hispeedChanges.push({
-            tick: buffer.readInt32LE(),
-            speed: buffer.readFloat32LE(),
-            layer: cyanvasVersion >= 4 ? buffer.readInt32LE() : 0,
-        })
+
+    if (version >= 3) {
+        const hispeedChangesCount = buffer.readInt32LE()
+        for (let i = 0; i < hispeedChangesCount; i++) {
+            const tick = buffer.readInt32LE()
+            const speed = buffer.readFloat32LE()
+            const layer = cyanvasVersion >= 4 ? buffer.readInt32LE() : 0
+
+            let skip = 0
+            let ease = 0
+            let hideNotes = false
+
+            if (untitledVersion >= 2) {
+                skip = buffer.readFloat32LE()
+                ease = buffer.readInt16LE()
+                hideNotes = !!buffer.readInt16LE()
+            }
+
+            events.hispeedChanges.push({
+                tick,
+                speed,
+                layer,
+                skip,
+                ease,
+                hideNotes,
+            })
+        }
     }
-    const skillsCount = buffer.readInt32LE()
-    for (let i = 0; i < skillsCount; i++) {
-        events.skills.push(buffer.readInt32LE())
+
+    if (version >= 2) {
+        const skillsCount = buffer.readInt32LE()
+        for (let i = 0; i < skillsCount; i++) {
+            const skillTick = buffer.readInt32LE()
+            events.skills.push(skillTick)
+        }
+        events.fever.start = buffer.readInt32LE()
+        events.fever.end = buffer.readInt32LE()
     }
-    events.fever.start = buffer.readInt32LE()
-    events.fever.end = buffer.readInt32LE()
 
     buffer.seek(tapsPointer)
 
@@ -192,22 +236,23 @@ export const analyze = (mmws: Uint8Array): Score => {
     const tapsCount = buffer.readInt32LE()
     for (let i = 0; i < tapsCount; i++) {
         const tick = buffer.readInt32LE()
-
-        const lane = buffer.readInt32LE()
-        const width = buffer.readInt32LE()
+        const lane = cyanvasVersion >= 6 ? buffer.readFloat32LE() : buffer.readInt32LE()
+        const width = cyanvasVersion >= 6 ? buffer.readFloat32LE() : buffer.readInt32LE()
         const layer = cyanvasVersion >= 4 ? buffer.readInt32LE() : 0
 
-        const flickType = FlickType[buffer.readInt32LE() as 0 | 1 | 2 | 3]
+        const flickTypeRaw = buffer.readInt32LE()
+        const flickType = FlickType[flickTypeRaw] || 'none'
+
         const flags = buffer.readInt32LE()
         taps.push({
             tick,
-
             lane,
             width,
             flickType,
             flags: {
                 critical: !!(flags & (1 << 0)),
                 friction: !!(flags & (1 << 1)),
+                dummy: cyanvasVersion >= 6 && untitledVersion >= 1 ? !!(flags & (1 << 2)) : false,
             },
             layer,
         })
@@ -219,8 +264,8 @@ export const analyze = (mmws: Uint8Array): Score => {
     for (let i = 0; i < holdsCount; i++) {
         const holdFlags = version >= 4 ? buffer.readInt32LE() : 0
         const startTick = buffer.readInt32LE()
-        const startLane = buffer.readInt32LE()
-        const startWidth = buffer.readInt32LE()
+        const startLane = cyanvasVersion >= 6 ? buffer.readFloat32LE() : buffer.readInt32LE()
+        const startWidth = cyanvasVersion >= 6 ? buffer.readFloat32LE() : buffer.readInt32LE()
         const startLayer = cyanvasVersion >= 4 ? buffer.readInt32LE() : 0
         const startFlags = buffer.readInt32LE()
         const startEase = EaseType[buffer.readInt32LE() as 0 | 1 | 2]
@@ -231,10 +276,12 @@ export const analyze = (mmws: Uint8Array): Score => {
         const steps: Score['holds'][0]['steps'] = []
         for (let j = 0; j < stepsCount; j++) {
             const tick = buffer.readInt32LE()
-            const lane = buffer.readInt32LE()
-            const width = buffer.readInt32LE()
+            const lane = cyanvasVersion >= 6 ? buffer.readFloat32LE() : buffer.readInt32LE()
+            const width = cyanvasVersion >= 6 ? buffer.readFloat32LE() : buffer.readInt32LE()
             const layer = cyanvasVersion >= 4 ? buffer.readInt32LE() : 0
-            buffer.readInt32LE() // unused flags
+
+            buffer.readInt32LE()
+
             const type = StepType[buffer.readInt32LE()]
             const ease = EaseType[buffer.readInt32LE()]
             steps.push({
@@ -243,15 +290,17 @@ export const analyze = (mmws: Uint8Array): Score => {
                 width,
                 type,
                 ease,
-
                 layer,
             })
         }
         const endTick = buffer.readInt32LE()
-        const endLane = buffer.readInt32LE()
-        const endWidth = buffer.readInt32LE()
+        const endLane = cyanvasVersion >= 6 ? buffer.readFloat32LE() : buffer.readInt32LE()
+        const endWidth = cyanvasVersion >= 6 ? buffer.readFloat32LE() : buffer.readInt32LE()
         const endLayer = cyanvasVersion >= 4 ? buffer.readInt32LE() : 0
-        const endFlickType = FlickType[buffer.readInt32LE() as 0 | 1 | 2 | 3]
+
+        const endFlickTypeRaw = buffer.readInt32LE()
+        const endFlickType = FlickType[endFlickTypeRaw] || 'none'
+
         const endFlags = buffer.readInt32LE()
 
         holds.push({
@@ -259,6 +308,7 @@ export const analyze = (mmws: Uint8Array): Score => {
                 startHidden: !!(holdFlags & (1 << 0)),
                 endHidden: !!(holdFlags & (1 << 1)),
                 guide: !!(holdFlags & (1 << 2)),
+                dummy: !!(holdFlags & (1 << 3)),
             },
             start: {
                 tick: startTick,
@@ -301,17 +351,16 @@ export const analyze = (mmws: Uint8Array): Score => {
         const damagesCount = buffer.readInt32LE()
         for (let i = 0; i < damagesCount; i++) {
             const tick = buffer.readInt32LE()
-
-            const lane = buffer.readInt32LE()
-            const width = buffer.readInt32LE()
-
+            const lane = cyanvasVersion >= 6 ? buffer.readFloat32LE() : buffer.readInt32LE()
+            const width = cyanvasVersion >= 6 ? buffer.readFloat32LE() : buffer.readInt32LE()
             const layer = cyanvasVersion >= 4 ? buffer.readInt32LE() : 0
 
-            const flickType = FlickType[buffer.readInt32LE() as 0 | 1 | 2 | 3]
+            const flickTypeRaw = buffer.readInt32LE()
+            const flickType = FlickType[flickTypeRaw] || 'none'
+
             const flags = buffer.readInt32LE()
             damages.push({
                 tick,
-
                 lane,
                 width,
                 flickType,
@@ -319,6 +368,8 @@ export const analyze = (mmws: Uint8Array): Score => {
                 flags: {
                     critical: !!(flags & (1 << 0)),
                     friction: !!(flags & (1 << 1)),
+                    dummy:
+                        cyanvasVersion >= 6 && untitledVersion >= 1 ? !!(flags & (1 << 2)) : false,
                 },
             })
         }
