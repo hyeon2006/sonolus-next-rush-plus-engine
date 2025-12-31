@@ -103,7 +103,7 @@ class FeverChance(WatchArchetype):
         return self.start_time
 
     def despawn_time(self):
-        return Fever.fever_start_time + 10
+        return Fever.fever_start_time + 1
 
     def update_parallel(self):
         if not is_replay() and not Options.forced_fever_chance and not self.force:
@@ -115,8 +115,7 @@ class FeverChance(WatchArchetype):
         if self.checker >= 2:
             return
         if time() >= Fever.fever_start_time:
-            if self.percentage >= 0.78:
-                spawn_fever_start_particle(Fever.fever_chance_cant_super_fever)
+            spawn_fever_start_particle(self.percentage)
             self.checker = 2
             return
         if time() >= Fever.fever_chance_time and not self.checker:
@@ -126,7 +125,7 @@ class FeverChance(WatchArchetype):
             clamp(
                 Fever.fever_chance_current_combo / self.counter,
                 0,
-                0.9 if not Fever.fever_chance_cant_super_fever else 0.89,
+                0.9 if not Fever.fever_chance_cant_super_fever or self.percentage >= 0.9 else 0.89,
             )
             if not Streams.fever_chance_counter[self.index][-2]
             else Streams.fever_chance_counter[self.index][time()]
