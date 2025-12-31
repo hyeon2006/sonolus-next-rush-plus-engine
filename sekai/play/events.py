@@ -113,8 +113,7 @@ class FeverChance(PlayArchetype):
             return
         Streams.fever_chance_counter[self.index][-2] = 1
         if time() >= Fever.fever_start_time:
-            if self.percentage >= 0.78:
-                spawn_fever_start_particle(Fever.fever_chance_cant_super_fever)
+            spawn_fever_start_particle(self.percentage)
             self.despawn = True
             return
         if time() >= Fever.fever_chance_time and not self.checker:
@@ -123,7 +122,7 @@ class FeverChance(PlayArchetype):
         self.percentage = clamp(
             Fever.fever_chance_current_combo / self.counter,
             0,
-            0.9 if not Fever.fever_chance_cant_super_fever else 0.89,
+            0.9 if not Fever.fever_chance_cant_super_fever or self.percentage >= 0.9 else 0.89,
         )
         Streams.fever_chance_counter[self.index][offset_adjusted_time()] = self.percentage
         if Options.fever_effect == 0:

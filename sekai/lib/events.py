@@ -75,12 +75,14 @@ def draw_fever_gauge(z: float, percentage: float):
     ActiveSkin.sekai_fever_gauge.get_sprite(percentage).draw(layout2, z, a=0.55)
 
 
-def spawn_fever_start_particle(cant_super_fever: bool):
+def spawn_fever_start_particle(percentage: float):
     if Options.hide_ui >= 3:
         return
     if Options.fever_effect == 2:
         return
-    if cant_super_fever:
+    if percentage < 0.78:
+        return
+    if percentage < 0.9:
         layout_text = layout_fever_text()
         layout_lane1 = layout_lane_fever(-6, 1)
         layout_lane2 = layout_lane_fever(6, 1)
