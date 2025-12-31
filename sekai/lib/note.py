@@ -146,12 +146,9 @@ class NoteKind(IntEnum):
 
 def init_score():
     level_score().update(
-        perfect_multiplier=1.0,
-        great_multiplier=0.7,
-        good_multiplier=0.5,
-        consecutive_great_multiplier=0.01,
-        consecutive_great_step=100,
-        consecutive_great_cap=1000,
+        perfect_multiplier=3,
+        great_multiplier=2,
+        good_multiplier=1,
     )
 
 
