@@ -10,7 +10,8 @@ export type USCObject =
     | USCSlideNote
     | USCGuideNote
     | USCDamageNote
-    | USCEvent
+    | USCSkill
+    | USCFever
 
 type BaseUSCObject = {
     beat: number
@@ -115,18 +116,28 @@ export type USCGuideNote = {
     midpoints: USCGuideMidpointNote[]
 }
 
-export const SkillTypes = {
-    heal: 0,
-    score: 1,
-    judgment: 2,
+export const SkillEffects = {
+    none: 0,
+    heal: 1,
+    score: 2,
+    judgment: 3,
 } as const
 
-export type SkillTypes = keyof typeof SkillTypes
+export type SkillEffects = (typeof SkillEffects)[keyof typeof SkillEffects]
 
-export type USCEvent = {
-    type: 'skill' | 'feverChance' | 'feverStart'
-    force?: boolean
-    types?: SkillTypes
-    level?: number
+type Level = 1 | 2 | 3 | 4
+
+type USCEvent = {
     beat: number
+}
+
+export type USCSkill = USCEvent & {
+    type: 'skill'
+    effect?: SkillEffects
+    level?: Level
+}
+
+export type USCFever = USCEvent & {
+    type: 'feverChance' | 'feverStart'
+    force?: boolean
 }
