@@ -10,8 +10,8 @@ import {
     USCTimeScaleChange,
     USCConnectionEndNote,
     USCConnectionStartNote,
-    USCEvent,
-    SkillTypes,
+    USCSkill,
+    USCFever,
 } from './index.js'
 
 type IntermediateEntity = {
@@ -97,14 +97,14 @@ export const uscToLevelData = (
     const guideNotes = allUscObjects.filter(
         (o): o is USCGuideNote => o.type === 'guide' && 'midpoints' in o,
     )
-    const skills = allUscObjects.filter((o): o is USCEvent => o.type === 'skill')
+    const skills = allUscObjects.filter((o): o is USCSkill => o.type === 'skill')
     const feverChance = allUscObjects
-        .filter((o): o is USCEvent => o.type === 'feverChance')
+        .filter((o): o is USCFever => o.type === 'feverChance')
         .sort((a, b) => a.beat - b.beat)
         .slice(0, 1)
 
     const feverStart = allUscObjects
-        .filter((o): o is USCEvent => o.type === 'feverStart')
+        .filter((o): o is USCFever => o.type === 'feverStart')
         .sort((a, b) => a.beat - b.beat)
         .slice(0, 1)
 
