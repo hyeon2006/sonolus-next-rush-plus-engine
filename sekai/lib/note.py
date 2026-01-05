@@ -230,7 +230,7 @@ def get_visual_spawn_time(
     return min(
         group_scaled_time_to_first_time(timescale_group, target_scaled_time - preempt_time() * 1.1),
         group_scaled_time_to_first_time_2(timescale_group, target_scaled_time + preempt_time() * 1.1),
-        -2 if 0 <= progress_to(target_scaled_time, -2) <= 2 else 1e8,
+        -2 if -1 <= progress_to(target_scaled_time, -2) <= 3 else 1e8,
     )
 
 
