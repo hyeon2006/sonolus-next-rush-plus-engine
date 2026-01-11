@@ -2,6 +2,7 @@ from sonolus.script.archetype import WatchArchetype, entity_memory
 from sonolus.script.runtime import is_skip
 
 from sekai.lib import archetype_names
+from sekai.lib.custom_elements import draw_score_number
 from sekai.lib.layer import (
     LAYER_BACKGROUND_COVER,
     LAYER_COVER,
@@ -14,6 +15,7 @@ from sekai.lib.layer import (
     get_z,
 )
 from sekai.lib.stage import draw_stage_and_accessories, play_lane_particle
+from sekai.watch import custom_elements
 
 
 class WatchStage(WatchArchetype):
@@ -26,6 +28,8 @@ class WatchStage(WatchArchetype):
     z_layer_background_cover: float = entity_memory()
     z_layer_stage: float = entity_memory()
     z_layer_stage_cover: float = entity_memory()
+    z_layer_score: float = entity_memory()
+    z_layer_score_glow: float = entity_memory()
 
     def spawn_time(self) -> float:
         return -1e8
@@ -42,6 +46,8 @@ class WatchStage(WatchArchetype):
         self.z_layer_background_cover = get_z(LAYER_BACKGROUND_COVER)
         self.z_layer_stage = get_z(LAYER_STAGE)
         self.z_layer_stage_cover = get_z(LAYER_STAGE_COVER)
+        self.z_layer_score = get_z(layer=LAYER_JUDGMENT)
+        self.z_layer_score_glow = get_z(layer=LAYER_JUDGMENT, etc=1)
 
     def update_parallel(self):
         draw_stage_and_accessories(
@@ -53,6 +59,12 @@ class WatchStage(WatchArchetype):
             self.z_layer_cover_line,
             self.z_layer_judgment,
             self.z_layer_background_cover,
+        )
+        draw_score_number(
+            ap=custom_elements.ScoreNumber.ap,
+            score=round(100.0000, 4),
+            z1=self.z_layer_score,
+            z2=self.z_layer_score_glow,
         )
 
 
