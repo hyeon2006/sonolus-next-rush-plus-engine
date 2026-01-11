@@ -325,6 +325,16 @@ def layout_note_body_by_edges(l: float, r: float, h: float, travel: float):
         reference_d_offset = reference_d + test_offset
         reference_h = 1 / reference_d - 1 / reference_d_offset
         h *= current_h / reference_h
+
+    p = 0.5
+    return transform_quad(
+        Quad(
+            bl=Vec2(l * (1 + h * p) * travel, (1 + h) * travel),
+            br=Vec2(r * (1 + h * p) * travel, (1 + h) * travel),
+            tl=Vec2(l * (1 - h * p) * travel, (1 - h) * travel),
+            tr=Vec2(r * (1 - h * p) * travel, (1 - h) * travel),
+        )
+    )
     return perspective_rect(l=l, r=r, t=1 - h, b=1 + h, travel=travel)
 
 
