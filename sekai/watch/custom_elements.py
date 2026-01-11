@@ -1,5 +1,6 @@
 from sonolus.script.archetype import EntityRef, WatchArchetype, callback, entity_memory
 from sonolus.script.bucket import Judgment
+from sonolus.script.globals import level_memory
 from sonolus.script.runtime import is_replay
 
 from sekai.lib import archetype_names
@@ -37,6 +38,12 @@ def spawn_custom(
             next_ref=next_ref_damage_flash,
             note_index=note_index,
         )
+
+
+@level_memory
+class ScoreNumber:
+    ap: bool
+    score: float
 
 
 class ComboJudge(WatchArchetype):

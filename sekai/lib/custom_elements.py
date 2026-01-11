@@ -106,7 +106,9 @@ def draw_combo_number(draw_time: float, ap: bool, combo: int, z: float, z1: floa
             ap=ap,
             combo_number=combo,
             digit_count=digit_count,
+            is_score=False,
         ),
+        design=ScoreDesignConfig(s_int=1, s_dot=1, s_dec=1),
         common=CommonConfig(
             center_x=screen_center.x,
             center_y=screen_center.y,
@@ -134,10 +136,70 @@ def draw_combo_number(draw_time: float, ap: bool, combo: int, z: float, z1: floa
     drawing_combo.draw_number(z=z, z1=z1, z2=z2)
 
 
+def draw_score_number(ap: bool, score: float, z1: float, z2: float):
+    if Options.hide_ui >= 2:
+        return
+
+    return
+
+    ui = runtime_ui()
+
+    n_int = 1 if score < 1 else floor(log(score, 10)) + 1  # noqa: FURB163
+    digit_count = n_int + 6
+
+    screen_center = Vec2(x=5.337, y=0.39)
+
+    base_h = 0.1222 * ui.combo_config.scale * 0.4
+    base_w = base_h * 0.79 * 7
+
+    s = 1.0
+
+    a = ui.combo_config.alpha
+    a3 = ui.combo_config.alpha * 0.8 * (cos(time() * pi) + 1) / 2
+
+    h, w = transform_fixed_size(base_h, base_w)
+
+    digit_gap = w * Options.combo_distance
+
+    s_int = 1.0
+    s_dot = 0.2
+    s_dec = 0.6
+
+    count_large = n_int + 2
+    count_dot = 1
+    count_small = 3
+
+    total_w_factor = (count_large * s_int) + (count_dot * s_dot) + (count_small * s_dec)
+    total_gap_factor = (count_large * s_int) + (count_dot * s_dot) + (count_small * s_dec) - s_dec
+
+    total_width = (total_w_factor * w) + (total_gap_factor * digit_gap)
+
+    start_x = screen_center.x - total_width / 2
+
+    drawing_combo = ComboNumberLayout(
+        core=CoreConfig(
+            ap=ap,
+            combo_number=score,
+            digit_count=digit_count,
+            is_score=True,
+        ),
+        design=ScoreDesignConfig(s_int=s_int, s_dot=s_dot, s_dec=s_dec),
+        common=CommonConfig(
+            center_x=screen_center.x,
+            center_y=screen_center.y,
+        ),
+        alpha=AlphaConfig(a=a, a2=0, a3=a3),
+        layout1=LayoutConfig(width=w, gap=digit_gap, scale=s, height=h, start_x=start_x),
+        layout2=LayoutConfig(width=0, gap=0, scale=0, height=0, start_x=0),
+    )
+    drawing_combo.draw_number(z=0, z1=z1, z2=z2)
+
+
 class CoreConfig(Record):
     ap: bool
-    combo_number: int
+    combo_number: int | float
     digit_count: int
+    is_score: bool
 
 
 class CommonConfig(Record):
@@ -159,8 +221,15 @@ class LayoutConfig(Record):
     start_x: float
 
 
+class ScoreDesignConfig(Record):
+    s_int: float
+    s_dot: float
+    s_dec: float
+
+
 class ComboNumberLayout(Record):
     core: CoreConfig
+    design: ScoreDesignConfig
     common: CommonConfig
     alpha: AlphaConfig
     layout1: LayoutConfig
@@ -180,43 +249,114 @@ class ComboNumberLayout(Record):
         s_inv = 1 - self.layout1.scale
         s2_inv = 1 - self.layout2.scale
 
+        current_x1 = self.layout1.start_x
+
+        baseline_y1 = self.common.center_y + self.layout1.height / 2
+
+        n_int = self.core.digit_count - 6 if self.core.is_score else 0
+
         for i in range(self.core.digit_count):
-            digit = floor(self.core.combo_number / 10 ** (self.core.digit_count - 1 - i)) % 10
+            digit = 0
+            if self.core.is_score:
+                gap_factor = 0
+                scale_factor = 0
+                layout_scale_factor = 0
+                if i < n_int:
+                    digit = floor(self.core.combo_number / (10 ** (n_int - 1 - i))) % 10  # Integer part
+                    scale_factor = self.design.s_int
+                    gap_factor = self.design.s_int
+                    layout_scale_factor = self.design.s_int
+                elif i == n_int:
+                    digit = 10  # Dot(.)
+                    scale_factor = self.design.s_int
+                    gap_factor = self.design.s_dot
+                    layout_scale_factor = self.design.s_dot
+                elif i == n_int + 1 or i == n_int + 2:
+                    decimal_idx = i - n_int
+                    digit = floor(self.core.combo_number * (10**decimal_idx)) % 10
+                    scale_factor = self.design.s_int
+                    gap_factor = self.design.s_int
+                    layout_scale_factor = self.design.s_int
+                elif i == n_int + 3 or i == n_int + 4:
+                    decimal_idx = i - n_int
+                    digit = floor(self.core.combo_number * (10**decimal_idx)) % 10
+                    scale_factor = self.design.s_dec
+                    gap_factor = self.design.s_dec
+                    layout_scale_factor = self.design.s_dec
+                elif i == n_int + 5:
+                    digit = 11  # Percent(%)
+                    scale_factor = self.design.s_dec
+                    gap_factor = self.design.s_dec
+                    layout_scale_factor = self.design.s_dec
 
-            digit_center_x = (
-                self.layout1.start_x + (i * (self.layout1.width + self.layout1.gap)) + self.layout1.width / 2
-            )
-            digit_center_x2 = (
-                self.layout2.start_x + (i * (self.layout2.width + self.layout2.gap)) + self.layout2.width / 2
-            )
+                layout_w1 = self.layout1.width * layout_scale_factor
 
-            digit_layout = self.layout_combo_number(
-                l=self.layout1.scale * (digit_center_x - self.layout1.width / 2) + s_inv * self.common.center_x,
-                r=self.layout1.scale * (digit_center_x + self.layout1.width / 2) + s_inv * self.common.center_x,
-                t=self.layout1.scale * (self.common.center_y - self.layout1.height / 2) + s_inv * self.common.center_y,
-                b=self.layout1.scale * (self.common.center_y + self.layout1.height / 2) + s_inv * self.common.center_y,
-            )
-            digit_layout2 = self.layout_combo_number(
-                l=self.layout2.scale * (digit_center_x2 - self.layout2.width / 2) + s2_inv * self.common.center_x,
-                r=self.layout2.scale * (digit_center_x2 + self.layout2.width / 2) + s2_inv * self.common.center_x,
-                t=self.layout2.scale * (self.common.center_y - self.layout2.height / 2) + s2_inv * self.common.center_y,
-                b=self.layout2.scale * (self.common.center_y + self.layout2.height / 2) + s2_inv * self.common.center_y,
-            )
+                draw_w1 = self.layout1.width * scale_factor
+                draw_h1 = self.layout1.height * scale_factor
+
+                this_gap1 = self.layout1.gap * gap_factor
+
+                digit_center_x = current_x1 + layout_w1 / 2
+
+                unscaled_b1 = baseline_y1
+                unscaled_t1 = baseline_y1 - draw_h1
+
+                current_x1 += layout_w1 + this_gap1
+
+                final_draw_w1 = draw_w1
+
+                digit_center_x2 = 0
+                final_draw_w2 = 0
+                unscaled_t2 = 0
+                unscaled_b2 = 0
+            else:
+                digit = floor(self.core.combo_number / 10 ** (self.core.digit_count - 1 - i)) % 10
+
+                final_draw_w1 = self.layout1.width
+                final_draw_w2 = self.layout2.width
+
+                digit_center_x = (
+                    self.layout1.start_x + (i * (self.layout1.width + self.layout1.gap)) + self.layout1.width / 2
+                )
+                digit_center_x2 = (
+                    self.layout2.start_x + (i * (self.layout2.width + self.layout2.gap)) + self.layout2.width / 2
+                )
+
+                unscaled_t1 = self.common.center_y - self.layout1.height / 2
+                unscaled_b1 = self.common.center_y + self.layout1.height / 2
+                unscaled_t2 = self.common.center_y - self.layout2.height / 2
+                unscaled_b2 = self.common.center_y + self.layout2.height / 2
+
+            l1 = self.layout1.scale * (digit_center_x - final_draw_w1 / 2) + s_inv * self.common.center_x
+            r1 = self.layout1.scale * (digit_center_x + final_draw_w1 / 2) + s_inv * self.common.center_x
+            t1 = self.layout1.scale * unscaled_t1 + s_inv * self.common.center_y
+            b1 = self.layout1.scale * unscaled_b1 + s_inv * self.common.center_y
+
+            digit_layout = self.layout_combo_number(l=l1, r=r1, t=t1, b=b1)
+
+            l2 = self.layout2.scale * (digit_center_x2 - final_draw_w2 / 2) + s2_inv * self.common.center_x
+            r2 = self.layout2.scale * (digit_center_x2 + final_draw_w2 / 2) + s2_inv * self.common.center_x
+            t2 = self.layout2.scale * unscaled_t2 + s2_inv * self.common.center_y
+            b2 = self.layout2.scale * unscaled_b2 + s2_inv * self.common.center_y
+
+            digit_layout2 = self.layout_combo_number(l=l2, r=r2, t=t2, b=b2)
 
             if not self.core.ap and Options.ap_effect:
                 ActiveSkin.combo_number.get_sprite(combo=digit, combo_type=ComboType.GLOW).draw(
                     quad=digit_layout, z=z2, a=self.alpha.a3
                 )
-                ActiveSkin.combo_number.get_sprite(combo=digit, combo_type=ComboType.AP).draw(
-                    quad=digit_layout2, z=z, a=self.alpha.a2
-                )
+                if not self.core.is_score:
+                    ActiveSkin.combo_number.get_sprite(combo=digit, combo_type=ComboType.AP).draw(
+                        quad=digit_layout2, z=z, a=self.alpha.a2
+                    )
                 ActiveSkin.combo_number.get_sprite(combo=digit, combo_type=ComboType.AP).draw(
                     quad=digit_layout, z=z1, a=self.alpha.a
                 )
             else:
-                ActiveSkin.combo_number.get_sprite(combo=digit, combo_type=ComboType.NORMAL).draw(
-                    quad=digit_layout2, z=z, a=self.alpha.a2
-                )
+                if not self.core.is_score:
+                    ActiveSkin.combo_number.get_sprite(combo=digit, combo_type=ComboType.NORMAL).draw(
+                        quad=digit_layout2, z=z, a=self.alpha.a2
+                    )
                 ActiveSkin.combo_number.get_sprite(combo=digit, combo_type=ComboType.NORMAL).draw(
                     quad=digit_layout, z=z1, a=self.alpha.a
                 )
