@@ -1,3 +1,6 @@
+from enum import IntEnum
+from typing import Literal
+
 from sonolus.script.options import options, select_option, slider_option, toggle_option
 from sonolus.script.text import StandardText
 
@@ -288,4 +291,143 @@ class Options:
         name="Skill Effect",
         scope="Rush",
         default=True,
+    )
+    score_mode: ScoreMode = select_option(
+        name="Score Mode",
+        scope="Sekai",
+        values=[
+            "Level Default",
+            "Weighted Flat (Next Sekai)",
+            "Weighted Combo",
+            "Unweighted Flat (Tournament)",
+            "Unweighted Combo (Classic)",
+        ],
+        standard=True,
+        advanced=True,
+        default=0,
+        values=["v3", "v1"],
+    )
+    custom_combo: bool = toggle_option(
+        name="Using Custom Combo",
+        scope="Rush",
+        default=True,
+    )
+    combo_distance: float = slider_option(
+        name="Custom Combo Number Distance",
+        scope="Rush",
+        advanced=True,
+        default=0.24,
+        min=-0.5,
+        max=0.5,
+        step=0.01,
+    )
+    ap_effect: bool = toggle_option(
+        name="AP Effect",
+        scope="Rush",
+        default=True,
+    )
+    custom_judgment: bool = toggle_option(
+        name="Using Custom Judgment",
+        scope="Rush",
+        default=True,
+    )
+    custom_accuracy: bool = toggle_option(
+        name="Late/Fast/Flick",
+        scope="Rush",
+        default=True,
+    )
+    auto_judgment: bool = toggle_option(
+        name="Using Auto Judgment",
+        description="When using Custom Judgment, judgment is always output as auto in Watch mode",
+        scope="Rush",
+        default=True,
+    )
+    custom_damage: bool = toggle_option(
+        name="Using Custom Damage Effect",
+        scope="Rush",
+        default=True,
+    )
+    custom_tag: bool = toggle_option(
+        name="Using Custom Tag",
+        description="Play special tags like Auto Live while Watch mode",
+        scope="Rush",
+        default=True,
+    )
+    background_alpha: float = slider_option(
+        name=StandardText.STAGE_ALPHA,
+        scope="Sekai",
+        default=1,
+        min=0.5,
+        max=1,
+        step=0.1,
+        unit=StandardText.PERCENTAGE_UNIT,
+    )
+    lane_alpha: float = slider_option(
+        name=StandardText.LANE_ALPHA,
+        scope="Sekai",
+        default=1,
+        min=0,
+        max=1,
+        step=0.1,
+        unit=StandardText.PERCENTAGE_UNIT,
+    )
+    fever_effect: int = select_option(
+        name="Fever Effect",
+        scope="Rush",
+        default=0,
+        values=["Default", "Lightweight", "None"],
+    )
+    forced_fever_chance: bool = toggle_option(
+        name="Forced Fever Chance",
+        description="Fever occurs even when not in a multiplayer environment",
+        scope="Rush",
+        default=False,
+    )
+    skill_effect: bool = toggle_option(
+        name="Skill Effect",
+        scope="Rush",
+        default=True,
+    )
+
+    replay_fallback_option_names = (
+        StandardText.SPEED,
+        StandardText.NOTE_SPEED,
+        StandardText.MIRROR,
+        StandardText.EFFECT,
+        StandardText.EFFECT_AUTO,
+        "Effect Duration",
+        StandardText.NOTE_EFFECT,
+        StandardText.NOTE_EFFECT_SIZE,
+        StandardText.MARKER_ANIMATION,
+        StandardText.SIMLINE,
+        StandardText.CONNECTOR_ANIMATION,
+        "Slide Alpha",
+        "Guide Alpha",
+        StandardText.LANE_EFFECT,
+        StandardText.SLOT_EFFECT,
+        StandardText.SLOT_EFFECT_SIZE,
+        StandardText.STAGE_COVER_VERTICAL,
+        StandardText.HIDDEN,
+        StandardText.STAGE_ASPECTRATIO_LOCK,
+        "Hide UI",
+        StandardText.STAGE,
+        "Slide Quality",
+        "Guide Quality",
+        "Note Margin",
+        "Alternative Approach Curve",
+        "Disable Timescale",
+        StandardText.VERSION,
+        "Using Custom Combo",
+        "Custom Combo Number Distance",
+        "Ap Effect",
+        "Using Combo Judgment",
+        "Late/Fast/Flick",
+        "Using Auto Judgment",
+        "Using Custom Damage Effect",
+        "Using Custom Tag",
+        StandardText.STAGE_ALPHA,
+        StandardText.LANE_ALPHA,
+        "Fever Effect",
+        "Forced Fever Chance",
+        "Skill Effect",
     )

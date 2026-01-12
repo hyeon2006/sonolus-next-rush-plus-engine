@@ -56,7 +56,8 @@ class WatchInitialization(WatchArchetype):
         init_particles()
         init_ui()
         init_buckets()
-        init_score()
+        init_score(note.WATCH_NOTE_ARCHETYPES)
+        init_life(note.WATCH_NOTE_ARCHETYPES, self.initial_life)
 
         LayerCache.judgment = get_z(layer=LAYER_JUDGMENT)
         LayerCache.judgment1 = get_z(layer=LAYER_JUDGMENT, etc=1)
