@@ -36,6 +36,7 @@ from sekai.lib.note import (
     get_leniency,
     get_note_bucket,
     get_note_effect_kind,
+    get_note_haptic_feedback,
     get_note_window,
     get_visual_spawn_time,
     has_release_input,
@@ -299,6 +300,7 @@ class BaseNote(PlayArchetype):
             play_note_hit_effects(
                 self.kind, self.effect_kind, self.lane, self.size, self.direction, self.result.judgment
             )
+            self.result.haptic = get_note_haptic_feedback(self.kind, self.result.judgment)
         self.end_time = offset_adjusted_time()
         self.played_hit_effects = self.should_play_hit_effects
 
