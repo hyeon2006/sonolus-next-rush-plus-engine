@@ -17,7 +17,7 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "sonolus-py", specifier = "~=0.13.2" }]
+requires-dist = [{ name = "sonolus-py", git = "https://github.com/qwewqa/sonolus.py.git?rev=sonolus-1.1.0" }]
 
 [package.metadata.requires-dev]
 dev = [
@@ -76,11 +76,7 @@ wheels = [
 [[package]]
 name = "sonolus-py"
 version = "0.13.2"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/8e/fd/314e89518fbfcddc4aaf00b5fe1e2329aee74f1c8947ed6b5a529bfabf2e/sonolus_py-0.13.2.tar.gz", hash = "sha256:1f5cafbaad87a6fbe80c855d3fe45972b336e2111da42282ed549ab30fad5936", size = 4753657, upload-time = "2025-11-29T20:23:16.132Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/b5/c6/244ed4ebc291ec891e0489d54d4e8cc2559ec41fa5ce3680e7fa223d40a4/sonolus_py-0.13.2-py3-none-any.whl", hash = "sha256:809750e604282b9f08e7e288b20be5d3f8dc843f94edeb0dee165702abbe216b", size = 190453, upload-time = "2025-11-29T20:23:14.811Z" },
-]
+source = { git = "https://github.com/qwewqa/sonolus.py.git?rev=sonolus-1.1.0#695ffa9d94f6e3b44477103f4a9a8d32338417f9" }
 
 [[package]]
 name = "typing-extensions"
