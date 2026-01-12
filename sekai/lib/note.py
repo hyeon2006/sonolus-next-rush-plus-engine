@@ -2,7 +2,7 @@ from collections.abc import Iterable
 from enum import IntEnum, auto
 from typing import assert_never, cast
 
-from sonolus.script.archetype import EntityRef, PlayArchetype, WatchArchetype, get_archetype_by_name
+from sonolus.script.archetype import EntityRef, HapticType, PlayArchetype, WatchArchetype, get_archetype_by_name
 from sonolus.script.bucket import Bucket, Judgment, JudgmentWindow
 from sonolus.script.easing import ease_in_cubic
 from sonolus.script.effect import Effect
@@ -802,6 +802,23 @@ def play_note_hit_effects(
             particles.lane_basic.spawn(layout, duration=0.3)
     if Options.slot_effect_enabled and not is_watch():
         schedule_note_slot_effects(kind, lane, size, time(), direction)
+
+
+def get_note_haptic_feedback(kind: NoteKind, judgment: Judgment) -> HapticType:
+    if not Options.haptics_enabled or judgment not in {Judgment.PERFECT, Judgment.GREAT}:
+        return HapticType.NONE
+    match kind:
+        case (
+            NoteKind.NORM_TAP
+            | NoteKind.NORM_HEAD_TAP
+            | NoteKind.NORM_TAIL_TAP
+            | NoteKind.CRIT_TAP
+            | NoteKind.CRIT_HEAD_TAP
+            | NoteKind.CRIT_TAIL_TAP
+        ):
+            return HapticType.HEAVY
+        case _:
+            return HapticType.NONE
 
 
 def schedule_note_auto_sfx(kind: NoteEffectKind, target_time: float):

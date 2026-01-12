@@ -55,6 +55,11 @@ class Options:
         scope="Sekai",
         default=False,
     )
+    haptics_enabled: bool = toggle_option(
+        name=StandardText.HAPTIC,
+        scope="Sekai",
+        default=False,
+    )
     note_effect_enabled: bool = toggle_option(
         name=StandardText.NOTE_EFFECT,
         scope="Sekai",
