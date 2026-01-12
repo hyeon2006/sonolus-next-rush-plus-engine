@@ -45,7 +45,7 @@ class WatchInitialization(WatchArchetype):
     name = archetype_names.INITIALIZATION
     is_multi: bool = imported()
 
-    score_mode: ConcreteScoreMode = imported(name="scoreMode", default=ScoreMode.UNWEIGHTED_COMBO)
+    score_mode: ConcreteScoreMode = imported(name="scoreMode", default=ScoreMode.SEKAI)
     initial_life: int = imported(name="initialLife", default=1000)
 
     @callback(order=-1)

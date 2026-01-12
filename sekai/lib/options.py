@@ -11,6 +11,7 @@ class ScoreMode(IntEnum):
     WEIGHTED_COMBO = 2
     UNWEIGHTED_FLAT = 3
     UNWEIGHTED_COMBO = 4
+    SEKAI = 5
 
 
 ConcreteScoreMode = Literal[
@@ -18,6 +19,7 @@ ConcreteScoreMode = Literal[
     ScoreMode.WEIGHTED_COMBO,
     ScoreMode.UNWEIGHTED_FLAT,
     ScoreMode.UNWEIGHTED_COMBO,
+    ScoreMode.SEKAI,
 ]
 
 
@@ -301,6 +303,7 @@ class Options:
             "Weighted Combo",
             "Unweighted Flat (Tournament)",
             "Unweighted Combo (Classic)",
+            "Sekai",
         ],
         standard=True,
         advanced=True,

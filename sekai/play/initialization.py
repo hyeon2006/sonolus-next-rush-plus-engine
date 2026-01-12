@@ -39,7 +39,7 @@ class LayerCache:
 class Initialization(PlayArchetype):
     name = archetype_names.INITIALIZATION
 
-    score_mode: ConcreteScoreMode = imported(name="scoreMode", default=ScoreMode.UNWEIGHTED_COMBO)
+    score_mode: ConcreteScoreMode = imported(name="scoreMode", default=ScoreMode.SEKAI)
     initial_life: int = imported(name="initialLife", default=1000)
 
     @callback(order=-1)
