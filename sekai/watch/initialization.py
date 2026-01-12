@@ -4,7 +4,7 @@ from sekai.lib import archetype_names
 from sekai.lib.buckets import init_buckets
 from sekai.lib.layout import init_layout
 from sekai.lib.level_config import init_level_config
-from sekai.lib.note import init_note_life, init_score
+from sekai.lib.note import init_life, init_score
 from sekai.lib.options import ConcreteScoreMode, ScoreMode
 from sekai.lib.particle import init_particles
 from sekai.lib.skin import init_skin
@@ -19,6 +19,7 @@ class WatchInitialization(WatchArchetype):
     name = archetype_names.INITIALIZATION
 
     score_mode: ConcreteScoreMode = imported(name="scoreMode", default=ScoreMode.UNWEIGHTED_COMBO)
+    initial_life: int = imported(name="initialLife", default=1000)
 
     @callback(order=-1)
     def preprocess(self):
@@ -29,9 +30,7 @@ class WatchInitialization(WatchArchetype):
         init_particles()
         init_buckets()
         init_score(WATCH_NOTE_ARCHETYPES)
-
-        for note_archetype in WATCH_NOTE_ARCHETYPES:
-            init_note_life(note_archetype)
+        init_life(WATCH_NOTE_ARCHETYPES, self.initial_life)
 
         WatchStage.spawn()
 

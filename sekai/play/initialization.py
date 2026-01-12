@@ -4,7 +4,7 @@ from sekai.lib import archetype_names
 from sekai.lib.buckets import init_buckets
 from sekai.lib.layout import init_layout
 from sekai.lib.level_config import init_level_config
-from sekai.lib.note import init_note_life, init_score
+from sekai.lib.note import init_life, init_score
 from sekai.lib.options import ConcreteScoreMode, ScoreMode
 from sekai.lib.particle import init_particles
 from sekai.lib.skin import init_skin
@@ -16,7 +16,9 @@ from sekai.play.stage import Stage
 
 class Initialization(PlayArchetype):
     name = archetype_names.INITIALIZATION
+
     score_mode: ConcreteScoreMode = imported(name="scoreMode", default=ScoreMode.UNWEIGHTED_COMBO)
+    initial_life: int = imported(name="initialLife", default=1000)
 
     @callback(order=-1)
     def preprocess(self):
@@ -27,9 +29,7 @@ class Initialization(PlayArchetype):
         init_ui()
         init_buckets()
         init_score(NOTE_ARCHETYPES)
-
-        for note_archetype in NOTE_ARCHETYPES:
-            init_note_life(note_archetype)
+        init_life(NOTE_ARCHETYPES, self.initial_life)
 
     def initialize(self):
         Stage.spawn()
