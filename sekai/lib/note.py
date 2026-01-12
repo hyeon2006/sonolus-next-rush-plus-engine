@@ -7,7 +7,7 @@ from sonolus.script.bucket import Bucket, Judgment, JudgmentWindow
 from sonolus.script.easing import ease_in_cubic
 from sonolus.script.effect import Effect
 from sonolus.script.interval import lerp, remap_clamped
-from sonolus.script.runtime import is_tutorial, is_watch, level_score, time
+from sonolus.script.runtime import is_tutorial, is_watch, level_life, level_score, time
 from sonolus.script.sprite import Sprite
 
 from sekai.lib import archetype_names
@@ -201,6 +201,15 @@ def init_score(note_archetypes: Iterable[type[PlayArchetype | WatchArchetype]]):
                 note_archetype.archetype_score_multiplier = 10
         case _:
             assert_never(LevelConfig.score_mode)
+
+
+def init_life(
+    note_archetypes: Iterable[type[PlayArchetype | WatchArchetype]],
+    initial_life: int,
+):
+    for note_archetype in note_archetypes:
+        init_note_life(note_archetype)
+    level_life().update(initial=initial_life, maximum=initial_life)
 
 
 def init_note_life(archetype: type[PlayArchetype | WatchArchetype]):
