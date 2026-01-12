@@ -142,6 +142,14 @@ def init_ui():
         horizontal_align=HorizontalAlign.CENTER,
         background=True,
     )
+    ui.progress_graph.update(
+        anchor=box.bl + Vec2(0, gap + 0.15 * ui.progress_config.scale),
+        pivot=Vec2(0, 0),
+        dimensions=Vec2(box.w, 0.3 * ui.progress_config.scale),
+        alpha=ui.progress_config.alpha * show_ui,
+        horizontal_align=HorizontalAlign.CENTER,
+        background=True,
+    )
     ui.previous.update(
         anchor=Vec2(box.l, box.center.y),
         pivot=Vec2(0, 0.5),
