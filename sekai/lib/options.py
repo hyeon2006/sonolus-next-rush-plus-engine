@@ -1,5 +1,24 @@
-from sonolus.script.options import options, slider_option, toggle_option
+from enum import IntEnum
+from typing import Literal
+
+from sonolus.script.options import options, select_option, slider_option, toggle_option
 from sonolus.script.text import StandardText
+
+
+class ScoreMode(IntEnum):
+    LEVEL_DEFAULT = 0
+    WEIGHTED_FLAT = 1
+    WEIGHTED_COMBO = 2
+    UNWEIGHTED_FLAT = 3
+    UNWEIGHTED_COMBO = 4
+
+
+ConcreteScoreMode = Literal[
+    ScoreMode.WEIGHTED_FLAT,
+    ScoreMode.WEIGHTED_COMBO,
+    ScoreMode.UNWEIGHTED_FLAT,
+    ScoreMode.UNWEIGHTED_COMBO,
+]
 
 
 @options
@@ -174,4 +193,46 @@ class Options:
         standard=True,
         advanced=True,
         default=False,
+    )
+    score_mode: ScoreMode = select_option(
+        name="Score Mode",
+        scope="Sekai",
+        values=[
+            "Level Default",
+            "Weighted Flat (Next Sekai)",
+            "Weighted Combo",
+            "Unweighted Flat (Tournament)",
+            "Unweighted Combo (Classic)",
+        ],
+        standard=True,
+        advanced=True,
+        default=0,
+    )
+
+    replay_fallback_option_names = (
+        StandardText.SPEED,
+        StandardText.NOTE_SPEED,
+        StandardText.MIRROR,
+        StandardText.EFFECT,
+        StandardText.EFFECT_AUTO,
+        StandardText.NOTE_EFFECT,
+        StandardText.NOTE_EFFECT_SIZE,
+        StandardText.MARKER_ANIMATION,
+        StandardText.SIMLINE,
+        StandardText.CONNECTOR_ANIMATION,
+        "Slide Alpha",
+        "Guide Alpha",
+        StandardText.LANE_EFFECT,
+        StandardText.SLOT_EFFECT,
+        StandardText.SLOT_EFFECT_SIZE,
+        StandardText.STAGE_COVER_VERTICAL,
+        StandardText.HIDDEN,
+        StandardText.STAGE_ASPECTRATIO_LOCK,
+        "Hide UI",
+        StandardText.STAGE,
+        "Slide Quality",
+        "Guide Quality",
+        "Note Margin",
+        "Alternative Approach Curve",
+        "Disable Timescale",
     )

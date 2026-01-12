@@ -1,3 +1,4 @@
+from collections.abc import Iterable
 from enum import IntEnum, auto
 from typing import assert_never, cast
 
@@ -61,7 +62,8 @@ from sekai.lib.layout import (
     preempt_time,
     progress_to,
 )
-from sekai.lib.options import Options
+from sekai.lib.level_config import LevelConfig
+from sekai.lib.options import Options, ScoreMode
 from sekai.lib.particle import (
     EMPTY_NOTE_PARTICLE_SET,
     ActiveParticles,
@@ -140,15 +142,65 @@ class NoteKind(IntEnum):
     ANCHOR = auto()
 
 
-def init_score():
-    level_score().update(
-        perfect_multiplier=1.0,
-        great_multiplier=0.7,
-        good_multiplier=0.5,
-        consecutive_great_multiplier=0.01,
-        consecutive_great_step=100,
-        consecutive_great_cap=1000,
-    )
+def init_score(note_archetypes: Iterable[type[PlayArchetype | WatchArchetype]]):
+    match LevelConfig.score_mode:
+        case ScoreMode.WEIGHTED_COMBO | ScoreMode.UNWEIGHTED_COMBO:
+            level_score().update(
+                perfect_multiplier=1.0,
+                great_multiplier=0.7,
+                good_multiplier=0.5,
+                consecutive_great_multiplier=0.1,  # Note that the base tap note multiplier is 10 not 1
+                consecutive_great_step=100,
+                consecutive_great_cap=1000,
+            )
+        case ScoreMode.WEIGHTED_FLAT | ScoreMode.UNWEIGHTED_FLAT:
+            level_score().update(
+                perfect_multiplier=3.0,
+                great_multiplier=2.0,
+                good_multiplier=1.0,
+            )
+        case _:
+            assert_never(LevelConfig.score_mode)
+
+    match LevelConfig.score_mode:
+        case ScoreMode.WEIGHTED_COMBO | ScoreMode.WEIGHTED_FLAT:
+            for note_archetype in note_archetypes:
+                kind = cast(NoteKind, note_archetype.key)
+                match kind:
+                    case NoteKind.NORM_TAP | NoteKind.NORM_HEAD_TAP | NoteKind.NORM_TAIL_TAP:
+                        weight = 10
+                    case NoteKind.CRIT_TAP | NoteKind.CRIT_HEAD_TAP | NoteKind.CRIT_TAIL_TAP:
+                        weight = 20
+                    case NoteKind.NORM_FLICK | NoteKind.NORM_HEAD_FLICK | NoteKind.NORM_TAIL_FLICK:
+                        weight = 10
+                    case NoteKind.CRIT_FLICK | NoteKind.CRIT_HEAD_FLICK | NoteKind.CRIT_TAIL_FLICK:
+                        weight = 30
+                    case NoteKind.NORM_TRACE | NoteKind.NORM_HEAD_TRACE | NoteKind.NORM_TAIL_TRACE:
+                        weight = 1
+                    case NoteKind.CRIT_TRACE | NoteKind.CRIT_HEAD_TRACE | NoteKind.CRIT_TAIL_TRACE:
+                        weight = 2
+                    case NoteKind.NORM_TRACE_FLICK | NoteKind.NORM_HEAD_TRACE_FLICK | NoteKind.NORM_TAIL_TRACE_FLICK:
+                        weight = 10
+                    case NoteKind.CRIT_TRACE_FLICK | NoteKind.CRIT_HEAD_TRACE_FLICK | NoteKind.CRIT_TAIL_TRACE_FLICK:
+                        weight = 30
+                    case NoteKind.NORM_RELEASE | NoteKind.NORM_HEAD_RELEASE | NoteKind.NORM_TAIL_RELEASE:
+                        weight = 10
+                    case NoteKind.CRIT_RELEASE | NoteKind.CRIT_HEAD_RELEASE | NoteKind.CRIT_TAIL_RELEASE:
+                        weight = 20
+                    case NoteKind.NORM_TICK | NoteKind.CRIT_TICK | NoteKind.HIDE_TICK:
+                        weight = 1
+                    case NoteKind.DAMAGE:
+                        weight = 1
+                    case NoteKind.ANCHOR:
+                        weight = 1  # Doesn't really matter since anchors are not scored
+                    case _:
+                        assert_never(kind)
+                note_archetype.archetype_score_multiplier = weight
+        case ScoreMode.UNWEIGHTED_COMBO | ScoreMode.UNWEIGHTED_FLAT:
+            for note_archetype in note_archetypes:
+                note_archetype.archetype_score_multiplier = 10
+        case _:
+            assert_never(LevelConfig.score_mode)
 
 
 def init_note_life(archetype: type[PlayArchetype | WatchArchetype]):
