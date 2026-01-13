@@ -6,27 +6,11 @@ from sonolus.script.record import Record
 from sonolus.script.runtime import is_replay, is_watch, runtime_ui, screen, time
 from sonolus.script.vec import Vec2
 
-from sekai.lib.layout import (
-    ComboType,
-    Layout,
-    Quad,
-    layout_combo_label,
-    transform_quad,
-)
+from sekai.lib.layout import ComboType, Quad, layout_combo_label, transform_fixed_size, transform_quad
 from sekai.lib.options import Options
 from sekai.lib.skin import (
     ActiveSkin,
 )
-
-
-def transform_fixed_size(h, w):
-    target_width = w * Layout.fixed_w_scale
-    target_height = h * Layout.fixed_h_scale
-
-    width = target_width / Layout.w_scale
-    height = target_height / Layout.h_scale
-
-    return height, width
 
 
 def draw_combo_label(ap: bool, z: float, z1: float, combo: int):

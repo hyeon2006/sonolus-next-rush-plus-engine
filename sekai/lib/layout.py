@@ -181,12 +181,28 @@ def transform_vec(v: Vec2) -> Vec2:
     )
 
 
+def transform_fixed_vec(v: Vec2) -> Vec2:
+    return Vec2(
+        v.x * Layout.fixed_w_scale,
+        v.y * Layout.fixed_h_scale + Layout.t,
+    )
+
+
 def transform_quad(q: QuadLike) -> Quad:
     return Quad(
         bl=transform_vec(q.bl),
         br=transform_vec(q.br),
         tl=transform_vec(q.tl),
         tr=transform_vec(q.tr),
+    )
+
+
+def transform_fixed_quad(q: QuadLike) -> Quad:
+    return Quad(
+        bl=transform_fixed_vec(q.bl),
+        br=transform_fixed_vec(q.br),
+        tl=transform_fixed_vec(q.tl),
+        tr=transform_fixed_vec(q.tr),
     )
 
 
@@ -644,6 +660,21 @@ def layout_combo_label(
     )
 
 
+def layout_skill_bar(
+    center: Vec2,
+    w: float,
+    h: float,
+) -> Quad:
+    return transform_fixed_quad(
+        Quad(
+            bl=Vec2(center.x - w, center.y + h),
+            br=Vec2(center.x + w, center.y + h),
+            tl=Vec2(center.x - w, center.y - h),
+            tr=Vec2(center.x + w, center.y - h),
+        )
+    )
+
+
 def layout_fever_cover_left() -> Quad:
     p = perspective_rect(l=-6.5, r=0, t=0, b=get_perspective_y(-1))
     safe_bl_x = min(screen().bl.x, p.bl.x)
@@ -694,6 +725,16 @@ def layout_fever_text() -> Quad:
 
 def layout_fever_border() -> Quad:
     return Rect(t=1, b=-1, l=screen().l, r=screen().r)
+
+
+def transform_fixed_size(h, w):
+    target_width = w * Layout.fixed_w_scale
+    target_height = h * Layout.fixed_h_scale
+
+    width = target_width / Layout.w_scale
+    height = target_height / Layout.h_scale
+
+    return height, width
 
 
 def layout_hitbox(

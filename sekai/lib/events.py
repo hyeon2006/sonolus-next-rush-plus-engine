@@ -9,7 +9,6 @@ from sekai.lib.layout import (
     Layout,
     aspect_ratio,
     get_perspective_y,
-    layout_combo_label,
     layout_fever_border,
     layout_fever_cover_left,
     layout_fever_cover_right,
@@ -20,6 +19,7 @@ from sekai.lib.layout import (
     layout_lane_fever,
     layout_sekai_stage,
     layout_sekai_stage_t,
+    layout_skill_bar,
     perspective_rect,
     screen,
 )
@@ -155,7 +155,7 @@ def draw_skill_bar(z: float, z2: float, time: float, num: int):
     current_center = lerp(start_center, target_center, anim)
     h = 0.08
     w = h * 21
-    layout = layout_combo_label(current_center, w, h)
+    layout = layout_skill_bar(current_center, w, h)
     ActiveSkin.skill_bar.draw(layout, z, anim)
 
     x = -7.5 + x_ratio
@@ -165,7 +165,7 @@ def draw_skill_bar(z: float, z2: float, time: float, num: int):
     icon_current_center = lerp(icon_start_center, icon_target_center, anim)
     h = 0.045
     w = h * 7
-    layout = layout_combo_label(icon_current_center, w, h)
+    layout = layout_skill_bar(icon_current_center, w, h)
     ActiveSkin.skill_icon.get_sprite(num).draw(layout, z2, anim)
 
     x = -5.58 + x_ratio
@@ -188,7 +188,7 @@ def draw_skill_bar(z: float, z2: float, time: float, num: int):
     text_current_center = lerp(current_start_pos, text_target_center, final_anim)
     h = 0.027
     w = h * 14
-    layout = layout_combo_label(text_current_center, w, h)
+    layout = layout_skill_bar(text_current_center, w, h)
     if time <= 1.5:
         ActiveSkin.skill_level.draw(layout, z2, final_anim)
     else:
