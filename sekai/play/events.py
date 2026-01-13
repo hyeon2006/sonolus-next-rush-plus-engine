@@ -18,6 +18,7 @@ from sonolus.script.timing import beat_to_time
 from sekai.lib import archetype_names
 from sekai.lib.effect import Effects
 from sekai.lib.events import (
+    SkillEffects,
     draw_fever_gauge,
     draw_fever_side_bar,
     draw_fever_side_cover,
@@ -32,8 +33,8 @@ from sekai.play import initialization
 
 class Skill(PlayArchetype):
     beat: StandardImport.BEAT
-    type: bool = imported(name="type")
-    level: bool = imported(name="level")
+    effect: SkillEffects = imported(name="effect", default=SkillEffects.HEAL)
+    level: int = imported(name="level", default=1)
     start_time: float = entity_data()
     count: int = shared_memory()
     next_ref: EntityRef[Skill] = entity_data()

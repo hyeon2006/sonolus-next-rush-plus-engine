@@ -1,3 +1,5 @@
+from enum import IntEnum
+
 from sonolus.script.interval import lerp, unlerp_clamped
 from sonolus.script.vec import Vec2
 
@@ -24,6 +26,13 @@ from sekai.lib.layout import (
 from sekai.lib.options import Options
 from sekai.lib.particle import ActiveParticles
 from sekai.lib.skin import ActiveSkin
+
+
+class SkillEffects(IntEnum):
+    NONE = 0
+    HEAL = 1
+    SCORE = 2
+    JUDGMENT = 3
 
 
 def draw_fever_side_cover(z: float, time: float):

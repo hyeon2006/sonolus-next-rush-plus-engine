@@ -1,9 +1,10 @@
-from sonolus.script.archetype import PlayArchetype, callback, entity_info_at
+from sonolus.script.archetype import EntityRef, PlayArchetype, callback, entity_info_at, imported
 from sonolus.script.containers import sort_linked_entities
 from sonolus.script.globals import level_memory
 
 from sekai.lib import archetype_names
 from sekai.lib.buckets import init_buckets
+from sekai.lib.events import SkillEffects
 from sekai.lib.layer import (
     LAYER_BACKGROUND_SIDE,
     LAYER_DAMAGE,
@@ -88,13 +89,14 @@ def sorted_linked_list():
         entity_count += 1
     note_head, note_length, skill_head, skill_length = initial_list(entity_count)
 
+    sorted_skill_head = +EntityRef[Skill]
+    if skill_length > 0:
+        sorted_skill_head @= sort_entities(skill_head, Skill)
+        count_skill(sorted_skill_head.index)
+
     if note_length > 0:
         sorted_note_head = sort_entities(note_head, note.BaseNote)
-        setting_count(sorted_note_head.index)
-
-    if skill_length > 0:
-        sorted_skill_head = sort_entities(skill_head, Skill)
-        count_skill(sorted_skill_head.index)
+        setting_count(sorted_note_head.index, sorted_skill_head.index)
 
 
 def initial_list(entity_count):
@@ -134,10 +136,20 @@ def sort_entities(index: int, entity_cls):
     )
 
 
-def setting_count(head: int) -> None:
+def setting_count(head: int, skill: int) -> None:
     ptr = head
+    skill_ptr = skill
     count = 0
     while ptr > 0:
+        if skill_ptr > 0 and note.BaseNote.at(ptr).target_time >= Skill.at(skill_ptr).start_time:
+            if Skill.at(skill_ptr).effect == SkillEffects.HEAL:
+                life = 200 + (Skill.at(skill_ptr).level * 50)
+                note.BaseNote.at(ptr).entity_life.perfect_increment += life
+                note.BaseNote.at(ptr).entity_life.great_increment += life
+                note.BaseNote.at(ptr).entity_life.good_increment += life
+                note.BaseNote.at(ptr).entity_life.miss_increment += life
+
+            skill_ptr = Skill.at(skill_ptr).next_ref.index
         count += 1
         note.BaseNote.at(ptr).count += count
         if Fever.fever_chance_time <= note.BaseNote.at(ptr).target_time < Fever.fever_start_time:
