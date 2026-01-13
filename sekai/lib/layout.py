@@ -242,7 +242,7 @@ def layout_sekai_stage_t() -> Quad:
 
 
 def layout_lane_by_edges(l: float, r: float) -> Quad:
-    return perspective_rect(l=l, r=r, t=LANE_T, b=get_perspective_y(-1))
+    return perspective_rect(l=l, r=r, t=max(LANE_T, get_perspective_y(1)), b=get_perspective_y(-1))
 
 
 def layout_lane(lane: float, size: float) -> Quad:
@@ -262,7 +262,7 @@ def layout_stage_cover() -> Quad:
     return perspective_rect(
         l=-6,
         r=6,
-        t=LANE_T,
+        t=max(LANE_T, get_perspective_y(1)),
         b=b + 0.002,
     )
 
