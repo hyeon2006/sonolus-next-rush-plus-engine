@@ -248,18 +248,23 @@ def calculate_score(head: int, max_score: int, scale_factor: float):
             )
         match Options.custom_score:
             case 1:
-                score += (
-                    (
-                        judgment_multiplier
-                        * (
-                            consecutive_judgment_multiplier
-                            + note.WatchBaseNote.at(ptr).archetype_score_multiplier
-                            + note.WatchBaseNote.at(ptr).entity_score_multiplier
+                score = clamp(
+                    score
+                    + (
+                        (
+                            judgment_multiplier
+                            * (
+                                consecutive_judgment_multiplier
+                                + note.WatchBaseNote.at(ptr).archetype_score_multiplier
+                                + note.WatchBaseNote.at(ptr).entity_score_multiplier
+                            )
+                            * scale_factor
                         )
-                        * scale_factor
-                    )
-                    / max_score
-                    * 100
+                        / max_score
+                        * 100
+                    ),
+                    0,
+                    100,
                 )
                 note.WatchBaseNote.at(ptr).score = score
             case 2:

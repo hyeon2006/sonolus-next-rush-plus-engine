@@ -165,18 +165,23 @@ class ComboJudge(PlayArchetype):
                 consecutive_judgment_multiplier = 0
         match Options.custom_score:
             case 1:
-                ScoreIndicator.score += (
-                    (
-                        judgment_multiplier
-                        * (
-                            consecutive_judgment_multiplier
-                            + note.BaseNote.at(self.index).archetype_score_multiplier
-                            + note.BaseNote.at(self.index).entity_score_multiplier
+                ScoreIndicator.score = clamp(
+                    ScoreIndicator.score
+                    + (
+                        (
+                            judgment_multiplier
+                            * (
+                                consecutive_judgment_multiplier
+                                + note.BaseNote.at(self.index).archetype_score_multiplier
+                                + note.BaseNote.at(self.index).entity_score_multiplier
+                            )
+                            * ScoreIndicator.scale_factor
                         )
-                        * ScoreIndicator.scale_factor
-                    )
-                    / ScoreIndicator.max_score
-                    * 100
+                        / ScoreIndicator.max_score
+                        * 100
+                    ),
+                    0,
+                    100,
                 )
             case 2:
                 ScoreIndicator.score = clamp(
