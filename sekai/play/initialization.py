@@ -1,6 +1,7 @@
 from sonolus.script.archetype import EntityRef, PlayArchetype, callback, entity_info_at, imported
 from sonolus.script.containers import sort_linked_entities
 from sonolus.script.globals import level_memory
+from sonolus.script.runtime import level_score
 
 from sekai.lib import archetype_names
 from sekai.lib.buckets import init_buckets
@@ -16,11 +17,13 @@ from sekai.lib.layer import (
     get_z,
 )
 from sekai.lib.layout import init_layout
-from sekai.lib.note import init_note_life, init_score
+from sekai.lib.level_config import init_level_config
+from sekai.lib.note import init_life, init_score
+from sekai.lib.options import ConcreteScoreMode, Options, ScoreMode
 from sekai.lib.particle import init_particles
 from sekai.lib.skin import init_skin
 from sekai.lib.ui import init_ui
-from sekai.play import input_manager, note, stage
+from sekai.play import custom_elements, input_manager, note, stage
 from sekai.play.events import Fever, Skill
 
 
@@ -140,7 +143,16 @@ def setting_count(head: int, skill: int) -> None:
     ptr = head
     skill_ptr = skill
     count = 0
+
+    custom_elements.ScoreIndicator.max_score = 1000000
     while ptr > 0:
+        # arcade score = judgmentMultiplier * (consecutiveJudgmentMultiplier + archetypeMultiplier + entityMultiplier)
+        custom_elements.ScoreIndicator.total_weight += level_score().perfect_multiplier * (
+            level_score().consecutive_perfect_cap
+            + note.BaseNote.at(ptr).archetype_score_multiplier
+            + note.BaseNote.at(ptr).entity_score_multiplier
+        )
+
         if skill_ptr > 0 and note.BaseNote.at(ptr).target_time >= Skill.at(skill_ptr).start_time:
             if Skill.at(skill_ptr).effect == SkillEffects.HEAL:
                 life = 200 + (Skill.at(skill_ptr).level * 50)
@@ -152,6 +164,7 @@ def setting_count(head: int, skill: int) -> None:
             skill_ptr = Skill.at(skill_ptr).next_ref.index
         count += 1
         note.BaseNote.at(ptr).count += count
+
         if Fever.fever_chance_time <= note.BaseNote.at(ptr).target_time < Fever.fever_start_time:
             Fever.fever_first_count = (
                 min(note.BaseNote.at(ptr).count, Fever.fever_first_count)
@@ -161,6 +174,12 @@ def setting_count(head: int, skill: int) -> None:
             Fever.fever_last_count = max(note.BaseNote.at(ptr).count, Fever.fever_last_count)
 
         ptr = note.BaseNote.at(ptr).next_ref.index
+
+    if Options.custom_score == 2:
+        custom_elements.ScoreIndicator.score = 100
+    custom_elements.ScoreIndicator.scale_factor = (
+        custom_elements.ScoreIndicator.max_score / custom_elements.ScoreIndicator.total_weight
+    )
 
 
 def count_skill(head: int) -> None:

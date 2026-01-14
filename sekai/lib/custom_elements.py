@@ -92,7 +92,7 @@ def draw_combo_number(draw_time: float, ap: bool, combo: int, z: float, z1: floa
             digit_count=digit_count,
             is_score=False,
         ),
-        design=ScoreDesignConfig(s_int=1, s_dot=1, s_dec=1),
+        design=ScoreDesignConfig(s_int=1, s_dot=1, s_dec=1, g_dec=1),
         common=CommonConfig(
             center_x=screen_center.x,
             center_y=screen_center.y,
@@ -124,7 +124,11 @@ def draw_score_number(ap: bool, score: float, z1: float, z2: float):
     if Options.hide_ui >= 2:
         return
 
-    return
+    if Options.custom_score == 0:
+        return
+
+    if Options.auto_judgment and is_watch() and not is_replay():
+        return
 
     ui = runtime_ui()
 
@@ -146,15 +150,16 @@ def draw_score_number(ap: bool, score: float, z1: float, z2: float):
     digit_gap = w * Options.combo_distance
 
     s_int = 1.0
-    s_dot = 0.2
+    s_dot = 0.5
     s_dec = 0.6
+    g_dec = 0.9
 
     count_large = n_int + 2
     count_dot = 1
     count_small = 3
 
     total_w_factor = (count_large * s_int) + (count_dot * s_dot) + (count_small * s_dec)
-    total_gap_factor = (count_large * s_int) + (count_dot * s_dot) + (count_small * s_dec) - s_dec
+    total_gap_factor = (count_large * s_int) + (count_dot * s_dot) + (count_small * g_dec) - g_dec
 
     total_width = (total_w_factor * w) + (total_gap_factor * digit_gap)
 
@@ -167,7 +172,7 @@ def draw_score_number(ap: bool, score: float, z1: float, z2: float):
             digit_count=digit_count,
             is_score=True,
         ),
-        design=ScoreDesignConfig(s_int=s_int, s_dot=s_dot, s_dec=s_dec),
+        design=ScoreDesignConfig(s_int=s_int, s_dot=s_dot, s_dec=s_dec, g_dec=g_dec),
         common=CommonConfig(
             center_x=screen_center.x,
             center_y=screen_center.y,
@@ -209,6 +214,7 @@ class ScoreDesignConfig(Record):
     s_int: float
     s_dot: float
     s_dec: float
+    g_dec: float
 
 
 class ComboNumberLayout(Record):
@@ -265,12 +271,12 @@ class ComboNumberLayout(Record):
                     decimal_idx = i - n_int
                     digit = floor(self.core.combo_number * (10**decimal_idx)) % 10
                     scale_factor = self.design.s_dec
-                    gap_factor = self.design.s_dec
+                    gap_factor = self.design.g_dec
                     layout_scale_factor = self.design.s_dec
                 elif i == n_int + 5:
                     digit = 11  # Percent(%)
                     scale_factor = self.design.s_dec
-                    gap_factor = self.design.s_dec
+                    gap_factor = self.design.g_dec
                     layout_scale_factor = self.design.s_dec
 
                 layout_w1 = self.layout1.width * layout_scale_factor

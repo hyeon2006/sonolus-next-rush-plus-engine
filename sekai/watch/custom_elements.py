@@ -41,9 +41,10 @@ def spawn_custom(
 
 
 @level_memory
-class ScoreNumber:
-    ap: bool
+class ScoreIndicator:
     score: float
+    ap: bool
+    first: float
 
 
 class ComboJudge(WatchArchetype):
@@ -99,7 +100,12 @@ class ComboJudge(WatchArchetype):
             return
         if Fever.fever_chance_time <= note.WatchBaseNote.at(self.note_index).calc_time < Fever.fever_start_time:
             Fever.fever_chance_current_combo = note.WatchBaseNote.at(self.note_index).count - Fever.fever_first_count
-            self.checker = True
+
+        if Options.custom_score > 0:
+            ScoreIndicator.score = note.WatchBaseNote.at(self.note_index).score
+            ScoreIndicator.ap = note.WatchBaseNote.at(self.note_index).ap
+
+        self.checker = True
 
     def terminate(self):
         self.checker = False

@@ -1,5 +1,5 @@
 from sonolus.script.archetype import WatchArchetype, entity_memory
-from sonolus.script.runtime import is_skip
+from sonolus.script.runtime import is_skip, time
 
 from sekai.lib import archetype_names
 from sekai.lib.custom_elements import draw_score_number
@@ -14,6 +14,7 @@ from sekai.lib.layer import (
     LAYER_STAGE_LANE,
     get_z,
 )
+from sekai.lib.options import Options
 from sekai.lib.stage import draw_stage_and_accessories, play_lane_particle
 from sekai.watch import custom_elements
 
@@ -61,11 +62,19 @@ class WatchStage(WatchArchetype):
             self.z_layer_background_cover,
         )
         draw_score_number(
-            ap=custom_elements.ScoreNumber.ap,
-            score=round(100.0000, 4),
+            ap=custom_elements.ScoreIndicator.ap,
+            score=round(custom_elements.ScoreIndicator.score, 4),
             z1=self.z_layer_score,
             z2=self.z_layer_score_glow,
         )
+
+    def update_sequential(self):
+        if is_skip() and time() < custom_elements.ScoreIndicator.first:
+            if Options.custom_score == 2:
+                custom_elements.ScoreIndicator.score = 100
+            else:
+                custom_elements.ScoreIndicator.score = 0
+            custom_elements.ScoreIndicator.ap = False
 
 
 class WatchScheduledLaneEffect(WatchArchetype):

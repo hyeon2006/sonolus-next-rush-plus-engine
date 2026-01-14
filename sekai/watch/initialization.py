@@ -2,7 +2,8 @@ from sonolus.script.archetype import EntityRef, WatchArchetype, callback, entity
 from sonolus.script.bucket import Judgment
 from sonolus.script.containers import sort_linked_entities
 from sonolus.script.globals import level_memory
-from sonolus.script.runtime import is_replay
+from sonolus.script.interval import clamp
+from sonolus.script.runtime import is_replay, level_score
 
 from sekai.lib import archetype_names
 from sekai.lib.buckets import init_buckets
@@ -18,13 +19,15 @@ from sekai.lib.layer import (
     get_z,
 )
 from sekai.lib.layout import init_layout
-from sekai.lib.note import init_note_life, init_score
+from sekai.lib.level_config import init_level_config
+from sekai.lib.note import init_life, init_score
+from sekai.lib.options import ConcreteScoreMode, Options, ScoreMode
 from sekai.lib.particle import init_particles
 from sekai.lib.skin import init_skin
 from sekai.lib.stage import schedule_lane_sfx
 from sekai.lib.streams import Streams
 from sekai.lib.ui import init_ui
-from sekai.watch import note
+from sekai.watch import custom_elements, note
 from sekai.watch.events import Fever, Skill
 from sekai.watch.stage import WatchScheduledLaneEffect, WatchStage
 
@@ -144,6 +147,7 @@ def setting_combo(head: int, skill: int) -> None:
     ap = False
     accuracy = head
     damage_flash = head
+    total_weight = 0
     while ptr > 0:
         if skill_ptr > 0 and note.WatchBaseNote.at(ptr).target_time >= Skill.at(skill_ptr).start_time:
             if Skill.at(skill_ptr).effect == SkillEffects.HEAL:
@@ -186,6 +190,102 @@ def setting_combo(head: int, skill: int) -> None:
                 else note.WatchBaseNote.at(ptr).count
             )
             Fever.fever_last_count = max(note.WatchBaseNote.at(ptr).count, Fever.fever_last_count)
+
+        total_weight += level_score().perfect_multiplier * (
+            level_score().consecutive_perfect_cap
+            + note.WatchBaseNote.at(ptr).archetype_score_multiplier
+            + note.WatchBaseNote.at(ptr).entity_score_multiplier
+        )
+
+        ptr = note.WatchBaseNote.at(ptr).next_ref.index
+
+    scale_factor = 1000000 / total_weight
+    calculate_score(head, 1000000, scale_factor)
+
+
+def calculate_score(head: int, max_score: int, scale_factor: float):
+    if Options.custom_score == 0:
+        return
+    ptr = head
+    count = 0
+    score = 0
+    if Options.custom_score == 2:
+        score = 100
+        custom_elements.ScoreIndicator.score = 100
+    custom_elements.ScoreIndicator.first = note.WatchBaseNote.at(head).calc_time
+    while ptr > 0:
+        # score = judgmentMultiplier * (consecutiveJudgmentMultiplier + archetypeMultiplier + entityMultiplier)
+        judgment_multiplier = 0
+        consecutive_judgment_multiplier = 0
+        if is_replay():
+            match note.WatchBaseNote.at(ptr).judgment:
+                case Judgment.PERFECT:
+                    judgment_multiplier = level_score().perfect_multiplier
+                    consecutive_judgment_multiplier = min(
+                        level_score().consecutive_perfect_multiplier * level_score().consecutive_perfect_step,
+                        level_score().consecutive_perfect_cap,
+                    )
+                case Judgment.GREAT:
+                    judgment_multiplier = level_score().great_multiplier
+                    consecutive_judgment_multiplier = min(
+                        level_score().consecutive_great_multiplier * level_score().consecutive_great_step,
+                        level_score().consecutive_great_cap,
+                    )
+                case Judgment.GOOD:
+                    judgment_multiplier = level_score().good_multiplier
+                    consecutive_judgment_multiplier = min(
+                        level_score().consecutive_good_multiplier * level_score().consecutive_good_step,
+                        level_score().consecutive_good_cap,
+                    )
+                case Judgment.MISS:
+                    judgment_multiplier = 0
+                    consecutive_judgment_multiplier = 0
+        else:
+            judgment_multiplier = level_score().perfect_multiplier
+            consecutive_judgment_multiplier = min(
+                level_score().consecutive_perfect_multiplier * level_score().consecutive_perfect_step,
+                level_score().consecutive_perfect_cap,
+            )
+        match Options.custom_score:
+            case 1:
+                score += (
+                    (
+                        judgment_multiplier
+                        * (
+                            consecutive_judgment_multiplier
+                            + note.WatchBaseNote.at(ptr).archetype_score_multiplier
+                            + note.WatchBaseNote.at(ptr).entity_score_multiplier
+                        )
+                        * scale_factor
+                    )
+                    / max_score
+                    * 100
+                )
+                note.WatchBaseNote.at(ptr).score = score
+            case 2:
+                score = clamp(
+                    score
+                    - (
+                        (
+                            (level_score().perfect_multiplier - judgment_multiplier)
+                            * (
+                                consecutive_judgment_multiplier
+                                + note.WatchBaseNote.at(ptr).archetype_score_multiplier
+                                + note.WatchBaseNote.at(ptr).entity_score_multiplier
+                            )
+                            * scale_factor
+                        )
+                        / max_score
+                        * 100
+                    ),
+                    0,
+                    100,
+                )
+                note.WatchBaseNote.at(ptr).score = score
+            case 3:
+                count += 1
+                score += (((1 - abs(note.WatchBaseNote.at(ptr).accuracy)) * 100) - score) / count
+                note.WatchBaseNote.at(ptr).score = score
         ptr = note.WatchBaseNote.at(ptr).next_ref.index
 
 

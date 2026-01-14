@@ -1,8 +1,8 @@
 from sonolus.script.archetype import PlayArchetype, callback, entity_memory
 from sonolus.script.bucket import Judgment, JudgmentWindow
 from sonolus.script.globals import level_memory
-from sonolus.script.interval import Interval
-from sonolus.script.runtime import time
+from sonolus.script.interval import Interval, clamp
+from sonolus.script.runtime import level_score, time
 
 from sekai.lib import archetype_names
 from sekai.lib.custom_elements import (
@@ -13,7 +13,7 @@ from sekai.lib.custom_elements import (
     draw_judgment_text,
 )
 from sekai.lib.options import Options
-from sekai.play import initialization
+from sekai.play import initialization, note
 from sekai.play.events import Fever
 
 
@@ -25,8 +25,10 @@ def spawn_custom(
     wrong_way: bool,
     check_pass: bool,
     target_time: float,
+    index: int,
 ):
     ComboJudge.spawn(
+        index=index,
         target_time=target_time,
         spawn_time=time(),
         judgment=judgment,
@@ -53,6 +55,15 @@ class ComboJudgeMemory:
     latest_judge_id: int
 
 
+@level_memory
+class ScoreIndicator:
+    score: float
+    total_weight: float
+    scale_factor: float
+    max_score: int
+    count: int
+
+
 class ComboJudge(PlayArchetype):
     target_time: float = entity_memory()
     spawn_time: float = entity_memory()
@@ -63,6 +74,7 @@ class ComboJudge(PlayArchetype):
     wrong_way: bool = entity_memory()
     check_pass: bool = entity_memory()
     my_judge_id: int = entity_memory()
+    index: int = entity_memory()
 
     check: bool = entity_memory()
     combo: int = entity_memory()
@@ -114,12 +126,80 @@ class ComboJudge(PlayArchetype):
 
         self.check_fever_count()
 
+        self.calculate_score()
+
     def check_fever_count(self):
         if Fever.fever_chance_time <= self.target_time < Fever.fever_start_time:
             if self.judgment in (Judgment.MISS, Judgment.GOOD):
                 Fever.fever_chance_cant_super_fever = True
             else:
                 Fever.fever_chance_current_combo += 1
+
+    def calculate_score(self):
+        if Options.custom_score == 0:
+            return
+        # score = judgmentMultiplier * (consecutiveJudgmentMultiplier + archetypeMultiplier + entityMultiplier)
+        judgment_multiplier = 0
+        consecutive_judgment_multiplier = 0
+        match self.judgment:
+            case Judgment.PERFECT:
+                judgment_multiplier = level_score().perfect_multiplier
+                consecutive_judgment_multiplier = min(
+                    level_score().consecutive_perfect_multiplier * level_score().consecutive_perfect_step,
+                    level_score().consecutive_perfect_cap,
+                )
+            case Judgment.GREAT:
+                judgment_multiplier = level_score().great_multiplier
+                consecutive_judgment_multiplier = min(
+                    level_score().consecutive_great_multiplier * level_score().consecutive_great_step,
+                    level_score().consecutive_great_cap,
+                )
+            case Judgment.GOOD:
+                judgment_multiplier = level_score().good_multiplier
+                consecutive_judgment_multiplier = min(
+                    level_score().consecutive_good_multiplier * level_score().consecutive_good_step,
+                    level_score().consecutive_good_cap,
+                )
+            case Judgment.MISS:
+                judgment_multiplier = 0
+                consecutive_judgment_multiplier = 0
+        match Options.custom_score:
+            case 1:
+                ScoreIndicator.score += (
+                    (
+                        judgment_multiplier
+                        * (
+                            consecutive_judgment_multiplier
+                            + note.BaseNote.at(self.index).archetype_score_multiplier
+                            + note.BaseNote.at(self.index).entity_score_multiplier
+                        )
+                        * ScoreIndicator.scale_factor
+                    )
+                    / ScoreIndicator.max_score
+                    * 100
+                )
+            case 2:
+                ScoreIndicator.score = clamp(
+                    ScoreIndicator.score
+                    - (
+                        (
+                            (level_score().perfect_multiplier - judgment_multiplier)
+                            * (
+                                consecutive_judgment_multiplier
+                                + note.BaseNote.at(self.index).archetype_score_multiplier
+                                + note.BaseNote.at(self.index).entity_score_multiplier
+                            )
+                            * ScoreIndicator.scale_factor
+                        )
+                        / ScoreIndicator.max_score
+                        * 100
+                    ),
+                    0,
+                    100,
+                )
+            case 3:
+                ScoreIndicator.count += 1
+                ScoreIndicator.score += (((1 - abs(self.accuracy)) * 100) - ScoreIndicator.score) / ScoreIndicator.count
 
 
 @level_memory

@@ -81,6 +81,7 @@ class WatchBaseNote(WatchArchetype):
     combo: int = shared_memory()
     count: int = shared_memory()
     ap: bool = shared_memory()
+    score: float = shared_memory()
 
     end_time: float = imported()
     played_hit_effects: bool = imported()

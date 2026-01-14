@@ -218,6 +218,12 @@ class Options:
         scope="Rush",
         default=True,
     )
+    custom_score: int = select_option(
+        name="Using Custom Score Indicator",
+        scope="Rush",
+        default=0,
+        values=["Disable", "Arcade% (+)", "Arcade% (-)", "Accuracy%"],
+    )
     combo_distance: float = slider_option(
         name="Custom Combo Number Distance",
         scope="Rush",

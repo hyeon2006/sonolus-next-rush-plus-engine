@@ -433,6 +433,7 @@ class BaseNote(PlayArchetype):
                 check_pass=self.should_play_hit_effects,
                 wrong_way=self.wrong_way,
                 target_time=self.target_time,
+                index=self.index,
             )
 
     def handle_tap_input(self):
@@ -670,7 +671,7 @@ class BaseNote(PlayArchetype):
 
     def complete_wrong_way(self):
         self.result.judgment = Judgment.GREAT
-        self.result.accuracy = self.judgment_window_bad.end
+        self.result.accuracy = self.judgment_window.good.end
         if self.result.bucket.id != -1:
             self.result.bucket_value = 0
         self.despawn = True
@@ -686,7 +687,7 @@ class BaseNote(PlayArchetype):
 
     def fail_late(self, accuracy: float | None = None):
         if accuracy is None:
-            accuracy = self.judgment_window_bad.end
+            accuracy = self.judgment_window.good.end
         self.result.judgment = Judgment.MISS
         self.result.accuracy = accuracy
         if self.result.bucket.id != -1:
