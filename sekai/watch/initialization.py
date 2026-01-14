@@ -199,7 +199,10 @@ def setting_combo(head: int, skill: int) -> None:
 
         ptr = note.WatchBaseNote.at(ptr).next_ref.index
 
-    scale_factor = 1000000 / total_weight
+    if total_weight == 0:
+        scale_factor = 1000000
+    else:
+        scale_factor = 1000000 / total_weight
     calculate_score(head, 1000000, scale_factor)
 
 
