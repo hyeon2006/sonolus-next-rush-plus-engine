@@ -246,7 +246,7 @@ class Options:
     custom_accuracy: bool = toggle_option(
         name="Late/Fast/Flick",
         scope="Rush",
-        default=True,
+        default=False,
     )
     auto_judgment: bool = toggle_option(
         name="Using Auto Judgment",
