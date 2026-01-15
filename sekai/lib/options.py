@@ -404,7 +404,6 @@ class Options:
         StandardText.MIRROR,
         StandardText.EFFECT,
         StandardText.EFFECT_AUTO,
-        "Effect Duration",
         StandardText.NOTE_EFFECT,
         StandardText.NOTE_EFFECT_SIZE,
         StandardText.MARKER_ANIMATION,
