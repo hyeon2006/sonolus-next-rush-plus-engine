@@ -45,7 +45,7 @@ from sekai.play.note import derive_note_archetypes
 from sekai.watch.custom_elements import spawn_custom
 from sekai.watch.particle_manager import ParticleManager
 
-MIN_START_TIME = 0.0161  # Executes the terminate process with a guaranteed minimum duration.
+MIN_START_TIME = 0.0167  # Executes the terminate process with a guaranteed minimum duration.
 
 
 class WatchBaseNote(WatchArchetype):
