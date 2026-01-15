@@ -298,6 +298,26 @@ class BaseSkin:
     skill_percent: Sprite = sprite("Skill Percent")
     skill_value: Sprite = sprite("Skill Value")
     skill_icon: SpriteGroup = sprite_group(f"Skill Icon {i}" for i in range(1, 6))
+    ui_number: SpriteGroup = sprite_group(f"UI Number {i}" for i in range(12))
+    life_bar_pause: Sprite = sprite("Life Bar Pause")
+    life_bar_skip: Sprite = sprite("Life Bar Skip")
+    life_bar_disable: Sprite = sprite("Life Bar Disable")
+    life_bar_gauge_normal: Sprite = sprite("Life Bar Gauge Normal")
+    life_bar_gauge_danger: Sprite = sprite("Life Bar Gauge Danger")
+    score_bar: Sprite = sprite("Score Bar")
+    score_bar_panel: Sprite = sprite("Score Bar Panel")
+    score_bar_gauge: Sprite = sprite("Score Bar Gauge")
+    score_bar_mask: Sprite = sprite("Score Bar Mask")
+    score_rank_s: Sprite = sprite("Score Rank S")
+    score_rank_a: Sprite = sprite("Score Rank A")
+    score_rank_b: Sprite = sprite("Score Rank B")
+    score_rank_c: Sprite = sprite("Score Rank C")
+    score_rank_d: Sprite = sprite("Score Rank D")
+    score_rank_text_s: Sprite = sprite("Score Rank Text S")
+    score_rank_text_a: Sprite = sprite("Score Rank Text A")
+    score_rank_text_b: Sprite = sprite("Score Rank Text B")
+    score_rank_text_c: Sprite = sprite("Score Rank Text C")
+    score_rank_text_d: Sprite = sprite("Score Rank Text D")
 
 
 EMPTY_SPRITE = Sprite(-1)
@@ -664,6 +684,146 @@ class SkillIconSpriteSet(Record):
         return self.icon[0].is_available
 
 
+class UINumberSpriteSet(Record):
+    ui: SpriteGroup
+
+    def get_sprite(self, number: int):
+        return self.ui[number]
+
+    @property
+    def available(self):
+        return self.ui[0].is_available
+
+
+class LifeBarType(IntEnum):
+    PAUSE = 0
+    SKIP = 1
+    DISABLE = 2
+
+
+class LifeBarSpriteSet(Record):
+    pause: Sprite
+    skip: Sprite
+    disable: Sprite
+
+    def get_sprite(self, bar_type: LifeBarType):
+        result = +Sprite
+        match bar_type:
+            case LifeBarType.PAUSE:
+                result = self.pause
+            case LifeBarType.SKIP:
+                result = self.skip
+            case LifeBarType.DISABLE:
+                result = self.disable
+            case _:
+                assert_never(bar_type)
+        return result
+
+    @property
+    def available(self):
+        return self.pause.is_available
+
+
+class LifeGaugeType(IntEnum):
+    NORMAL = 0
+    DANGER = 1
+
+
+class LifeGaugeSpriteSet(Record):
+    normal: Sprite
+    danger: Sprite
+
+    def get_sprite(self, gauge_type: LifeGaugeType):
+        result = +Sprite
+        match gauge_type:
+            case LifeGaugeType.NORMAL:
+                result = self.normal
+            case LifeGaugeType.DANGER:
+                result = self.danger
+            case _:
+                assert_never(gauge_type)
+        return result
+
+    @property
+    def available(self):
+        return self.normal.is_available
+
+
+class LifeSpriteSet(Record):
+    bar: LifeBarSpriteSet
+    gauge: LifeGaugeSpriteSet
+
+
+class ScoreSpriteSet(Record):
+    bar: Sprite
+    panel: Sprite
+    gauge: ScoreGaugeSpriteSet
+    rank: ScoreRankSpriteSet
+    rank_text: ScoreRankSpriteSet
+
+
+class ScoreGaugeType(IntEnum):
+    NORMAL = 0
+    MASK = 1
+
+
+class ScoreGaugeSpriteSet(Record):
+    normal: Sprite
+    mask: Sprite
+
+    def get_sprite(self, gauge_type: ScoreGaugeType):
+        result = +Sprite
+        match gauge_type:
+            case ScoreGaugeType.NORMAL:
+                result = self.normal
+            case ScoreGaugeType.MASK:
+                result = self.mask
+            case _:
+                assert_never(gauge_type)
+        return result
+
+    @property
+    def available(self):
+        return self.normal.is_available
+
+
+class ScoreRankType(IntEnum):
+    S = 0
+    A = 1
+    B = 2
+    C = 3
+    D = 4
+
+
+class ScoreRankSpriteSet(Record):
+    s: Sprite
+    a: Sprite
+    b: Sprite
+    c: Sprite
+    d: Sprite
+
+    def get_sprite(self, score_type: ScoreRankType):
+        result = +Sprite
+        match score_type:
+            case ScoreRankType.S:
+                result = self.s
+            case ScoreRankType.A:
+                result = self.a
+            case ScoreRankType.B:
+                result = self.b
+            case ScoreRankType.C:
+                result = self.c
+            case ScoreRankType.D:
+                result = self.d
+            case _:
+                assert_never(score_type)
+        return result
+
+    @property
+    def available(self):
+        return self.s.is_available
+
+
 class NoteSpriteSet(Record):
     body: BodySpriteSet
     arrow: ArrowSpriteSet
@@ -981,6 +1141,26 @@ slot_glow_critical_down_flick_sprites = SlotGlowSpriteSet(
     great=BaseSkin.slot_glow_critical_down_flick,
     good=BaseSkin.slot_glow_critical_down_flick,
 )
+life_bar = LifeBarSpriteSet(
+    pause=BaseSkin.life_bar_pause, skip=BaseSkin.life_bar_skip, disable=BaseSkin.life_bar_disable
+)
+life_gauge = LifeGaugeSpriteSet(normal=BaseSkin.life_bar_gauge_normal, danger=BaseSkin.life_bar_gauge_danger)
+score_gauge = ScoreGaugeSpriteSet(normal=BaseSkin.score_bar_gauge, mask=BaseSkin.score_bar_mask)
+score_rank = ScoreRankSpriteSet(s=BaseSkin)
+score_rank = ScoreRankSpriteSet(
+    s=BaseSkin.score_rank_s,
+    a=BaseSkin.score_rank_a,
+    b=BaseSkin.score_rank_b,
+    c=BaseSkin.score_rank_c,
+    d=BaseSkin.score_rank_d,
+)
+score_rank_text = ScoreRankSpriteSet(
+    s=BaseSkin.score_rank_text_s,
+    a=BaseSkin.score_rank_text_a,
+    b=BaseSkin.score_rank_text_b,
+    c=BaseSkin.score_rank_text_c,
+    d=BaseSkin.score_rank_text_d,
+)
 
 
 @level_data
@@ -1051,6 +1231,9 @@ class ActiveSkin:
     skill_percent: Sprite
     skill_value: Sprite
     skill_icon: SkillIconSpriteSet
+    ui_number: UINumberSpriteSet
+    life: LifeSpriteSet
+    score: ScoreSpriteSet
 
 
 def init_skin():
@@ -1482,3 +1665,12 @@ def init_skin():
     ActiveSkin.skill_level = BaseSkin.skill_level
     ActiveSkin.skill_percent = BaseSkin.skill_percent
     ActiveSkin.skill_value = BaseSkin.skill_value
+    ActiveSkin.ui_number = UINumberSpriteSet(ui=BaseSkin.ui_number)
+    ActiveSkin.life = LifeSpriteSet(bar=life_bar, gauge=life_gauge)
+    ActiveSkin.score = ScoreSpriteSet(
+        bar=BaseSkin.score_bar,
+        panel=BaseSkin.score_bar_panel,
+        gauge=score_gauge,
+        rank=score_rank,
+        rank_text=score_rank_text,
+    )
