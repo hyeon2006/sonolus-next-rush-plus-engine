@@ -259,6 +259,16 @@ class Options:
         scope="Rush",
         default=True,
     )
+    custom_life_bar: bool = toggle_option(
+        name="Using Custom Life Bar",
+        scope="Rush",
+        default=True,
+    )
+    custom_score_bar: bool = toggle_option(
+        name="Using Custom Score Bar",
+        scope="Rush",
+        default=True,
+    )
     custom_tag: bool = toggle_option(
         name="Using Custom Tag",
         description="Play special tags like Auto Live while Watch mode",
