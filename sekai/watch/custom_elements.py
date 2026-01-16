@@ -110,7 +110,7 @@ class ComboJudge(WatchArchetype):
             ScoreIndicator.score = note.WatchBaseNote.at(self.note_index).score
             ScoreIndicator.ap = note.WatchBaseNote.at(self.note_index).ap
         if Options.custom_life_bar:
-            LifeManager.life = note.WatchBaseNote.at(self.note_index).life
+            LifeManager.life = note.WatchBaseNote.at(self.note_index).display_life
 
         self.checker = True
 

@@ -202,6 +202,7 @@ def setting_combo(head: int, skill: int) -> None:
             + note.WatchBaseNote.at(ptr).entity_score_multiplier
         )
 
+        LastNote.last_time = max(LastNote.last_time, note.BaseNote.at(ptr).calc_time)
         ptr = note.WatchBaseNote.at(ptr).next_ref.index
 
     if total_weight == 0:
@@ -328,7 +329,7 @@ def calculate_score(head: int, max_score: int, scale_factor: float):
                     + note.WatchBaseNote.at(ptr).entity_life.perfect_increment
                 )
             life = clamp(life, 0, 2000)
-            note.WatchBaseNote.at(ptr).life = life
+            note.WatchBaseNote.at(ptr).display_life = life
 
         ptr = note.WatchBaseNote.at(ptr).next_ref.index
 
