@@ -745,6 +745,10 @@ class LifeSpriteSet(Record):
     bar: LifeBarSpriteSet
     gauge: LifeGaugeSpriteSet
 
+    @property
+    def available(self):
+        return self.bar.available
+
 
 class ScoreGaugeType(IntEnum):
     NORMAL = 0
@@ -814,6 +818,10 @@ class ScoreSpriteSet(Record):
     gauge: ScoreGaugeSpriteSet
     rank: ScoreRankSpriteSet
     rank_text: ScoreRankSpriteSet
+
+    @property
+    def available(self):
+        return self.bar.is_available
 
 
 class NoteSpriteSet(Record):
