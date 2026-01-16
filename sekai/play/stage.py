@@ -36,6 +36,7 @@ class Stage(PlayArchetype):
     z_layer_stage_cover: float = entity_memory()
     z_layer_score: float = entity_memory()
     z_layer_score_glow: float = entity_memory()
+    z_layer_background: float = entity_memory()
     total_hitbox: Rect = entity_memory()
     w_scale: float = entity_memory()
 
