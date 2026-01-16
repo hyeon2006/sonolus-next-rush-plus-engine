@@ -1,4 +1,4 @@
-from math import cos, floor, log, pi
+from math import cos, floor, pi
 
 from sonolus.script.bucket import Judgment, JudgmentWindow
 from sonolus.script.interval import Interval, unlerp, unlerp_clamped
@@ -55,7 +55,14 @@ def draw_combo_number(draw_time: float, ap: bool, combo: int, z: float, z1: floa
 
     ui = runtime_ui()
 
-    digit_count = 1 if combo == 0 else floor(log(combo, 10)) + 1  # noqa: FURB163
+    if combo == 0:
+        digit_count = 1
+    else:
+        digit_count = 0
+        temp_n = combo
+        while temp_n > 0:
+            temp_n = temp_n // 10
+            digit_count += 1
 
     screen_center = Vec2(x=5.337, y=0.585)
 
@@ -132,7 +139,14 @@ def draw_score_number(ap: bool, score: float, z1: float, z2: float):
 
     ui = runtime_ui()
 
-    n_int = 1 if score < 1 else floor(log(score, 10)) + 1  # noqa: FURB163
+    if score == 0:
+        n_int = 1
+    else:
+        n_int = 0
+        temp_n = score
+        while temp_n > 0:
+            temp_n = temp_n // 10
+            n_int += 1
     digit_count = n_int + 6
 
     screen_center = Vec2(x=5.337, y=0.39)
