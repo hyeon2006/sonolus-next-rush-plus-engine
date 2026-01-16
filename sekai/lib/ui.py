@@ -83,7 +83,7 @@ def init_ui():
         background=True,
     )
     ui.primary_metric_bar.update(
-        anchor=box.tl,
+        anchor=box.tl + custom_life_bar_margin,
         pivot=Vec2(0, 1),
         dimensions=Vec2(0.75, 0.15) * ui.primary_metric_config.scale,
         alpha=ui.primary_metric_config.alpha * show_ui * custom_score_bar,
@@ -91,7 +91,7 @@ def init_ui():
         background=True,
     )
     ui.primary_metric_value.update(
-        anchor=box.tl + Vec2(0.715, -0.035) * ui.primary_metric_config.scale,
+        anchor=box.tl + custom_life_bar_margin + Vec2(0.715, -0.035) * ui.primary_metric_config.scale,
         pivot=Vec2(1, 1),
         dimensions=Vec2(0, 0.08) * ui.primary_metric_config.scale,
         alpha=ui.primary_metric_config.alpha * show_ui * custom_score_bar,
