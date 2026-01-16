@@ -1,6 +1,6 @@
 from math import cos, pi
 
-from sonolus.script.runtime import is_multiplayer, is_replay, is_watch, time
+from sonolus.script.runtime import is_multiplayer, is_play, is_replay, is_watch, time
 
 from sekai.lib.custom_elements import draw_life_number, draw_score_number
 from sekai.lib.effect import SFX_DISTANCE, Effects
@@ -135,7 +135,7 @@ def draw_life_bar(life, z_layer_score, z_layer_score_glow, last_time):
     bar_layout = layout_life_bar()
     if is_multiplayer():
         ActiveSkin.life.bar.disable.draw(bar_layout, z=z_layer_score)
-    elif last_time < time():
+    elif last_time < time() and is_play():
         ActiveSkin.life.bar.skip.draw(bar_layout, z=z_layer_score)
     else:
         ActiveSkin.life.bar.pause.draw(bar_layout, z=z_layer_score)
