@@ -85,8 +85,8 @@ def draw_combo_number(draw_time: float, ap: bool, combo: int, z: float, z1: floa
     h, w = transform_fixed_size(base_h, base_w)
     h2, w2 = transform_fixed_size(base_h2, base_w2)
 
-    digit_gap = w * Options.combo_distance
-    digit_gap2 = w2 * Options.combo_distance
+    digit_gap = w * (0.24 + Options.combo_distance)
+    digit_gap2 = w2 * (0.24 + Options.combo_distance)
     total_width = digit_count * w + (digit_count - 1) * digit_gap
     total_width2 = digit_count * w2 + (digit_count - 1) * digit_gap2
     start_x = screen_center.x - total_width / 2
@@ -161,7 +161,7 @@ def draw_score_number(ap: bool, score: float, z1: float, z2: float):
 
     h, w = transform_fixed_size(base_h, base_w)
 
-    digit_gap = w * Options.combo_distance
+    digit_gap = w * (0.24 + Options.combo_distance)
 
     s_int = 1.0
     s_dot = 0.5

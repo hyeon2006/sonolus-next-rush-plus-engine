@@ -228,9 +228,9 @@ class Options:
         name="Custom Combo Number Distance",
         scope="Rush",
         advanced=True,
-        default=0.24,
-        min=-0.5,
-        max=0.5,
+        default=0,
+        min=-0.25,
+        max=0.25,
         step=0.01,
     )
     ap_effect: bool = toggle_option(
