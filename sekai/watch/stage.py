@@ -2,7 +2,6 @@ from sonolus.script.archetype import WatchArchetype, entity_memory
 from sonolus.script.runtime import is_skip, time
 
 from sekai.lib import archetype_names
-from sekai.lib.custom_elements import draw_score_number
 from sekai.lib.layer import (
     LAYER_BACKGROUND_COVER,
     LAYER_COVER,
@@ -60,12 +59,10 @@ class WatchStage(WatchArchetype):
             self.z_layer_cover_line,
             self.z_layer_judgment,
             self.z_layer_background_cover,
-        )
-        draw_score_number(
-            ap=custom_elements.ScoreIndicator.ap,
-            score=round(custom_elements.ScoreIndicator.score, 4),
-            z1=self.z_layer_score,
-            z2=self.z_layer_score_glow,
+            self.z_layer_score,
+            self.z_layer_score_glow,
+            custom_elements.ScoreIndicator.ap,
+            custom_elements.ScoreIndicator.score,
         )
 
     def update_sequential(self):

@@ -2,6 +2,7 @@ from math import cos, pi
 
 from sonolus.script.runtime import is_replay, is_watch, time
 
+from sekai.lib.custom_elements import draw_score_number
 from sekai.lib.effect import SFX_DISTANCE, Effects
 from sekai.lib.layout import (
     layout_background_cover,
@@ -20,12 +21,29 @@ from sekai.lib.skin import ActiveSkin
 
 
 def draw_stage_and_accessories(
-    z_stage_lane, z_stage_cover, z_stage, z_judgment_line, z_cover, z_cover_line, z_judgment, z_background_cover
+    z_stage_lane,
+    z_stage_cover,
+    z_stage,
+    z_judgment_line,
+    z_cover,
+    z_cover_line,
+    z_judgment,
+    z_background_cover,
+    z_layer_score,
+    z_layer_score_glow,
+    ap,
+    score,
 ):
     draw_stage(z_stage_lane, z_stage_cover, z_stage, z_judgment_line)
     draw_stage_cover(z_cover, z_cover_line)
     draw_auto_play(z_judgment)
     draw_background_cover(z_background_cover)
+    draw_score_number(
+        ap=ap,
+        score=round(score, 4),
+        z1=z_layer_score,
+        z2=z_layer_score_glow,
+    )
 
 
 def draw_stage(z_stage_lane, z_stage_cover, z_stage, z_judgment_line):
