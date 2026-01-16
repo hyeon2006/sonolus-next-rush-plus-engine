@@ -325,9 +325,9 @@ def layout_life_bar() -> Quad:
     h = 0.196 * ui.secondary_metric_config.scale * scale_ratio
     w = 0.827 * ui.secondary_metric_config.scale * scale_ratio
 
-    right_margin = 0.2398
+    RIGHT_MARGIN = 0.2398  # noqa: N806
 
-    screen_center = Vec2(x=screen().r - right_margin - (w / 2), y=0.887)
+    screen_center = Vec2(x=screen().r - RIGHT_MARGIN - (w / 2), y=0.887)
     return Quad(
         bl=Vec2(screen_center.x - w / 2, screen_center.y - h / 2),
         br=Vec2(screen_center.x + w / 2, screen_center.y - h / 2),
@@ -340,13 +340,13 @@ def layout_life_gauge(life) -> Quad:
     ui = runtime_ui()
 
     scale_ratio = min(1, aspect_ratio() / (16 / 9))
-    right_margin = 0.2398
+    RIGHT_MARGIN = 0.2398  # noqa: N806
     margin_offset = 0.121
     bar_base_w = 0.827
     final_scale = ui.secondary_metric_config.scale * scale_ratio
     current_bar_w = bar_base_w * final_scale
 
-    bar_center_x = screen().r - right_margin - (current_bar_w / 2)
+    bar_center_x = screen().r - RIGHT_MARGIN - (current_bar_w / 2)
     number_center_x = bar_center_x + (margin_offset * final_scale)
 
     screen_center = Vec2(x=number_center_x - (current_bar_w / 2), y=0.88)

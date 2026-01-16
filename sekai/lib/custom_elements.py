@@ -476,13 +476,13 @@ def draw_life_number(number: int, z: float):
             digit_count += 1
 
     scale_ratio = min(1, aspect_ratio() / (16 / 9))
-    right_margin = 0.2398
-    margin_offset = 0.52
+    RIGHT_MARGIN = 0.2398  # noqa: N806
+    margin_offset = 0.61
     bar_base_w = 0.827
     final_scale = ui.secondary_metric_config.scale * scale_ratio
     current_bar_w = bar_base_w * final_scale
 
-    bar_center_x = screen().r - right_margin - (current_bar_w / 2)
+    bar_center_x = screen().r - RIGHT_MARGIN - (current_bar_w / 2)
     number_center_x = bar_center_x + (margin_offset * final_scale)
 
     screen_center = Vec2(x=number_center_x - (current_bar_w / 2), y=0.93014)
@@ -491,21 +491,14 @@ def draw_life_number(number: int, z: float):
     w = 0.04389 * ui.secondary_metric_config.scale * scale_ratio
 
     digit_gap = w * (-0.04 + Options.combo_distance)
-    total_width = digit_count * w + (digit_count - 1) * digit_gap
-    start_x = screen_center.x - total_width / 2
 
     drawing_ui = UILayout(
-        core=UICoreConfig(number, digit_count, mode=0),
+        core=UICoreConfig(number, digit_count, mode=UIMode.LIFE),
         common=CommonConfig(
             center_x=screen_center.x,
             center_y=screen_center.y,
         ),
-        layout=UILayoutConfig(
-            width=w,
-            gap=digit_gap,
-            height=h,
-            start_x=start_x,
-        ),
+        layout=UILayoutConfig(width=w, gap=digit_gap, height=h, start_x=screen_center.x, alignment=UIAlignment.RIGHT),
     )
     drawing_ui.draw_number(z=z)
 
@@ -514,6 +507,12 @@ class UIMode(IntEnum):
     LIFE = 0
     SCORE_BAR = 1
     SCORE_ADD = 2
+
+
+class UIAlignment(IntEnum):
+    LEFT = 0
+    RIGHT = 1
+    CENTER = 2
 
 
 class UICoreConfig(Record):
@@ -527,6 +526,7 @@ class UILayoutConfig(Record):
     gap: float
     height: float
     start_x: float
+    alignment: int
 
 
 class UILayout(Record):
@@ -545,13 +545,24 @@ class UILayout(Record):
     def draw_number(self, z):
         s_inv = 0
 
-        loop_count = self.core.digit_count
+        item_count = self.core.digit_count
         if self.core.mode == UIMode.SCORE_BAR:
-            loop_count = 7
+            item_count = 7
         elif self.core.mode == UIMode.SCORE_ADD:
-            loop_count = self.core.digit_count + 1
+            item_count = self.core.digit_count + 1
 
-        for i in range(loop_count):
+        total_width = 0
+        if item_count > 0:
+            total_width = item_count * self.layout.width + (item_count - 1) * self.layout.gap
+
+        base_x = self.layout.start_x
+
+        if self.layout.alignment == UIAlignment.RIGHT:
+            base_x = self.layout.start_x - total_width
+        elif self.layout.alignment == UIAlignment.CENTER:
+            base_x = self.layout.start_x - total_width / 2
+
+        for i in range(item_count):
             digit = 0
 
             if self.core.mode == UIMode.SCORE_BAR:
@@ -574,7 +585,7 @@ class UILayout(Record):
 
             final_draw_w = self.layout.width
 
-            digit_center_x = self.layout.start_x + (i * (self.layout.width + self.layout.gap)) + self.layout.width / 2
+            digit_center_x = base_x + (i * (self.layout.width + self.layout.gap)) + self.layout.width / 2
 
             unscaled_t = self.common.center_y - self.layout.height / 2
             unscaled_b = self.common.center_y + self.layout.height / 2
