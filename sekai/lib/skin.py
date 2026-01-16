@@ -754,14 +754,6 @@ class LifeSpriteSet(Record):
     gauge: LifeGaugeSpriteSet
 
 
-class ScoreSpriteSet(Record):
-    bar: Sprite
-    panel: Sprite
-    gauge: ScoreGaugeSpriteSet
-    rank: ScoreRankSpriteSet
-    rank_text: ScoreRankSpriteSet
-
-
 class ScoreGaugeType(IntEnum):
     NORMAL = 0
     MASK = 1
@@ -822,6 +814,14 @@ class ScoreRankSpriteSet(Record):
     @property
     def available(self):
         return self.s.is_available
+
+
+class ScoreSpriteSet(Record):
+    bar: Sprite
+    panel: Sprite
+    gauge: ScoreGaugeSpriteSet
+    rank: ScoreRankSpriteSet
+    rank_text: ScoreRankSpriteSet
 
 
 class NoteSpriteSet(Record):
@@ -1146,7 +1146,6 @@ life_bar = LifeBarSpriteSet(
 )
 life_gauge = LifeGaugeSpriteSet(normal=BaseSkin.life_bar_gauge_normal, danger=BaseSkin.life_bar_gauge_danger)
 score_gauge = ScoreGaugeSpriteSet(normal=BaseSkin.score_bar_gauge, mask=BaseSkin.score_bar_mask)
-score_rank = ScoreRankSpriteSet(s=BaseSkin)
 score_rank = ScoreRankSpriteSet(
     s=BaseSkin.score_rank_s,
     a=BaseSkin.score_rank_a,
