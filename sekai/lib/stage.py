@@ -1,8 +1,8 @@
 from math import cos, pi
 
-from sonolus.script.runtime import is_replay, is_watch, time
+from sonolus.script.runtime import is_multiplayer, is_replay, is_watch, time
 
-from sekai.lib.custom_elements import draw_score_number
+from sekai.lib.custom_elements import draw_life_number, draw_score_number
 from sekai.lib.effect import SFX_DISTANCE, Effects
 from sekai.lib.layout import (
     layout_background_cover,
@@ -11,6 +11,8 @@ from sekai.lib.layout import (
     layout_hidden_cover,
     layout_lane,
     layout_lane_by_edges,
+    layout_life_bar,
+    layout_life_gauge,
     layout_sekai_stage,
     layout_stage_cover,
     layout_stage_cover_line,
@@ -31,19 +33,24 @@ def draw_stage_and_accessories(
     z_background_cover,
     z_layer_score,
     z_layer_score_glow,
+    z_layer_background,
     ap,
     score,
+    life=1000,
+    last_time=1e8,
 ):
     draw_stage(z_stage_lane, z_stage_cover, z_stage, z_judgment_line)
     draw_stage_cover(z_cover, z_cover_line)
     draw_auto_play(z_judgment)
     draw_background_cover(z_background_cover)
+    draw_dead(z_layer_background, life)
     draw_score_number(
         ap=ap,
         score=round(score, 4),
         z1=z_layer_score,
         z2=z_layer_score_glow,
     )
+    draw_life_bar(life, z_layer_score, z_layer_score_glow, last_time)
 
 
 def draw_stage(z_stage_lane, z_stage_cover, z_stage, z_judgment_line):
@@ -99,11 +106,41 @@ def draw_background_cover(z_background_cover):
         ActiveSkin.background.draw(layout, z=z_background_cover, a=1 - Options.background_alpha)
 
 
+def draw_dead(z_background, life):
+    if life == 0:
+        layout = layout_background_cover()
+        ActiveSkin.background.draw(layout, z=z_background, a=0.3)
+
+
 def draw_auto_play(z_judgment):
     if Options.custom_tag and is_watch() and not is_replay() and Options.hide_ui < 2:
         layout = layout_custom_tag()
         a = 0.8 * (cos(time() * pi) + 1) / 2
         ActiveSkin.auto_live.draw(layout, z=z_judgment, a=a)
+
+
+def draw_life_bar(life, z_layer_score, z_layer_score_glow, last_time):
+    if Options.hide_ui >= 2:
+        return
+    if not ActiveSkin.ui_number.available:
+        return
+    if not Options.custom_life_bar:
+        return
+    if not ActiveSkin.life.bar.available:
+        return
+    draw_life_number(
+        life,
+        z_layer_score_glow,
+    )
+    bar_layout = layout_life_bar()
+    if is_multiplayer():
+        ActiveSkin.life.bar.disable.draw(bar_layout, z=z_layer_score)
+    elif last_time < time():
+        ActiveSkin.life.bar.skip.draw(bar_layout, z=z_layer_score)
+    else:
+        ActiveSkin.life.bar.pause.draw(bar_layout, z=z_layer_score)
+    gauge_layout = layout_life_gauge(life)
+    ActiveSkin.life.gauge.get_sprite(life).draw(gauge_layout, z_layer_score_glow)
 
 
 def play_lane_hit_effects(lane: float):

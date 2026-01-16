@@ -70,12 +70,14 @@ def init_ui():
     custom_combo_label = not Options.custom_combo or not ActiveSkin.combo_label.available
     custom_combo_number = not Options.custom_combo or not ActiveSkin.combo_number.available
     custom_judgment = not Options.custom_judgment or not ActiveSkin.judgment.available
+    custom_life_bar = not Options.custom_life_bar
+    custom_score_bar = not Options.custom_score_bar
 
     ui.menu.update(
-        anchor=box.tr,
+        anchor=box.tr - Vec2(0.2, 0),
         pivot=Vec2(1, 1),
         dimensions=Vec2(0.15, 0.15) * ui.menu_config.scale,
-        alpha=ui.menu_config.alpha * show_ui,
+        alpha=ui.menu_config.alpha * show_ui * custom_life_bar,
         horizontal_align=HorizontalAlign.CENTER,
         background=True,
     )
@@ -83,7 +85,7 @@ def init_ui():
         anchor=box.tl,
         pivot=Vec2(0, 1),
         dimensions=Vec2(0.75, 0.15) * ui.primary_metric_config.scale,
-        alpha=ui.primary_metric_config.alpha * show_ui,
+        alpha=ui.primary_metric_config.alpha * show_ui * custom_score_bar,
         horizontal_align=HorizontalAlign.LEFT,
         background=True,
     )
@@ -91,26 +93,27 @@ def init_ui():
         anchor=box.tl + Vec2(0.715, -0.035) * ui.primary_metric_config.scale,
         pivot=Vec2(1, 1),
         dimensions=Vec2(0, 0.08) * ui.primary_metric_config.scale,
-        alpha=ui.primary_metric_config.alpha * show_ui,
+        alpha=ui.primary_metric_config.alpha * show_ui * custom_score_bar,
         horizontal_align=HorizontalAlign.RIGHT,
         background=False,
     )
     ui.secondary_metric_bar.update(
-        anchor=box.tr - Vec2(gap, 0) - Vec2(0.15, 0) * ui.menu_config.scale,
+        anchor=box.tr - Vec2(gap, 0) - Vec2(0.2, 0) - Vec2(0.15, 0) * ui.menu_config.scale,
         pivot=Vec2(1, 1),
         dimensions=Vec2(0.55, 0.15) * ui.secondary_metric_config.scale,
-        alpha=ui.secondary_metric_config.alpha * show_ui,
+        alpha=ui.secondary_metric_config.alpha * show_ui * custom_life_bar,
         horizontal_align=HorizontalAlign.LEFT,
         background=True,
     )
     ui.secondary_metric_value.update(
         anchor=box.tr
         - Vec2(gap, 0)
+        - Vec2(0.2, 0)
         - Vec2(0.15, 0) * ui.menu_config.scale
         - Vec2(0.035, 0.035) * ui.secondary_metric_config.scale,
         pivot=Vec2(1, 1),
         dimensions=Vec2(0, 0.08) * ui.secondary_metric_config.scale,
-        alpha=ui.secondary_metric_config.alpha * show_ui,
+        alpha=ui.secondary_metric_config.alpha * show_ui * custom_life_bar,
         horizontal_align=HorizontalAlign.RIGHT,
         background=False,
     )

@@ -64,6 +64,11 @@ class ScoreIndicator:
     count: int
 
 
+@level_memory
+class LifeManager:
+    life: int
+
+
 class ComboJudge(PlayArchetype):
     target_time: float = entity_memory()
     spawn_time: float = entity_memory()
@@ -127,6 +132,8 @@ class ComboJudge(PlayArchetype):
         self.check_fever_count()
 
         self.calculate_score()
+
+        self.calculate_life()
 
     def check_fever_count(self):
         if Fever.fever_chance_time <= self.target_time < Fever.fever_start_time:
@@ -205,6 +212,34 @@ class ComboJudge(PlayArchetype):
             case 3:
                 ScoreIndicator.count += 1
                 ScoreIndicator.score += (((1 - abs(self.accuracy)) * 100) - ScoreIndicator.score) / ScoreIndicator.count
+
+    def calculate_life(self):
+        if not Options.custom_life_bar:
+            return
+        if LifeManager.life == 0:
+            return
+        match self.judgment:
+            case Judgment.PERFECT:
+                LifeManager.life += (
+                    note.BaseNote.at(self.index).archetype_life.perfect_increment
+                    + note.BaseNote.at(self.index).entity_life.perfect_increment
+                )
+            case Judgment.GREAT:
+                LifeManager.life += (
+                    note.BaseNote.at(self.index).archetype_life.great_increment
+                    + note.BaseNote.at(self.index).entity_life.great_increment
+                )
+            case Judgment.GOOD:
+                LifeManager.life += (
+                    note.BaseNote.at(self.index).archetype_life.good_increment
+                    + note.BaseNote.at(self.index).entity_life.good_increment
+                )
+            case Judgment.MISS:
+                LifeManager.life += (
+                    note.BaseNote.at(self.index).archetype_life.miss_increment
+                    + note.BaseNote.at(self.index).entity_life.miss_increment
+                )
+        LifeManager.life = clamp(LifeManager.life, 0, 2000)
 
 
 @level_memory

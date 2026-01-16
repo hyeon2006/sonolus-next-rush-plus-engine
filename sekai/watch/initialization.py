@@ -1,7 +1,7 @@
 from sonolus.script.archetype import EntityRef, WatchArchetype, callback, entity_info_at, imported
 from sonolus.script.bucket import Judgment
 from sonolus.script.containers import sort_linked_entities
-from sonolus.script.globals import level_memory
+from sonolus.script.globals import level_data, level_memory
 from sonolus.script.interval import clamp
 from sonolus.script.runtime import is_replay, level_score
 
@@ -43,6 +43,11 @@ class LayerCache:
     fever_chance_gauge: float
     skill_bar: float
     skill_etc: float
+
+
+@level_data
+class LastNote:
+    last_time: float
 
 
 class WatchInitialization(WatchArchetype):
@@ -207,11 +212,10 @@ def setting_combo(head: int, skill: int) -> None:
 
 
 def calculate_score(head: int, max_score: int, scale_factor: float):
-    if Options.custom_score == 0:
-        return
     ptr = head
     count = 0
     score = 0
+    life = 1000
     if Options.custom_score == 2:
         score = 100
         custom_elements.ScoreIndicator.score = 100
@@ -294,6 +298,38 @@ def calculate_score(head: int, max_score: int, scale_factor: float):
                 count += 1
                 score += (((1 - abs(note.WatchBaseNote.at(ptr).accuracy)) * 100) - score) / count
                 note.WatchBaseNote.at(ptr).score = score
+
+        if life != 0:
+            if is_replay():
+                match note.WatchBaseNote.at(ptr).judgment:
+                    case Judgment.PERFECT:
+                        life += (
+                            note.WatchBaseNote.at(ptr).archetype_life.perfect_increment
+                            + note.WatchBaseNote.at(ptr).entity_life.perfect_increment
+                        )
+                    case Judgment.GREAT:
+                        life += (
+                            note.WatchBaseNote.at(ptr).archetype_life.great_increment
+                            + note.WatchBaseNote.at(ptr).entity_life.great_increment
+                        )
+                    case Judgment.GOOD:
+                        life += (
+                            note.WatchBaseNote.at(ptr).archetype_life.good_increment
+                            + note.WatchBaseNote.at(ptr).entity_life.good_increment
+                        )
+                    case Judgment.MISS:
+                        life += (
+                            note.WatchBaseNote.at(ptr).archetype_life.miss_increment
+                            + note.WatchBaseNote.at(ptr).entity_life.miss_increment
+                        )
+            else:
+                life += (
+                    note.WatchBaseNote.at(ptr).archetype_life.perfect_increment
+                    + note.WatchBaseNote.at(ptr).entity_life.perfect_increment
+                )
+            life = clamp(life, 0, 2000)
+            note.WatchBaseNote.at(ptr).life = life
+
         ptr = note.WatchBaseNote.at(ptr).next_ref.index
 
 

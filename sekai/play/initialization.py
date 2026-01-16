@@ -1,6 +1,6 @@
 from sonolus.script.archetype import EntityRef, PlayArchetype, callback, entity_info_at, imported
 from sonolus.script.containers import sort_linked_entities
-from sonolus.script.globals import level_memory
+from sonolus.script.globals import level_data, level_memory
 from sonolus.script.runtime import level_score
 
 from sekai.lib import archetype_names
@@ -38,6 +38,11 @@ class LayerCache:
     fever_chance_gauge: float
     skill_bar: float
     skill_etc: float
+
+
+@level_data
+class LastNote:
+    last_time: float
 
 
 class Initialization(PlayArchetype):
@@ -173,6 +178,7 @@ def setting_count(head: int, skill: int) -> None:
             )
             Fever.fever_last_count = max(note.BaseNote.at(ptr).count, Fever.fever_last_count)
 
+        LastNote.last_time = max(LastNote.last_time, note.BaseNote.at(ptr).calc_time)
         ptr = note.BaseNote.at(ptr).next_ref.index
 
     if Options.custom_score == 2:
@@ -180,6 +186,8 @@ def setting_count(head: int, skill: int) -> None:
     custom_elements.ScoreIndicator.scale_factor = (
         custom_elements.ScoreIndicator.max_score / custom_elements.ScoreIndicator.total_weight
     )
+
+    custom_elements.LifeManager.life = 1000
 
 
 def count_skill(head: int) -> None:

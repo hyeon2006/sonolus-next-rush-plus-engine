@@ -1,12 +1,19 @@
+from enum import IntEnum
 from math import cos, floor, pi
 
 from sonolus.script.bucket import Judgment, JudgmentWindow
 from sonolus.script.interval import Interval, unlerp, unlerp_clamped
 from sonolus.script.record import Record
-from sonolus.script.runtime import is_replay, is_watch, runtime_ui, screen, time
+from sonolus.script.runtime import aspect_ratio, is_replay, is_watch, runtime_ui, screen, time
 from sonolus.script.vec import Vec2
 
-from sekai.lib.layout import ComboType, Quad, layout_combo_label, transform_fixed_size, transform_quad
+from sekai.lib.layout import (
+    ComboType,
+    Quad,
+    layout_combo_label,
+    transform_fixed_size,
+    transform_quad,
+)
 from sekai.lib.options import Options
 from sekai.lib.skin import (
     ActiveSkin,
@@ -447,3 +454,136 @@ def draw_damage_flash(draw_time: float, z: float):
                 tr=Vec2(0, t_val),
             )
             ActiveSkin.damage_flash.draw(quad=layout, z=z, a=a * 0.8)
+
+
+def draw_life_number(number: int, z: float):
+    if Options.hide_ui >= 2:
+        return
+    if not ActiveSkin.ui_number.available:
+        return
+    if not Options.custom_life_bar:
+        return
+
+    ui = runtime_ui()
+
+    if number == 0:
+        digit_count = 1
+    else:
+        digit_count = 0
+        temp_n = number
+        while temp_n > 0:
+            temp_n = temp_n // 10
+            digit_count += 1
+
+    scale_ratio = min(1, aspect_ratio() / (16 / 9))
+    right_margin = 0.2398
+    margin_offset = 0.52
+    bar_base_w = 0.827
+    final_scale = ui.secondary_metric_config.scale * scale_ratio
+    current_bar_w = bar_base_w * final_scale
+
+    bar_center_x = screen().r - right_margin - (current_bar_w / 2)
+    number_center_x = bar_center_x + (margin_offset * final_scale)
+
+    screen_center = Vec2(x=number_center_x - (current_bar_w / 2), y=0.93014)
+
+    h = -0.06141 * ui.secondary_metric_config.scale * scale_ratio
+    w = 0.04389 * ui.secondary_metric_config.scale * scale_ratio
+
+    digit_gap = w * (-0.04 + Options.combo_distance)
+    total_width = digit_count * w + (digit_count - 1) * digit_gap
+    start_x = screen_center.x - total_width / 2
+
+    drawing_ui = UILayout(
+        core=UICoreConfig(number, digit_count, mode=0),
+        common=CommonConfig(
+            center_x=screen_center.x,
+            center_y=screen_center.y,
+        ),
+        layout=UILayoutConfig(
+            width=w,
+            gap=digit_gap,
+            height=h,
+            start_x=start_x,
+        ),
+    )
+    drawing_ui.draw_number(z=z)
+
+
+class UIMode(IntEnum):
+    LIFE = 0
+    SCORE_BAR = 1
+    SCORE_ADD = 2
+
+
+class UICoreConfig(Record):
+    number: int
+    digit_count: int
+    mode: UIMode
+
+
+class UILayoutConfig(Record):
+    width: float
+    gap: float
+    height: float
+    start_x: float
+
+
+class UILayout(Record):
+    core: UICoreConfig
+    common: CommonConfig
+    layout: UILayoutConfig
+
+    def layout_combo_number(self, l: float, r: float, t: float, b: float) -> Quad:
+        return Quad(
+            bl=Vec2(l, b),
+            br=Vec2(r, b),
+            tl=Vec2(l, t),
+            tr=Vec2(r, t),
+        )
+
+    def draw_number(self, z):
+        s_inv = 0
+
+        loop_count = self.core.digit_count
+        if self.core.mode == UIMode.SCORE_BAR:
+            loop_count = 7
+        elif self.core.mode == UIMode.SCORE_ADD:
+            loop_count = self.core.digit_count + 1
+
+        for i in range(loop_count):
+            digit = 0
+
+            if self.core.mode == UIMode.SCORE_BAR:
+                power_of_ten = 10 ** (6 - i)
+
+                if self.core.number < power_of_ten and i < 6:
+                    digit = 10  # 'special 0'
+                else:
+                    digit = floor(self.core.number / power_of_ten) % 10
+
+            elif self.core.mode == UIMode.SCORE_ADD:
+                if i == 0:
+                    digit = 11  # '+'
+                else:
+                    real_i = i - 1
+                    digit = floor(self.core.number / 10 ** (self.core.digit_count - 1 - real_i)) % 10
+
+            else:  # UIMode.LIFE
+                digit = floor(self.core.number / 10 ** (self.core.digit_count - 1 - i)) % 10
+
+            final_draw_w = self.layout.width
+
+            digit_center_x = self.layout.start_x + (i * (self.layout.width + self.layout.gap)) + self.layout.width / 2
+
+            unscaled_t = self.common.center_y - self.layout.height / 2
+            unscaled_b = self.common.center_y + self.layout.height / 2
+
+            l = (digit_center_x - final_draw_w / 2) + s_inv * self.common.center_x
+            r = (digit_center_x + final_draw_w / 2) + s_inv * self.common.center_x
+            t = unscaled_t + s_inv * self.common.center_y
+            b = unscaled_b + s_inv * self.common.center_y
+
+            digit_layout = self.layout_combo_number(l=l, r=r, t=t, b=b)
+
+            ActiveSkin.ui_number.get_sprite(number=digit).draw(quad=digit_layout, z=z, a=1)

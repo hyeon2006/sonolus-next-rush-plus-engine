@@ -47,6 +47,11 @@ class ScoreIndicator:
     first: float
 
 
+@level_memory
+class LifeManager:
+    life: int
+
+
 class ComboJudge(WatchArchetype):
     next_ref: EntityRef[note.WatchBaseNote] = entity_memory()
     note_index: int = entity_memory()
@@ -104,6 +109,8 @@ class ComboJudge(WatchArchetype):
         if Options.custom_score > 0:
             ScoreIndicator.score = note.WatchBaseNote.at(self.note_index).score
             ScoreIndicator.ap = note.WatchBaseNote.at(self.note_index).ap
+        if Options.custom_life_bar:
+            LifeManager.life = note.WatchBaseNote.at(self.note_index).life
 
         self.checker = True
 

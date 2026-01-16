@@ -7,6 +7,7 @@ from sonolus.script.runtime import offset_adjusted_time, touches
 
 from sekai.lib import archetype_names
 from sekai.lib.layer import (
+    LAYER_BACKGROUND,
     LAYER_BACKGROUND_COVER,
     LAYER_COVER,
     LAYER_COVER_LINE,
@@ -20,7 +21,7 @@ from sekai.lib.layer import (
 from sekai.lib.layout import layout_hitbox
 from sekai.lib.stage import draw_stage_and_accessories, play_lane_hit_effects
 from sekai.lib.streams import Streams
-from sekai.play import custom_elements, input_manager
+from sekai.play import custom_elements, initialization, input_manager
 
 
 class Stage(PlayArchetype):
@@ -55,6 +56,7 @@ class Stage(PlayArchetype):
         self.z_layer_stage_cover = get_z(LAYER_STAGE_COVER)
         self.z_layer_score = get_z(layer=LAYER_JUDGMENT)
         self.z_layer_score_glow = get_z(layer=LAYER_JUDGMENT, etc=1)
+        self.z_layer_background = get_z(layer=LAYER_BACKGROUND)
         self.total_hitbox = layout_hitbox(-7, 7)
         self.w_scale = (self.total_hitbox.r - self.total_hitbox.l) / 14
 
@@ -94,6 +96,9 @@ class Stage(PlayArchetype):
             self.z_layer_background_cover,
             self.z_layer_score,
             self.z_layer_score_glow,
+            self.z_layer_background,
             custom_elements.ComboJudgeMemory.ap,
             custom_elements.ScoreIndicator.score,
+            custom_elements.LifeManager.life,
+            initialization.LastNote.last_time,
         )

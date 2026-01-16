@@ -7,7 +7,7 @@ from sonolus.script.globals import level_data
 from sonolus.script.interval import clamp, lerp, remap, unlerp
 from sonolus.script.num import Num
 from sonolus.script.quad import Quad, QuadLike, Rect
-from sonolus.script.runtime import aspect_ratio, screen
+from sonolus.script.runtime import aspect_ratio, runtime_ui, screen
 from sonolus.script.values import swap
 from sonolus.script.vec import Vec2
 
@@ -314,6 +314,51 @@ def layout_custom_tag() -> Quad:
         br=Vec2(x + w, y - h),
         tl=Vec2(x - w, y + h),
         tr=Vec2(x + w, y + h),
+    )
+
+
+def layout_life_bar() -> Quad:
+    ui = runtime_ui()
+
+    scale_ratio = min(1, aspect_ratio() / (16 / 9))
+
+    h = 0.196 * ui.secondary_metric_config.scale * scale_ratio
+    w = 0.827 * ui.secondary_metric_config.scale * scale_ratio
+
+    right_margin = 0.2398
+
+    screen_center = Vec2(x=screen().r - right_margin - (w / 2), y=0.887)
+    return Quad(
+        bl=Vec2(screen_center.x - w / 2, screen_center.y - h / 2),
+        br=Vec2(screen_center.x + w / 2, screen_center.y - h / 2),
+        tl=Vec2(screen_center.x - w / 2, screen_center.y + h / 2),
+        tr=Vec2(screen_center.x + w / 2, screen_center.y + h / 2),
+    )
+
+
+def layout_life_gauge(life) -> Quad:
+    ui = runtime_ui()
+
+    scale_ratio = min(1, aspect_ratio() / (16 / 9))
+    right_margin = 0.2398
+    margin_offset = 0.121
+    bar_base_w = 0.827
+    final_scale = ui.secondary_metric_config.scale * scale_ratio
+    current_bar_w = bar_base_w * final_scale
+
+    bar_center_x = screen().r - right_margin - (current_bar_w / 2)
+    number_center_x = bar_center_x + (margin_offset * final_scale)
+
+    screen_center = Vec2(x=number_center_x - (current_bar_w / 2), y=0.88)
+
+    h = 0.027 * ui.secondary_metric_config.scale * scale_ratio
+    w = 0.495 * ui.secondary_metric_config.scale * scale_ratio
+    life = clamp((life / 1000), 0, 1)
+    return Quad(
+        bl=Vec2(screen_center.x, screen_center.y - h / 2),
+        br=Vec2(screen_center.x + w * life, screen_center.y - h / 2),
+        tl=Vec2(screen_center.x, screen_center.y + h / 2),
+        tr=Vec2(screen_center.x + w * life, screen_center.y + h / 2),
     )
 
 

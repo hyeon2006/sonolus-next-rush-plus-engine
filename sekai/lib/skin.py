@@ -724,24 +724,16 @@ class LifeBarSpriteSet(Record):
         return self.pause.is_available
 
 
-class LifeGaugeType(IntEnum):
-    NORMAL = 0
-    DANGER = 1
-
-
 class LifeGaugeSpriteSet(Record):
     normal: Sprite
     danger: Sprite
 
-    def get_sprite(self, gauge_type: LifeGaugeType):
+    def get_sprite(self, life: int):
         result = +Sprite
-        match gauge_type:
-            case LifeGaugeType.NORMAL:
-                result = self.normal
-            case LifeGaugeType.DANGER:
-                result = self.danger
-            case _:
-                assert_never(gauge_type)
+        if life > 400:
+            result @= self.normal
+        else:
+            result @= self.danger
         return result
 
     @property
