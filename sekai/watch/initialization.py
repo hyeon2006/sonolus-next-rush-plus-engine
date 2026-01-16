@@ -202,7 +202,7 @@ def setting_combo(head: int, skill: int) -> None:
             + note.WatchBaseNote.at(ptr).entity_score_multiplier
         )
 
-        LastNote.last_time = max(LastNote.last_time, note.BaseNote.at(ptr).calc_time)
+        LastNote.last_time = max(LastNote.last_time, note.WatchBaseNote.at(ptr).calc_time)
         ptr = note.WatchBaseNote.at(ptr).next_ref.index
 
     if total_weight == 0:
