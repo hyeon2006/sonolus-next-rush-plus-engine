@@ -70,12 +70,8 @@ def init_ui():
     custom_combo_label = not Options.custom_combo or not ActiveSkin.combo_label.available
     custom_combo_number = not Options.custom_combo or not ActiveSkin.combo_number.available
     custom_judgment = not Options.custom_judgment or not ActiveSkin.judgment.available
-    custom_life_bar = (
-        not Options.custom_life_bar or not ActiveSkin.life.available or not is_preview() or not is_tutorial()
-    )
-    custom_score_bar = (
-        not Options.custom_score_bar or not ActiveSkin.score.available or not is_preview() or not is_tutorial()
-    )
+    custom_life_bar = not Options.custom_life_bar or not ActiveSkin.life.available or is_preview() or is_tutorial()
+    custom_score_bar = not Options.custom_score_bar or not ActiveSkin.score.available or is_preview() or is_tutorial()
 
     ui.menu.update(
         anchor=box.tr - Vec2(0.2, 0),
