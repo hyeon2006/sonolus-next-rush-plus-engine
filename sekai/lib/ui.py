@@ -1,4 +1,4 @@
-from sonolus.script.runtime import HorizontalAlign, is_preview, is_tutorial, runtime_ui, screen
+from sonolus.script.runtime import HorizontalAlign, is_play, is_preview, is_tutorial, is_watch, runtime_ui, screen
 from sonolus.script.ui import (
     EaseType,
     UiAnimation,
@@ -71,10 +71,11 @@ def init_ui():
     custom_combo_number = not Options.custom_combo or not ActiveSkin.combo_number.available
     custom_judgment = not Options.custom_judgment or not ActiveSkin.judgment.available
     custom_life_bar = not Options.custom_life_bar or not ActiveSkin.life.available or is_preview() or is_tutorial()
+    custom_life_bar_margin = Vec2(0.2, 0) if is_play() or is_watch() else Vec2(0, 0)
     custom_score_bar = not Options.custom_score_bar or not ActiveSkin.score.available or is_preview() or is_tutorial()
 
     ui.menu.update(
-        anchor=box.tr - Vec2(0.2, 0),
+        anchor=box.tr - custom_life_bar_margin,
         pivot=Vec2(1, 1),
         dimensions=Vec2(0.15, 0.15) * ui.menu_config.scale,
         alpha=ui.menu_config.alpha * show_ui * custom_life_bar,
@@ -98,7 +99,7 @@ def init_ui():
         background=False,
     )
     ui.secondary_metric_bar.update(
-        anchor=box.tr - Vec2(gap, 0) - Vec2(0.2, 0) - Vec2(0.15, 0) * ui.menu_config.scale,
+        anchor=box.tr - Vec2(gap, 0) - custom_life_bar_margin - Vec2(0.15, 0) * ui.menu_config.scale,
         pivot=Vec2(1, 1),
         dimensions=Vec2(0.55, 0.15) * ui.secondary_metric_config.scale,
         alpha=ui.secondary_metric_config.alpha * show_ui * custom_life_bar,
@@ -108,7 +109,7 @@ def init_ui():
     ui.secondary_metric_value.update(
         anchor=box.tr
         - Vec2(gap, 0)
-        - Vec2(0.2, 0)
+        - custom_life_bar_margin
         - Vec2(0.15, 0) * ui.menu_config.scale
         - Vec2(0.035, 0.035) * ui.secondary_metric_config.scale,
         pivot=Vec2(1, 1),
