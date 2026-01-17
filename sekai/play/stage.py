@@ -103,3 +103,6 @@ class Stage(PlayArchetype):
             custom_elements.LifeManager.life,
             initialization.LastNote.last_time,
         )
+
+    def update_sequential(self):
+        Streams.life[self.index][offset_adjusted_time()] = custom_elements.LifeManager.life

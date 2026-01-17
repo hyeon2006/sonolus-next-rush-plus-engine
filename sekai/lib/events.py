@@ -1,5 +1,3 @@
-from enum import IntEnum
-
 from sonolus.script.interval import lerp, unlerp_clamped
 from sonolus.script.vec import Vec2
 
@@ -25,14 +23,7 @@ from sekai.lib.layout import (
 )
 from sekai.lib.options import Options
 from sekai.lib.particle import ActiveParticles
-from sekai.lib.skin import ActiveSkin
-
-
-class SkillEffects(IntEnum):
-    NONE = 0
-    HEAL = 1
-    SCORE = 2
-    JUDGMENT = 3
+from sekai.lib.skin import ActiveSkin, SkillEffects
 
 
 def draw_fever_side_cover(z: float, time: float):
@@ -130,7 +121,7 @@ def spawn_fever_chance_particle():
         ActiveParticles.fever_chance_lane.spawn(layout_lane2, 1, False)
 
 
-def draw_skill_bar(z: float, z2: float, time: float, num: int):
+def draw_skill_bar(z: float, z2: float, time: float, num: int, effect: SkillEffects, level: int):
     if Options.hide_ui >= 3:
         return
     if not Options.skill_effect:
@@ -190,6 +181,6 @@ def draw_skill_bar(z: float, z2: float, time: float, num: int):
     w = h * 14
     layout = layout_skill_bar(text_current_center, w, h)
     if time <= 1.5:
-        ActiveSkin.skill_level.draw(layout, z2, final_anim)
+        ActiveSkin.skill_level.get_sprite(level).draw(layout, z2, final_anim)
     else:
-        ActiveSkin.skill_value.draw(layout, z2, final_anim)
+        ActiveSkin.skill_value.get_sprite(level, effect).draw(layout, z2, final_anim)

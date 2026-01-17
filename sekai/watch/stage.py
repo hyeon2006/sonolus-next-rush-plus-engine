@@ -1,5 +1,5 @@
 from sonolus.script.archetype import WatchArchetype, entity_memory
-from sonolus.script.runtime import is_skip, time
+from sonolus.script.runtime import is_replay, is_skip, time
 
 from sekai.lib import archetype_names
 from sekai.lib.layer import (
@@ -16,6 +16,7 @@ from sekai.lib.layer import (
 )
 from sekai.lib.options import Options
 from sekai.lib.stage import draw_stage_and_accessories, play_lane_particle
+from sekai.lib.streams import Streams
 from sekai.watch import custom_elements, initialization
 
 
@@ -72,13 +73,15 @@ class WatchStage(WatchArchetype):
         )
 
     def update_sequential(self):
+        custom_elements.LifeManager.life = (
+            Streams.life[self.index][time()] if is_replay() else custom_elements.LifeManager.life
+        )
         if is_skip() and time() < custom_elements.ScoreIndicator.first:
             if Options.custom_score == 2:
                 custom_elements.ScoreIndicator.score = 100
             else:
                 custom_elements.ScoreIndicator.score = 0
             custom_elements.ScoreIndicator.ap = False
-            custom_elements.LifeManager.life = 1000
 
 
 class WatchScheduledLaneEffect(WatchArchetype):

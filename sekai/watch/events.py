@@ -12,13 +12,12 @@ from sonolus.script.archetype import (
 )
 from sonolus.script.globals import level_memory
 from sonolus.script.interval import clamp
-from sonolus.script.runtime import is_replay, is_skip, time
+from sonolus.script.runtime import add_life_scheduled, is_replay, is_skip, time
 from sonolus.script.timing import beat_to_time
 
 from sekai.lib import archetype_names
 from sekai.lib.effect import Effects
 from sekai.lib.events import (
-    SkillEffects,
     draw_fever_gauge,
     draw_fever_side_bar,
     draw_fever_side_cover,
@@ -27,15 +26,17 @@ from sekai.lib.events import (
     spawn_fever_start_particle,
 )
 from sekai.lib.options import Options
+from sekai.lib.skin import SkillEffects
 from sekai.lib.streams import Streams
-from sekai.watch import initialization
+from sekai.watch import custom_elements, initialization
 
 
 class Skill(WatchArchetype):
     beat: StandardImport.BEAT
-    effect: SkillEffects = imported(name="effect", default=SkillEffects.HEAL)
+    effect: SkillEffects = imported(name="effect", default=SkillEffects.SCORE)
     level: int = imported(name="level", default=1)
     start_time: float = entity_data()
+    current_life: float = entity_data()
     name = archetype_names.SKILL
     z: float = entity_memory()
     z2: float = entity_memory()
@@ -47,6 +48,8 @@ class Skill(WatchArchetype):
         self.start_time = beat_to_time(self.beat)
         if Options.hide_ui != 3 and Options.skill_effect:
             Effects.skill.schedule(self.start_time)
+        if self.effect == SkillEffects.HEAL:
+            add_life_scheduled(250, self.start_time)
 
     def initialize(self):
         self.z = initialization.LayerCache.skill_bar
@@ -56,10 +59,17 @@ class Skill(WatchArchetype):
         return self.start_time
 
     def despawn_time(self):
-        return self.start_time + 3
+        if self.next_ref.index > 0:
+            return self.next_ref.get().calc_time
+        else:
+            return 1e8
 
     def update_parallel(self):
-        draw_skill_bar(self.z, self.z2, time() - self.start_time, self.count)
+        if time() < self.start_time + 3:
+            draw_skill_bar(self.z, self.z2, time() - self.start_time, self.count, self.effect, self.level)
+
+    def update_sequential(self):
+        custom_elements.LifeManager.life = self.current_life
 
     @property
     def calc_time(self) -> float:
@@ -128,7 +138,7 @@ class FeverChance(WatchArchetype):
                 0,
                 0.9 if not Fever.fever_chance_cant_super_fever or self.percentage >= 0.9 else 0.89,
             )
-            if not Streams.fever_chance_counter[self.index][-2]
+            if not is_replay()
             else Streams.fever_chance_counter[self.index][time()]
         )
         if Options.fever_effect == 0:

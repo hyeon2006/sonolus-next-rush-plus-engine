@@ -78,8 +78,7 @@ class WatchInitialization(WatchArchetype):
         LayerCache.skill_bar = get_z(layer=LAYER_SKILL_BAR)
         LayerCache.skill_etc = get_z(layer=LAYER_SKILL_ETC)
 
-        for note_archetype in note.WATCH_NOTE_ARCHETYPES:
-            init_note_life(note_archetype)
+        custom_elements.LifeManager.life = 1000
 
         WatchStage.spawn()
 
@@ -156,13 +155,16 @@ def setting_combo(head: int, skill: int) -> None:
     while ptr > 0:
         if skill_ptr > 0 and note.WatchBaseNote.at(ptr).target_time >= Skill.at(skill_ptr).start_time:
             if Skill.at(skill_ptr).effect == SkillEffects.HEAL:
-                life = 200 + (Skill.at(skill_ptr).level * 50)
-                note.WatchBaseNote.at(ptr).entity_life.perfect_increment += life
-                note.WatchBaseNote.at(ptr).entity_life.great_increment += life
-                note.WatchBaseNote.at(ptr).entity_life.good_increment += life
-                note.WatchBaseNote.at(ptr).entity_life.miss_increment += life
-
-            skill_ptr = Skill.at(skill_ptr).next_ref.index
+                skill_ptr = Skill.at(skill_ptr).next_ref.index
+            elif (
+                Skill.at(skill_ptr).effect == SkillEffects.SCORE or Skill.at(skill_ptr).effect == SkillEffects.JUDGMENT
+            ):
+                note.WatchBaseNote.at(ptr).entity_score_multiplier += (
+                    note.WatchBaseNote.at(ptr).archetype_score_multiplier
+                    + note.WatchBaseNote.at(ptr).entity_score_multiplier
+                )
+                if note.WatchBaseNote.at(ptr).target_time > Skill.at(skill_ptr).start_time + 6:
+                    skill_ptr = Skill.at(skill_ptr).next_ref.index
 
         judgment = note.WatchBaseNote.at(ptr).judgment
         if is_replay() and judgment in (Judgment.GOOD, Judgment.MISS):
@@ -216,7 +218,6 @@ def calculate_score(head: int, max_score: int, scale_factor: float):
     ptr = head
     count = 0
     score = 0
-    life = 1000
     if Options.custom_score == 2:
         score = 100
         custom_elements.ScoreIndicator.score = 100
@@ -300,44 +301,17 @@ def calculate_score(head: int, max_score: int, scale_factor: float):
                 score += (((1 - abs(note.WatchBaseNote.at(ptr).accuracy)) * 100) - score) / count
                 note.WatchBaseNote.at(ptr).score = score
 
-        if life != 0:
-            if is_replay():
-                match note.WatchBaseNote.at(ptr).judgment:
-                    case Judgment.PERFECT:
-                        life += (
-                            note.WatchBaseNote.at(ptr).archetype_life.perfect_increment
-                            + note.WatchBaseNote.at(ptr).entity_life.perfect_increment
-                        )
-                    case Judgment.GREAT:
-                        life += (
-                            note.WatchBaseNote.at(ptr).archetype_life.great_increment
-                            + note.WatchBaseNote.at(ptr).entity_life.great_increment
-                        )
-                    case Judgment.GOOD:
-                        life += (
-                            note.WatchBaseNote.at(ptr).archetype_life.good_increment
-                            + note.WatchBaseNote.at(ptr).entity_life.good_increment
-                        )
-                    case Judgment.MISS:
-                        life += (
-                            note.WatchBaseNote.at(ptr).archetype_life.miss_increment
-                            + note.WatchBaseNote.at(ptr).entity_life.miss_increment
-                        )
-            else:
-                life += (
-                    note.WatchBaseNote.at(ptr).archetype_life.perfect_increment
-                    + note.WatchBaseNote.at(ptr).entity_life.perfect_increment
-                )
-            life = clamp(life, 0, 2000)
-            note.WatchBaseNote.at(ptr).display_life = life
-
         ptr = note.WatchBaseNote.at(ptr).next_ref.index
 
 
 def count_skill(head: int) -> None:
     ptr = head
     count = 0
+    life = 1000
     while ptr > 0:
         Skill.at(ptr).count = count
         count += 1
+        if Skill.at(ptr).effect == SkillEffects.HEAL:
+            life = clamp(life + 250, 0, 2000)
+        Skill.at(ptr).current_life = life
         ptr = Skill.at(ptr).next_ref.index

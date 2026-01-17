@@ -12,13 +12,12 @@ from sonolus.script.archetype import (
 )
 from sonolus.script.globals import level_memory
 from sonolus.script.interval import clamp
-from sonolus.script.runtime import is_multiplayer, offset_adjusted_time, time
+from sonolus.script.runtime import add_life_scheduled, is_multiplayer, offset_adjusted_time, time
 from sonolus.script.timing import beat_to_time
 
 from sekai.lib import archetype_names
 from sekai.lib.effect import Effects
 from sekai.lib.events import (
-    SkillEffects,
     draw_fever_gauge,
     draw_fever_side_bar,
     draw_fever_side_cover,
@@ -27,13 +26,14 @@ from sekai.lib.events import (
     spawn_fever_start_particle,
 )
 from sekai.lib.options import Options
+from sekai.lib.skin import SkillEffects
 from sekai.lib.streams import Streams
 from sekai.play import initialization
 
 
 class Skill(PlayArchetype):
     beat: StandardImport.BEAT
-    effect: SkillEffects = imported(name="effect", default=SkillEffects.HEAL)
+    effect: SkillEffects = imported(name="effect", default=SkillEffects.SCORE)
     level: int = imported(name="level", default=1)
     start_time: float = entity_data()
     count: int = shared_memory()
@@ -47,6 +47,8 @@ class Skill(PlayArchetype):
         self.start_time = beat_to_time(self.beat)
         if Options.hide_ui != 3 and Options.skill_effect:
             Effects.skill.schedule(self.start_time)
+        if self.effect == SkillEffects.HEAL:
+            add_life_scheduled(250, self.start_time)
 
     def initialize(self):
         self.z = initialization.LayerCache.skill_bar
@@ -59,7 +61,7 @@ class Skill(PlayArchetype):
         return time() >= self.start_time
 
     def update_parallel(self):
-        draw_skill_bar(self.z, self.z2, time() - self.start_time, self.count)
+        draw_skill_bar(self.z, self.z2, time() - self.start_time, self.count, self.effect, self.level)
         if time() >= self.start_time + 3:
             self.despawn = True
 
@@ -112,7 +114,6 @@ class FeverChance(PlayArchetype):
         if not is_multiplayer() and not Options.forced_fever_chance and not self.force:
             self.despawn = True
             return
-        Streams.fever_chance_counter[self.index][-2] = 1
         if time() >= Fever.fever_start_time:
             spawn_fever_start_particle(self.percentage)
             self.despawn = True

@@ -151,24 +151,26 @@ def setting_count(head: int, skill: int) -> None:
 
     custom_elements.ScoreIndicator.max_score = 1000000
     while ptr > 0:
+        if skill_ptr > 0 and note.BaseNote.at(ptr).target_time >= Skill.at(skill_ptr).start_time:
+            if Skill.at(skill_ptr).effect == SkillEffects.HEAL:
+                skill_ptr = Skill.at(skill_ptr).next_ref.index
+            elif (
+                Skill.at(skill_ptr).effect == SkillEffects.SCORE or Skill.at(skill_ptr).effect == SkillEffects.JUDGMENT
+            ):
+                note.BaseNote.at(ptr).entity_score_multiplier += (
+                    note.BaseNote.at(ptr).archetype_score_multiplier + note.BaseNote.at(ptr).entity_score_multiplier
+                )
+                if note.BaseNote.at(ptr).target_time > Skill.at(skill_ptr).start_time + 6:
+                    skill_ptr = Skill.at(skill_ptr).next_ref.index
+        count += 1
+        note.BaseNote.at(ptr).count += count
+
         # arcade score = judgmentMultiplier * (consecutiveJudgmentMultiplier + archetypeMultiplier + entityMultiplier)
         custom_elements.ScoreIndicator.total_weight += level_score().perfect_multiplier * (
             level_score().consecutive_perfect_cap
             + note.BaseNote.at(ptr).archetype_score_multiplier
             + note.BaseNote.at(ptr).entity_score_multiplier
         )
-
-        if skill_ptr > 0 and note.BaseNote.at(ptr).target_time >= Skill.at(skill_ptr).start_time:
-            if Skill.at(skill_ptr).effect == SkillEffects.HEAL:
-                life = 200 + (Skill.at(skill_ptr).level * 50)
-                note.BaseNote.at(ptr).entity_life.perfect_increment += life
-                note.BaseNote.at(ptr).entity_life.great_increment += life
-                note.BaseNote.at(ptr).entity_life.good_increment += life
-                note.BaseNote.at(ptr).entity_life.miss_increment += life
-
-            skill_ptr = Skill.at(skill_ptr).next_ref.index
-        count += 1
-        note.BaseNote.at(ptr).count += count
 
         if Fever.fever_chance_time <= note.BaseNote.at(ptr).target_time < Fever.fever_start_time:
             Fever.fever_first_count = (

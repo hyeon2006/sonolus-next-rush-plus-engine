@@ -11,3 +11,4 @@ class Streams:
     connector_visual_states: StreamGroup[ConnectorVisualState, Dim[1_000_000]]
     connector_effect_kinds: StreamGroup[ConnectorKind, Dim[1_000_000]]
     fever_chance_counter: StreamGroup[float, Dim[1_000_000]]
+    life: StreamGroup[float, Dim[1_000_000]]
