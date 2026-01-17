@@ -76,7 +76,7 @@ wheels = [
 [[package]]
 name = "sonolus-py"
 version = "0.13.2"
-source = { git = "https://github.com/qwewqa/sonolus.py.git?rev=sonolus-1.1.0#2e8f043aa20f22bcfb96c7a65b9fb9f23525824d" }
+source = { git = "https://github.com/qwewqa/sonolus.py.git?rev=sonolus-1.1.0#e6675f5b37d255a69e418499a8088e34b9419b77" }
 
 [[package]]
 name = "typing-extensions"
