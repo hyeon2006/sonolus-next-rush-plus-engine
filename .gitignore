@@ -12,3 +12,5 @@ wheels/
 .idea/
 
 js/node_modules/
+
+resources/*.scp
