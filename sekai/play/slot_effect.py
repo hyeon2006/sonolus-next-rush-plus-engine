@@ -33,7 +33,7 @@ class SlotGlowEffect(PlayArchetype):
             self.start_time,
             self.end_time,
             self.lane,
-            self.size,
+            0.5,
         )
 
 
