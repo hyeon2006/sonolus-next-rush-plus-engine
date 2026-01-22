@@ -36,6 +36,9 @@ class Stage(PlayArchetype):
     z_layer_stage_cover: float = entity_memory()
     z_layer_score: float = entity_memory()
     z_layer_score_glow: float = entity_memory()
+    z_layer_score_bar: float = entity_memory()
+    z_layer_score_bar_mask: float = entity_memory()
+    z_layer_score_bar_rate: float = entity_memory()
     z_layer_background: float = entity_memory()
     total_hitbox: Rect = entity_memory()
     w_scale: float = entity_memory()
@@ -57,6 +60,9 @@ class Stage(PlayArchetype):
         self.z_layer_stage_cover = get_z(LAYER_STAGE_COVER)
         self.z_layer_score = get_z(layer=LAYER_JUDGMENT)
         self.z_layer_score_glow = get_z(layer=LAYER_JUDGMENT, etc=1)
+        self.z_layer_score_bar = get_z(layer=LAYER_JUDGMENT, etc=2)
+        self.z_layer_score_bar_mask = get_z(layer=LAYER_JUDGMENT, etc=3)
+        self.z_layer_score_bar_rate = get_z(layer=LAYER_JUDGMENT, etc=4)
         self.z_layer_background = get_z(layer=LAYER_BACKGROUND)
         self.total_hitbox = layout_hitbox(-7, 7)
         self.w_scale = (self.total_hitbox.r - self.total_hitbox.l) / 14
@@ -97,9 +103,15 @@ class Stage(PlayArchetype):
             self.z_layer_background_cover,
             self.z_layer_score,
             self.z_layer_score_glow,
+            self.z_layer_score_bar,
+            self.z_layer_score_bar_mask,
+            self.z_layer_score_bar_rate,
             self.z_layer_background,
             custom_elements.ComboJudgeMemory.ap,
             custom_elements.ScoreIndicator.score,
+            custom_elements.ScoreIndicator.note_score,
+            custom_elements.ScoreIndicator.note_time,
+            custom_elements.ScoreIndicator.percentage,
             custom_elements.LifeManager.life,
             initialization.LastNote.last_time,
         )
