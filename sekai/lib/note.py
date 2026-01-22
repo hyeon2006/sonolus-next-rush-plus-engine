@@ -6,7 +6,7 @@ from sonolus.script.archetype import EntityRef, HapticType, PlayArchetype, Watch
 from sonolus.script.bucket import Bucket, Judgment
 from sonolus.script.easing import ease_in_cubic
 from sonolus.script.effect import Effect
-from sonolus.script.interval import lerp, remap_clamped
+from sonolus.script.interval import Interval, lerp, remap_clamped
 from sonolus.script.runtime import is_tutorial, is_watch, level_life, level_score, time
 from sonolus.script.sprite import Sprite
 
@@ -15,15 +15,17 @@ from sekai.lib.buckets import (
     EMPTY_JUDGMENT_WINDOW,
     FLICK_CRITICAL_WINDOW,
     FLICK_NORMAL_WINDOW,
+    FLICK_NORMAL_WINDOW_BAD,
     SLIDE_END_CRITICAL_WINDOW,
     SLIDE_END_FLICK_CRITICAL_WINDOW,
     SLIDE_END_FLICK_NORMAL_WINDOW,
     SLIDE_END_NORMAL_WINDOW,
     SLIDE_END_TRACE_CRITICAL_WINDOW,
     SLIDE_END_TRACE_NORMAL_WINDOW,
-    SLIDE_TICK_JUDGMENT_WINDOW,
     TAP_CRITICAL_WINDOW,
+    TAP_CRITICAL_WINDOW_BAD,
     TAP_NORMAL_WINDOW,
+    TAP_NORMAL_WINDOW_BAD,
     TRACE_CRITICAL_WINDOW,
     TRACE_FLICK_CRITICAL_WINDOW,
     TRACE_FLICK_NORMAL_WINDOW,
@@ -31,11 +33,12 @@ from sekai.lib.buckets import (
     Buckets,
     SekaiWindow,
 )
-from sekai.lib.connector import ActiveConnectorKind, ConnectorKind
+from sekai.lib.connector import ActiveConnectorKind, ConnectorKind, get_active_connector_z_offset
 from sekai.lib.ease import EaseType, ease
 from sekai.lib.effect import EMPTY_EFFECT, SFX_DISTANCE, Effects, first_available_effect
 from sekai.lib.layer import (
     LAYER_NOTE_ARROW,
+    LAYER_NOTE_ARROW_CRITICAL,
     LAYER_NOTE_BODY,
     LAYER_NOTE_FLICK_BODY,
     LAYER_NOTE_SLIM_BODY,
@@ -55,7 +58,7 @@ from sekai.lib.layout import (
     layout_linear_effect,
     layout_regular_note_body,
     layout_regular_note_body_fallback,
-    layout_rotated_linear_effect,
+    layout_rotated2_linear_effect,
     layout_slim_note_body,
     layout_slim_note_body_fallback,
     layout_tick,
@@ -68,6 +71,7 @@ from sekai.lib.options import Options, ScoreMode, VibrateMode
 from sekai.lib.particle import (
     EMPTY_NOTE_PARTICLE_SET,
     ActiveParticles,
+    BaseParticles,
     NoteParticleSet,
 )
 from sekai.lib.skin import (
@@ -145,6 +149,12 @@ class NoteKind(IntEnum):
 
 def init_score(note_archetypes: Iterable[type[PlayArchetype | WatchArchetype]]):
     match LevelConfig.score_mode:
+        case ScoreMode.SEKAI:
+            level_score().update(
+                perfect_multiplier=1.0,
+                great_multiplier=0.7,
+                good_multiplier=0.5,
+            )
         case ScoreMode.WEIGHTED_COMBO | ScoreMode.UNWEIGHTED_COMBO:
             level_score().update(
                 perfect_multiplier=1.0,
@@ -164,7 +174,7 @@ def init_score(note_archetypes: Iterable[type[PlayArchetype | WatchArchetype]]):
             assert_never(LevelConfig.score_mode)
 
     match LevelConfig.score_mode:
-        case ScoreMode.WEIGHTED_COMBO | ScoreMode.WEIGHTED_FLAT:
+        case ScoreMode.WEIGHTED_COMBO | ScoreMode.WEIGHTED_FLAT | ScoreMode.SEKAI:
             for note_archetype in note_archetypes:
                 kind = cast(NoteKind, note_archetype.key)
                 match kind:
@@ -210,7 +220,7 @@ def init_life(
 ):
     for note_archetype in note_archetypes:
         init_note_life(note_archetype)
-    level_life().update(initial=initial_life, maximum=initial_life)
+    level_life().update(initial=initial_life, maximum=max(2000, initial_life))
 
 
 def init_note_life(archetype: type[PlayArchetype | WatchArchetype]):
@@ -335,8 +345,9 @@ def draw_slide_note_head(
         case _:
             assert_never(connector_kind)
     sprite_set = get_note_sprite_set(kind, FlickDirection.UP_OMNI)
-    draw_note_body(sprite_set.body, kind, lane, size, 1.0, target_time)
-    draw_note_tick(sprite_set.tick, lane, 1.0, target_time)
+    etc = get_active_connector_z_offset(connector_kind, False)
+    draw_note_body(sprite_set.body, kind, lane, size, 1.0, target_time, etc)
+    draw_note_tick(sprite_set.tick, lane, 1.0, target_time, etc)
 
 
 def note_kind_as_normal(kind: NoteKind) -> NoteKind:
@@ -506,10 +517,12 @@ def get_note_body_layer(kind: NoteKind) -> int:
             return LAYER_NOTE_BODY
 
 
-def draw_note_body(sprites: BodySpriteSet, kind: NoteKind, lane: float, size: float, travel: float, target_time: float):
+def draw_note_body(
+    sprites: BodySpriteSet, kind: NoteKind, lane: float, size: float, travel: float, target_time: float, etc: int = 0
+):
     layer = get_note_body_layer(kind)
     a = get_alpha(target_time)
-    z = get_z(layer, time=target_time, lane=lane)
+    z = get_z(layer, time=target_time, lane=lane, etc=etc)
     match sprites.render_type:
         case BodyRenderType.NORMAL:
             left_layout, middle_layout, right_layout = layout_regular_note_body(lane, size, travel)
@@ -529,9 +542,9 @@ def draw_note_body(sprites: BodySpriteSet, kind: NoteKind, lane: float, size: fl
             sprites.middle.draw(layout, z=z, a=a)
 
 
-def draw_note_tick(sprite: Sprite, lane: float, travel: float, target_time: float):
+def draw_note_tick(sprite: Sprite, lane: float, travel: float, target_time: float, etc: int = 0):
     a = get_alpha(target_time)
-    z = get_z(LAYER_NOTE_TICK, time=target_time, lane=lane)
+    z = get_z(LAYER_NOTE_TICK, time=target_time, lane=lane, etc=etc)
     layout = layout_tick(lane, travel)
     sprite.draw(layout, z=z, a=a)
 
@@ -557,7 +570,7 @@ def draw_note_arrow(
             assert_never(direction)
     animation_alpha = (1 - ease_in_cubic(animation_progress)) if Options.marker_animation else 1
     a = get_alpha(target_time) * animation_alpha
-    z = get_z(LAYER_NOTE_ARROW, time=target_time, lane=lane, etc=direction + 6 * (not is_critical(kind)))
+    z = get_z(get_flick_layer(kind), time=target_time, lane=lane, etc=direction)
     match sprites.render_type:
         case ArrowRenderType.NORMAL:
             layout = layout_flick_arrow(lane, size, direction, travel, animation_progress)
@@ -565,6 +578,21 @@ def draw_note_arrow(
         case ArrowRenderType.FALLBACK:
             layout = layout_flick_arrow_fallback(lane, size, direction, travel, animation_progress)
             sprites.get_sprite(size, direction).draw(layout, z=z, a=a)
+
+
+def get_flick_layer(kind: NoteKind) -> int:
+    match kind:
+        case (
+            NoteKind.CRIT_FLICK
+            | NoteKind.CRIT_HEAD_FLICK
+            | NoteKind.CRIT_TAIL_FLICK
+            | NoteKind.CRIT_TRACE_FLICK
+            | NoteKind.CRIT_HEAD_TRACE_FLICK
+            | NoteKind.CRIT_TAIL_TRACE_FLICK
+        ):
+            return LAYER_NOTE_ARROW_CRITICAL
+        case _:
+            return LAYER_NOTE_ARROW
 
 
 def get_note_particles(kind: NoteKind, direction: FlickDirection) -> NoteParticleSet:
@@ -710,7 +738,7 @@ def get_note_effect(kind: NoteEffectKind, judgment: Judgment):
                 case Judgment.GOOD:
                     result @= Effects.normal_good
                 case Judgment.MISS:
-                    result @= EMPTY_EFFECT
+                    result @= Effects.normal_good
                 case _:
                     assert_never(judgment)
         case NoteEffectKind.NORM_FLICK:
@@ -718,11 +746,11 @@ def get_note_effect(kind: NoteEffectKind, judgment: Judgment):
                 case Judgment.PERFECT:
                     result @= Effects.flick_perfect
                 case Judgment.GREAT:
-                    result @= Effects.flick_great
+                    result @= Effects.flick_perfect
                 case Judgment.GOOD:
-                    result @= Effects.flick_good
+                    result @= Effects.flick_perfect
                 case Judgment.MISS:
-                    result @= EMPTY_EFFECT
+                    result @= Effects.flick_perfect
                 case _:
                     assert_never(judgment)
         case NoteEffectKind.NORM_TRACE:
@@ -768,7 +796,12 @@ def get_note_effect(kind: NoteEffectKind, judgment: Judgment):
 
 
 def play_note_hit_effects(
-    kind: NoteKind, effect_kind: NoteEffectKind, lane: float, size: float, direction: FlickDirection, judgment: Judgment
+    kind: NoteKind,
+    effect_kind: NoteEffectKind,
+    lane: float,
+    size: float,
+    direction: FlickDirection,
+    judgment: Judgment,
 ):
     if kind == NoteKind.DAMAGE and judgment == Judgment.PERFECT:
         return
@@ -777,39 +810,69 @@ def play_note_hit_effects(
     if Options.sfx_enabled and not Options.auto_sfx and not is_watch() and sfx.is_available:
         sfx.play(SFX_DISTANCE)
     if Options.note_effect_enabled:
-        if particles.linear.is_available:
+        linear_particle = particles.get_linear(judgment)
+        if linear_particle.is_available:
             layout = layout_linear_effect(lane, shear=0)
-            particles.linear.spawn(layout, duration=0.5 / Options.effect_animation_speed)
-        if particles.circular.is_available:
+            if linear_particle == particles.linear_good:
+                for slot_lane in iter_slot_lanes(lane, size):
+                    layout @= layout_linear_effect(slot_lane, shear=0)
+                    linear_particle.spawn(layout, duration=0.5 / Options.effect_animation_speed)
+            else:
+                linear_particle.spawn(layout, duration=0.5 / Options.effect_animation_speed)
+        circular_particle = particles.get_circular(judgment)
+        if circular_particle.is_available:
             layout = layout_circular_effect(lane, w=1.75, h=1.05)
-            particles.circular.spawn(layout, duration=0.6 / Options.effect_animation_speed)
+            if circular_particle == particles.circular_good:
+                for slot_lane in iter_slot_lanes(lane, size):
+                    layout @= layout_circular_effect(slot_lane, w=1.75, h=1.05)
+                circular_particle.spawn(layout, duration=0.6 / Options.effect_animation_speed)
+            else:
+                circular_particle.spawn(layout, duration=0.6 / Options.effect_animation_speed)
         if particles.directional.is_available:
+            degree = (
+                45
+                if kind
+                in (
+                    NoteKind.CRIT_FLICK,
+                    NoteKind.CRIT_HEAD_FLICK,
+                    NoteKind.CRIT_HEAD_TRACE_FLICK,
+                    NoteKind.CRIT_TAIL_FLICK,
+                    NoteKind.CRIT_TAIL_TRACE_FLICK,
+                )
+                and Options.version == 1
+                else 22.5
+            )
             match direction:
                 case FlickDirection.UP_OMNI | FlickDirection.DOWN_OMNI:
                     shear = 0
                 case FlickDirection.UP_LEFT | FlickDirection.DOWN_RIGHT:
-                    shear = -1
+                    shear = degree
                 case FlickDirection.UP_RIGHT | FlickDirection.DOWN_LEFT:
-                    shear = 1
+                    shear = -degree
                 case _:
                     assert_never(direction)
-            layout = layout_rotated_linear_effect(lane, shear=shear)
+            layout = layout_rotated2_linear_effect(lane, degree=shear)
             particles.directional.spawn(layout, duration=0.32 / Options.effect_animation_speed)
         if particles.tick.is_available:
             layout = layout_tick_effect(lane)
             particles.tick.spawn(layout, duration=0.6 / Options.effect_animation_speed)
-        if particles.slot_linear.is_available:
+        slot_linear_particle = particles.get_slot_linear()
+        if slot_linear_particle.is_available:
             for slot_lane in iter_slot_lanes(lane, size):
                 layout = layout_linear_effect(slot_lane, shear=0)
-                particles.slot_linear.spawn(layout, duration=0.5 / Options.effect_animation_speed)
+                slot_linear_particle.spawn(layout, duration=0.5 / Options.effect_animation_speed)
     if Options.lane_effect_enabled:
-        layout = layout_lane(lane, size)
         if particles.lane.is_available:
-            particles.lane.spawn(layout, duration=1 / Options.effect_animation_speed)
+            if particles.lane.id != BaseParticles.critical_flick_note_lane_linear.id:
+                for slot_lane in iter_slot_lanes(lane, size):
+                    layout = layout_lane(slot_lane, 0.5)
+                    particles.lane.spawn(layout, duration=1 / Options.effect_animation_speed)
         elif particles.lane_basic.is_available:
-            particles.lane_basic.spawn(layout, duration=0.3 / Options.effect_animation_speed)
+            for slot_lane in iter_slot_lanes(lane, size):
+                layout = layout_lane(slot_lane, 0.5)
+                particles.lane_basic.spawn(layout, duration=0.3 / Options.effect_animation_speed)
     if Options.slot_effect_enabled and not is_watch():
-        schedule_note_slot_effects(kind, lane, size, time(), direction)
+        schedule_note_slot_effects(kind, lane, size, time(), direction, judgment)
 
 
 def get_note_haptic_feedback(kind: NoteKind, judgment: Judgment) -> HapticType:
@@ -833,7 +896,7 @@ def get_note_haptic_feedback(kind: NoteKind, judgment: Judgment) -> HapticType:
             return HapticType.NONE
 
 
-def schedule_note_auto_sfx(kind: NoteEffectKind, target_time: float):
+def schedule_note_auto_sfx(kind: NoteEffectKind, target_time: float, accuracy: float = 0):
     if not Options.sfx_enabled:
         return
     if not Options.auto_sfx:
@@ -851,7 +914,14 @@ def schedule_note_sfx(kind: NoteEffectKind, judgment: Judgment, target_time: flo
         sfx.schedule(target_time, SFX_DISTANCE)
 
 
-def schedule_note_slot_effects(kind: NoteKind, lane: float, size: float, target_time: float, direction: FlickDirection):
+def schedule_note_slot_effects(
+    kind: NoteKind,
+    lane: float,
+    size: float,
+    target_time: float,
+    direction: FlickDirection,
+    judgment: Judgment = Judgment.PERFECT,
+):
     if is_tutorial():
         return
     if not Options.slot_effect_enabled:
@@ -863,11 +933,12 @@ def schedule_note_slot_effects(kind: NoteKind, lane: float, size: float, target_
             get_archetype_by_name(archetype_names.SLOT_EFFECT).spawn(
                 sprite=slot_sprite, start_time=target_time, lane=slot_lane
             )
-    slot_glow_sprite = sprite_set.slot_glow
+    slot_glow_sprite = sprite_set.slot_glow.get_sprite(judgment)
     if slot_glow_sprite.is_available:
-        get_archetype_by_name(archetype_names.SLOT_GLOW_EFFECT).spawn(
-            sprite=slot_glow_sprite, start_time=target_time, lane=lane, size=size
-        )
+        for slot_lane in iter_slot_lanes(lane, size):
+            get_archetype_by_name(archetype_names.SLOT_GLOW_EFFECT).spawn(
+                sprite=slot_glow_sprite, start_time=target_time, lane=slot_lane, size=size
+            )
 
 
 def draw_tutorial_note_slot_effects(
@@ -932,10 +1003,55 @@ def get_note_window(kind: NoteKind) -> SekaiWindow:
             result @= TRACE_FLICK_NORMAL_WINDOW
         case NoteKind.CRIT_TAIL_TRACE_FLICK:
             result @= TRACE_FLICK_CRITICAL_WINDOW
-        case NoteKind.NORM_TICK | NoteKind.CRIT_TICK | NoteKind.HIDE_TICK:
-            result @= SLIDE_TICK_JUDGMENT_WINDOW
-        case NoteKind.ANCHOR | NoteKind.DAMAGE:
+        case NoteKind.NORM_TICK | NoteKind.CRIT_TICK | NoteKind.HIDE_TICK | NoteKind.ANCHOR | NoteKind.DAMAGE:
             result @= EMPTY_JUDGMENT_WINDOW
+        case _:
+            assert_never(kind)
+    return result
+
+
+def get_note_window_bad(kind: NoteKind) -> Interval:
+    result = +Interval
+    match kind:
+        case NoteKind.NORM_TAP | NoteKind.NORM_HEAD_TAP | NoteKind.NORM_TAIL_TAP:
+            result @= TAP_NORMAL_WINDOW_BAD
+        case NoteKind.CRIT_TAP | NoteKind.CRIT_HEAD_TAP | NoteKind.CRIT_TAIL_TAP:
+            result @= TAP_CRITICAL_WINDOW_BAD
+        case NoteKind.NORM_FLICK | NoteKind.NORM_HEAD_FLICK:
+            result @= FLICK_NORMAL_WINDOW_BAD
+        case NoteKind.CRIT_FLICK | NoteKind.CRIT_HEAD_FLICK:
+            result @= FLICK_NORMAL_WINDOW_BAD
+        case NoteKind.DAMAGE:
+            result @= Interval(0, 0)
+        case (
+            NoteKind.NORM_TAIL_FLICK
+            | NoteKind.CRIT_TAIL_FLICK
+            | NoteKind.NORM_TRACE
+            | NoteKind.NORM_HEAD_TRACE
+            | NoteKind.CRIT_TRACE
+            | NoteKind.CRIT_HEAD_TRACE
+            | NoteKind.NORM_TRACE_FLICK
+            | NoteKind.NORM_HEAD_TRACE_FLICK
+            | NoteKind.NORM_TAIL_TRACE_FLICK
+            | NoteKind.CRIT_TRACE_FLICK
+            | NoteKind.CRIT_HEAD_TRACE_FLICK
+            | NoteKind.CRIT_TAIL_TRACE_FLICK
+            | NoteKind.NORM_RELEASE
+            | NoteKind.NORM_HEAD_RELEASE
+            | NoteKind.NORM_TAIL_RELEASE
+            | NoteKind.CRIT_RELEASE
+            | NoteKind.CRIT_HEAD_RELEASE
+            | NoteKind.CRIT_TAIL_RELEASE
+            | NoteKind.NORM_TAIL_TRACE
+            | NoteKind.CRIT_TAIL_TRACE
+            | NoteKind.NORM_TAIL_TRACE_FLICK
+            | NoteKind.CRIT_TAIL_TRACE_FLICK
+            | NoteKind.NORM_TICK
+            | NoteKind.CRIT_TICK
+            | NoteKind.HIDE_TICK
+            | NoteKind.ANCHOR
+        ):
+            result @= Interval(-1, -1)
         case _:
             assert_never(kind)
     return result
