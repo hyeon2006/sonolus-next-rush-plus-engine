@@ -5,7 +5,7 @@ from typing import assert_never
 from sonolus.script.archetype import EntityRef, WatchArchetype, callback, entity_data, entity_memory, imported
 from sonolus.script.interval import Interval
 from sonolus.script.particle import ParticleHandle
-from sonolus.script.runtime import is_replay, is_skip, time
+from sonolus.script.runtime import delta_time, is_replay, is_skip, time
 
 from sekai.lib import archetype_names
 from sekai.lib.connector import (
@@ -306,6 +306,9 @@ class WatchSlideManager(WatchArchetype):
             case _:
                 destroy_looped_particle(self.circular_particle)
                 destroy_looped_particle(self.linear_particle)
+
+        if time() + delta_time() > self.active_tail.despawn_time():
+            return
         match info.connector_kind:
             case (
                 ConnectorKind.ACTIVE_NORMAL

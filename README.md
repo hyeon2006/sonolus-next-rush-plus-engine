@@ -1,13 +1,14 @@
-# Next SEKAI Sonolus Engine
+# Next RUSH+ Sonolus Engine
 
 A new Project Sekai inspired engine for [Sonolus](https://sonolus.com).
 
 ## Official Resources
 
 Server: https://coconut.sonolus.com/next-sekai/  
-Editor: https://next-sekai-editor.sonolus.com/  
+Editor: https://next-sekai-editor.sonolus.com/
 
 ## Quick Dev Setup
+
 1. Install [uv](https://docs.astral.sh/uv/).
 2. Run `uv sync`.
 3. Add resources (full exported scp files) such as skins and levels to the `/resources` folder.
@@ -19,7 +20,7 @@ Editor: https://next-sekai-editor.sonolus.com/
 ### Skin Sprites
 
 | Name                                          |
-|-----------------------------------------------|
+| --------------------------------------------- |
 | `Sekai Stage`                                 |
 | `Sekai Stage Surface`                         |
 | `Sekai Note Cyan Left`                        |
@@ -47,6 +48,8 @@ Editor: https://next-sekai-editor.sonolus.com/
 | `Sekai Slot Yellow Flick`                     |
 | `Sekai Slot Yellow Slider`                    |
 | `Sekai Slot Glow Cyan`                        |
+| `Sekai Slot Glow Cyan Great`                  |
+| `Sekai Slot Glow Cyan Good`                   |
 | `Sekai Slot Glow Green`                       |
 | `Sekai Slot Glow Red`                         |
 | `Sekai Slot Glow Yellow`                      |
@@ -54,54 +57,14 @@ Editor: https://next-sekai-editor.sonolus.com/
 | `Sekai Slot Glow Yellow Slider Tap`           |
 | `Sekai Slot Glow Green Slider Hold`           |
 | `Sekai Slot Glow Yellow Slider Hold`          |
-| `Sekai Flick Arrow Red Up 1`                  |
-| `Sekai Flick Arrow Red Up 2`                  |
-| `Sekai Flick Arrow Red Up 3`                  |
-| `Sekai Flick Arrow Red Up 4`                  |
-| `Sekai Flick Arrow Red Up 5`                  |
-| `Sekai Flick Arrow Red Up 6`                  |
-| `Sekai Flick Arrow Red Up Left 1`             |
-| `Sekai Flick Arrow Red Up Left 2`             |
-| `Sekai Flick Arrow Red Up Left 3`             |
-| `Sekai Flick Arrow Red Up Left 4`             |
-| `Sekai Flick Arrow Red Up Left 5`             |
-| `Sekai Flick Arrow Red Up Left 6`             |
-| `Sekai Flick Arrow Red Down 1`                |
-| `Sekai Flick Arrow Red Down 2`                |
-| `Sekai Flick Arrow Red Down 3`                |
-| `Sekai Flick Arrow Red Down 4`                |
-| `Sekai Flick Arrow Red Down 5`                |
-| `Sekai Flick Arrow Red Down 6`                |
-| `Sekai Flick Arrow Red Down Left 1`           |
-| `Sekai Flick Arrow Red Down Left 2`           |
-| `Sekai Flick Arrow Red Down Left 3`           |
-| `Sekai Flick Arrow Red Down Left 4`           |
-| `Sekai Flick Arrow Red Down Left 5`           |
-| `Sekai Flick Arrow Red Down Left 6`           |
-| `Sekai Flick Arrow Yellow Up 1`               |
-| `Sekai Flick Arrow Yellow Up 2`               |
-| `Sekai Flick Arrow Yellow Up 3`               |
-| `Sekai Flick Arrow Yellow Up 4`               |
-| `Sekai Flick Arrow Yellow Up 5`               |
-| `Sekai Flick Arrow Yellow Up 6`               |
-| `Sekai Flick Arrow Yellow Up Left 1`          |
-| `Sekai Flick Arrow Yellow Up Left 2`          |
-| `Sekai Flick Arrow Yellow Up Left 3`          |
-| `Sekai Flick Arrow Yellow Up Left 4`          |
-| `Sekai Flick Arrow Yellow Up Left 5`          |
-| `Sekai Flick Arrow Yellow Up Left 6`          |
-| `Sekai Flick Arrow Yellow Down 1`             |
-| `Sekai Flick Arrow Yellow Down 2`             |
-| `Sekai Flick Arrow Yellow Down 3`             |
-| `Sekai Flick Arrow Yellow Down 4`             |
-| `Sekai Flick Arrow Yellow Down 5`             |
-| `Sekai Flick Arrow Yellow Down 6`             |
-| `Sekai Flick Arrow Yellow Down Left 1`        |
-| `Sekai Flick Arrow Yellow Down Left 2`        |
-| `Sekai Flick Arrow Yellow Down Left 3`        |
-| `Sekai Flick Arrow Yellow Down Left 4`        |
-| `Sekai Flick Arrow Yellow Down Left 5`        |
-| `Sekai Flick Arrow Yellow Down Left 6`        |
+| `Sekai Flick Arrow Red Up (1 to 6)`           |
+| `Sekai Flick Arrow Red Up Left (1 to 6)`      |
+| `Sekai Flick Arrow Red Down (1 to 6)`         |
+| `Sekai Flick Arrow Red Down Left (1 to 6)`    |
+| `Sekai Flick Arrow Yellow Up (1 to 6)`        |
+| `Sekai Flick Arrow Yellow Up Left (1 to 6)`   |
+| `Sekai Flick Arrow Yellow Down (1 to 6)`      |
+| `Sekai Flick Arrow Yellow Down Left (1 to 6)` |
 | `Sekai Trace Note Green Left`                 |
 | `Sekai Trace Note Green Middle`               |
 | `Sekai Trace Note Green Right`                |
@@ -126,11 +89,28 @@ Editor: https://next-sekai-editor.sonolus.com/
 | `Sekai Trace Note Purple Middle`              |
 | `Sekai Trace Note Purple Right`               |
 | `Sekai Black Background`                      |
+| `Perfect`                                     |
+| `Great`                                       |
+| `Good`                                        |
+| `Bad`                                         |
+| `Miss`                                        |
+| `Auto`                                        |
+| `AP Combo Number (0 to 9)`                    |
+| `Combo Number (0 to 9)`                       |
+| `Combo Number Glow (0 to 9)`                  |
+| `AP Combo Label`                              |
+| `Combo Label`                                 |
+| `Combo Label Glow`                            |
+| `Fast Warning`                                |
+| `Late Warning`                                |
+| `Flick Warning`                               |
+| `Damage Flash`                                |
+| `Auto Live`                                   |
 
 ### Effect Clips
 
 | Name                   |
-|------------------------|
+| ---------------------- |
 | `Sekai Tick`           |
 | `Sekai Critical Tap`   |
 | `Sekai Critical Flick` |
@@ -142,11 +122,17 @@ Editor: https://next-sekai-editor.sonolus.com/
 ### Particle Effects
 
 | Name                                   |
-|----------------------------------------|
+| -------------------------------------- |
 | `Sekai Note Lane Linear`               |
+| `Sekai Circular Tap Cyan Great`        |
+| `Sekai Circular Tap Cyan Good`         |
+| `Sekai Linear Tap Cyan Great`          |
+| `Sekai Linear Tap Cyan Good`           |
 | `Sekai Critical Lane Linear`           |
 | `Sekai Critical Flick Lane Linear`     |
 | `Sekai Slot Linear Tap Cyan`           |
+| `Sekai Slot Linear Tap Cyan Great`     |
+| `Sekai Slot Linear Tap Cyan Good`      |
 | `Sekai Slot Linear Slide Tap Green`    |
 | `Sekai Slot Linear Alternative Red`    |
 | `Sekai Slot Linear Tap Yellow`         |
