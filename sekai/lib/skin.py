@@ -310,6 +310,7 @@ class BaseSkin:
     score_bar_panel: Sprite = sprite("Score Bar Panel")
     score_bar_gauge: Sprite = sprite("Score Bar Gauge")
     score_bar_mask: Sprite = sprite("Score Bar Mask")
+    score_bar_mask_edge: Sprite = sprite("Score Bar Mask Edge")
     score_rank_s: Sprite = sprite("Score Rank S")
     score_rank_a: Sprite = sprite("Score Rank A")
     score_rank_b: Sprite = sprite("Score Rank B")
@@ -794,29 +795,10 @@ class LifeSpriteSet(Record):
         return self.bar.available
 
 
-class ScoreGaugeType(IntEnum):
-    NORMAL = 0
-    MASK = 1
-
-
 class ScoreGaugeSpriteSet(Record):
     normal: Sprite
     mask: Sprite
-
-    def get_sprite(self, gauge_type: ScoreGaugeType):
-        result = +Sprite
-        match gauge_type:
-            case ScoreGaugeType.NORMAL:
-                result = self.normal
-            case ScoreGaugeType.MASK:
-                result = self.mask
-            case _:
-                assert_never(gauge_type)
-        return result
-
-    @property
-    def available(self):
-        return self.normal.is_available
+    mask_edge: Sprite
 
 
 class ScoreRankType(IntEnum):
@@ -838,15 +820,15 @@ class ScoreRankSpriteSet(Record):
         result = +Sprite
         match score_type:
             case ScoreRankType.S:
-                result = self.s
+                result @= self.s
             case ScoreRankType.A:
-                result = self.a
+                result @= self.a
             case ScoreRankType.B:
-                result = self.b
+                result @= self.b
             case ScoreRankType.C:
-                result = self.c
+                result @= self.c
             case ScoreRankType.D:
-                result = self.d
+                result @= self.d
             case _:
                 assert_never(score_type)
         return result
@@ -1185,7 +1167,9 @@ life_bar = LifeBarSpriteSet(
     pause=BaseSkin.life_bar_pause, skip=BaseSkin.life_bar_skip, disable=BaseSkin.life_bar_disable
 )
 life_gauge = LifeGaugeSpriteSet(normal=BaseSkin.life_bar_gauge_normal, danger=BaseSkin.life_bar_gauge_danger)
-score_gauge = ScoreGaugeSpriteSet(normal=BaseSkin.score_bar_gauge, mask=BaseSkin.score_bar_mask)
+score_gauge = ScoreGaugeSpriteSet(
+    normal=BaseSkin.score_bar_gauge, mask=BaseSkin.score_bar_mask, mask_edge=BaseSkin.score_bar_mask_edge
+)
 score_rank = ScoreRankSpriteSet(
     s=BaseSkin.score_rank_s,
     a=BaseSkin.score_rank_a,
