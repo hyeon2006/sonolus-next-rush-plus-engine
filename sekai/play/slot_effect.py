@@ -3,6 +3,7 @@ from sonolus.script.runtime import time
 from sonolus.script.sprite import Sprite
 
 from sekai.lib import archetype_names
+from sekai.lib.options import Options
 from sekai.lib.slot_effect import (
     SLOT_EFFECT_DURATION,
     SLOT_GLOW_EFFECT_DURATION,
@@ -21,7 +22,7 @@ class SlotGlowEffect(PlayArchetype):
     end_time: float = entity_memory()
 
     def initialize(self):
-        self.end_time = self.start_time + SLOT_GLOW_EFFECT_DURATION
+        self.end_time = self.start_time + SLOT_GLOW_EFFECT_DURATION * Options.note_effect_duration
 
     def update_parallel(self):
         if time() > self.end_time:
@@ -32,7 +33,7 @@ class SlotGlowEffect(PlayArchetype):
             self.start_time,
             self.end_time,
             self.lane,
-            self.size,
+            0.5,
         )
 
 
@@ -45,7 +46,7 @@ class SlotEffect(PlayArchetype):
     end_time: float = entity_memory()
 
     def initialize(self):
-        self.end_time = self.start_time + SLOT_EFFECT_DURATION
+        self.end_time = self.start_time + SLOT_EFFECT_DURATION * Options.note_effect_duration
 
     def update_parallel(self):
         if time() > self.end_time:

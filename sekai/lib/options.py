@@ -11,6 +11,7 @@ class ScoreMode(IntEnum):
     WEIGHTED_COMBO = 2
     UNWEIGHTED_FLAT = 3
     UNWEIGHTED_COMBO = 4
+    SEKAI = 5
 
 
 ConcreteScoreMode = Literal[
@@ -18,6 +19,7 @@ ConcreteScoreMode = Literal[
     ScoreMode.WEIGHTED_COMBO,
     ScoreMode.UNWEIGHTED_FLAT,
     ScoreMode.UNWEIGHTED_COMBO,
+    ScoreMode.SEKAI,
 ]
 
 
@@ -54,6 +56,15 @@ class Options:
         name=StandardText.EFFECT_AUTO,
         scope="Sekai",
         default=False,
+    )
+    note_effect_duration: float = slider_option(
+        name="Effect Duration",
+        scope="Sekai",
+        default=1,
+        min=0.1,
+        max=1,
+        step=0.05,
+        unit=StandardText.PERCENTAGE_UNIT,
     )
     haptics_enabled: bool = toggle_option(
         name=StandardText.HAPTIC,
@@ -151,10 +162,11 @@ class Options:
         scope="Sekai",
         default=True,
     )
-    hide_ui: bool = toggle_option(
+    hide_ui: int = select_option(
         name="Hide UI",
-        scope="Sekai",
-        default=False,
+        scope="Rush",
+        default=0,
+        values=["None", "Sonolus", "Sonolus + Custom Judgment", "All"],
     )
     show_lane: bool = toggle_option(
         name=StandardText.STAGE,
@@ -199,6 +211,110 @@ class Options:
         advanced=True,
         default=False,
     )
+    version: int = select_option(
+        name=StandardText.VERSION,
+        description="The particle generation method, etc. will work with the selected version",
+        scope="Rush",
+        default=0,
+        values=["v3", "v1"],
+    )
+    custom_combo: bool = toggle_option(
+        name="Using Custom Combo",
+        scope="Rush",
+        default=True,
+    )
+    custom_score: int = select_option(
+        name="Using Custom Score Indicator",
+        scope="Rush",
+        default=0,
+        values=["Disable", "Arcade% (+)", "Arcade% (-)", "Accuracy%"],
+    )
+    combo_distance: float = slider_option(
+        name="Custom Combo Number Distance",
+        scope="Rush",
+        advanced=True,
+        default=0,
+        min=-0.25,
+        max=0.25,
+        step=0.01,
+    )
+    ap_effect: bool = toggle_option(
+        name="AP Effect",
+        scope="Rush",
+        default=True,
+    )
+    custom_judgment: bool = toggle_option(
+        name="Using Custom Judgment",
+        scope="Rush",
+        default=True,
+    )
+    custom_accuracy: bool = toggle_option(
+        name="Late/Fast/Flick",
+        scope="Rush",
+        default=False,
+    )
+    auto_judgment: bool = toggle_option(
+        name="Using Auto Judgment",
+        description="When using Custom Judgment, judgment is always output as auto in Watch mode",
+        scope="Rush",
+        default=True,
+    )
+    custom_damage: bool = toggle_option(
+        name="Using Custom Damage Effect",
+        scope="Rush",
+        default=True,
+    )
+    custom_life_bar: bool = toggle_option(
+        name="Using Custom Life Bar",
+        scope="Rush",
+        default=True,
+    )
+    custom_score_bar: bool = toggle_option(
+        name="Using Custom Score Bar",
+        scope="Rush",
+        default=True,
+    )
+    custom_tag: bool = toggle_option(
+        name="Using Custom Tag",
+        description="Play special tags like Auto Live while Watch mode",
+        scope="Rush",
+        default=True,
+    )
+    background_alpha: float = slider_option(
+        name=StandardText.STAGE_ALPHA,
+        scope="Sekai",
+        default=1,
+        min=0.5,
+        max=1,
+        step=0.1,
+        unit=StandardText.PERCENTAGE_UNIT,
+    )
+    lane_alpha: float = slider_option(
+        name=StandardText.LANE_ALPHA,
+        scope="Sekai",
+        default=1,
+        min=0,
+        max=1,
+        step=0.1,
+        unit=StandardText.PERCENTAGE_UNIT,
+    )
+    fever_effect: int = select_option(
+        name="Fever Effect",
+        scope="Rush",
+        default=0,
+        values=["Default", "Lightweight", "None"],
+    )
+    forced_fever_chance: bool = toggle_option(
+        name="Forced Fever Chance",
+        description="Fever occurs even when not in a multiplayer environment",
+        scope="Rush",
+        default=False,
+    )
+    skill_effect: bool = toggle_option(
+        name="Skill Effect",
+        scope="Rush",
+        default=True,
+    )
     score_mode: ScoreMode = select_option(
         name="Score Mode",
         scope="Sekai",
@@ -208,6 +324,7 @@ class Options:
             "Weighted Combo (Sekai)",
             "Unweighted Flat (Tournament)",
             "Unweighted Combo (Classic)",
+            "Sekai",
         ],
         standard=True,
         advanced=True,
@@ -240,4 +357,18 @@ class Options:
         "Note Margin",
         "Alternative Approach Curve",
         "Disable Timescale",
+        StandardText.VERSION,
+        "Using Custom Combo",
+        "Custom Combo Number Distance",
+        "Ap Effect",
+        "Using Combo Judgment",
+        "Late/Fast/Flick",
+        "Using Auto Judgment",
+        "Using Custom Damage Effect",
+        "Using Custom Tag",
+        StandardText.STAGE_ALPHA,
+        StandardText.LANE_ALPHA,
+        "Fever Effect",
+        "Forced Fever Chance",
+        "Skill Effect",
     )
