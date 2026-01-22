@@ -56,6 +56,7 @@ class Connector(PlayArchetype):
     input_active_interval: Interval = entity_data()
 
     last_visual_state: ConnectorVisualState = entity_memory()
+    delay: bool = entity_memory()
 
     @callback(order=1)  # After note preprocessing is done
     def preprocess(self):
@@ -74,6 +75,10 @@ class Connector(PlayArchetype):
         )
         self.end_time = max(self.visual_active_interval.end, self.input_active_interval.end)
         self.last_visual_state = ConnectorVisualState.WAITING
+        if self.active_head_ref.index > 0:
+            head.tick_head_ref = self.active_head_ref
+        if self.active_tail_ref.index > 0:
+            head.tick_tail_ref = self.active_tail_ref
 
         if Options.auto_sfx and self.head_ref.index == self.segment_head_ref.index:
             match self.kind:
@@ -130,15 +135,16 @@ class Connector(PlayArchetype):
                 hitbox = self.active_connector_info.get_hitbox(CONNECTOR_LENIENCY)
                 for touch in touches():
                     if not touch.ended and hitbox.contains_point(touch.position):
-                        input_manager.disallow_empty(touch)
                         if not self.active_connector_info.is_active:
                             self.active_connector_info.active_start_time = time()
-                        self.active_connector_info.last_active_time = time()
+                        self.active_connector_info.is_active = True
+                        self.delay = False
                         break
-                if self.kind in {ConnectorKind.ACTIVE_FAKE_NORMAL, ConnectorKind.ACTIVE_FAKE_CRITICAL}:
-                    if not self.active_connector_info.is_active:
-                        self.active_connector_info.active_start_time = time()
-                    self.active_connector_info.last_active_time = time()
+                else:
+                    if self.delay:
+                        self.active_connector_info.is_active = False
+                    else:
+                        self.delay = True
             if time() in self.visual_active_interval:
                 visual_lane, visual_size = self.get_attached_params(time())
                 self.active_connector_info.visual_lane = visual_lane
@@ -146,6 +152,20 @@ class Connector(PlayArchetype):
                 self.active_connector_info.connector_kind = self.kind
             if group_hide_notes(self.segment_head.timescale_group):
                 self.active_connector_info.connector_kind = ConnectorKind.NONE
+
+    def touch(self):
+        if self.segment_head.segment_kind not in (
+            ConnectorKind.ACTIVE_NORMAL,
+            ConnectorKind.ACTIVE_CRITICAL,
+            ConnectorKind.ACTIVE_FAKE_NORMAL,
+            ConnectorKind.ACTIVE_FAKE_CRITICAL,
+        ):
+            return
+        if time() in self.input_active_interval:
+            hitbox = self.active_connector_info.get_hitbox(CONNECTOR_LENIENCY)
+            for touch in touches():
+                if hitbox.contains_point(touch.position) and not touch.ended and input_manager.is_allowed_empty(touch):
+                    input_manager.disallow_empty(touch)
 
     def update_parallel(self):
         if time() < self.visual_active_interval.end:
@@ -172,6 +192,7 @@ class Connector(PlayArchetype):
             if group_hide_notes(segment_head.timescale_group):
                 return
             if self.active_tail_ref.index > 0 and self.active_tail.is_despawned:
+                self.despawn = True
                 return
             draw_connector(
                 kind=self.kind,
