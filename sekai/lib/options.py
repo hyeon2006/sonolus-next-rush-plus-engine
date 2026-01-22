@@ -45,6 +45,15 @@ class Options:
         scope="Sekai",
         default=False,
     )
+    note_effect_duration: float = slider_option(
+        name="Effect Duration",
+        scope="Sekai",
+        default=1,
+        min=0.1,
+        max=1,
+        step=0.05,
+        unit=StandardText.PERCENTAGE_UNIT,
+    )
     haptics_enabled: bool = toggle_option(
         name=StandardText.HAPTIC,
         scope="Sekai",
@@ -141,10 +150,11 @@ class Options:
         scope="Sekai",
         default=True,
     )
-    hide_ui: bool = toggle_option(
+    hide_ui: int = select_option(
         name="Hide UI",
-        scope="Sekai",
-        default=False,
+        scope="Rush",
+        default=0,
+        values=["None", "Sonolus", "Sonolus + Custom Judgment", "All"],
     )
     show_lane: bool = toggle_option(
         name=StandardText.STAGE,
@@ -203,6 +213,7 @@ class Options:
             "Weighted Combo (Sekai)",
             "Unweighted Flat (Tournament)",
             "Unweighted Combo (Classic)",
+            "Sekai",
         ],
         standard=True,
         advanced=True,
@@ -235,4 +246,18 @@ class Options:
         "Note Margin",
         "Alternative Approach Curve",
         "Disable Timescale",
+        StandardText.VERSION,
+        "Using Custom Combo",
+        "Custom Combo Number Distance",
+        "Ap Effect",
+        "Using Combo Judgment",
+        "Late/Fast/Flick",
+        "Using Auto Judgment",
+        "Using Custom Damage Effect",
+        "Using Custom Tag",
+        StandardText.STAGE_ALPHA,
+        StandardText.LANE_ALPHA,
+        "Fever Effect",
+        "Forced Fever Chance",
+        "Skill Effect",
     )
