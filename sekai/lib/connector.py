@@ -1,9 +1,8 @@
 from enum import IntEnum
-from math import ceil, cos, pi
+from math import ceil, cos, pi, sin
 from typing import Literal, assert_never
 
 from sonolus.script.archetype import EntityRef
-from sonolus.script.easing import ease_out_cubic
 from sonolus.script.effect import Effect, LoopedEffectHandle
 from sonolus.script.interval import clamp, lerp, remap, remap_clamped, unlerp_clamped
 from sonolus.script.particle import Particle, ParticleHandle
@@ -13,7 +12,6 @@ from sonolus.script.runtime import time
 from sonolus.script.sprite import Sprite
 from sonolus.script.timing import beat_to_time
 
-from sekai.lib.buckets import SLIDE_TICK_JUDGMENT_WINDOW
 from sekai.lib.ease import EaseType, ease
 from sekai.lib.effect import Effects
 from sekai.lib.layer import (
@@ -370,27 +368,25 @@ def draw_connector(
         case EaseType.NONE:
             curve_change_scale = 0.0
         case EaseType.LINEAR:
+            mid_travel = (start_travel + end_travel) / 2
+            perspective_factor = max(0.1, mid_travel) ** 0.8
+
             x_diff = (
                 max(
                     abs((start_lane - start_size) - (end_lane - end_size)),
                     abs((start_lane + start_size) - (end_lane + end_size)),
                 )
                 * Layout.w_scale
-            )
-            y_diff = abs(start_pos_y - end_pos_y)
-            travel_adj = clamp(2 - max(start_travel, end_travel), 1, 2)
-            curve_change_scale = (min(x_diff, y_diff) * travel_adj) * 0.8
+                / perspective_factor
+            ) * abs(end_progress - start_progress)
+            curve_change_scale = x_diff**0.8
         case _:
+            pos_offset = 0
             left_start_lane = start_lane - start_size
             left_end_lane = end_lane - end_size
             right_start_lane = start_lane + start_size
             right_end_lane = end_lane + end_size
-            if abs(start_size - end_size) < 0.1:
-                ref_start_lane = start_lane
-                ref_end_lane = end_lane
-                ref_head_lane = head_lane
-                ref_tail_lane = tail_lane
-            elif abs(left_start_lane - left_end_lane) > abs(right_start_lane - right_end_lane):
+            if abs(left_start_lane - left_end_lane) > abs(right_start_lane - right_end_lane):
                 ref_start_lane = left_start_lane
                 ref_end_lane = left_end_lane
                 ref_head_lane = head_lane - head_size
@@ -402,8 +398,7 @@ def draw_connector(
                 ref_tail_lane = tail_lane + tail_size
             start_ref = transformed_vec_at(ref_start_lane, start_travel)
             end_ref = transformed_vec_at(ref_end_lane, end_travel)
-            last_pos_offset = 0
-            total_pos_offsets = 0
+            pos_offset_this_side = 0
             for r in (0.25, 0.75):
                 ease_frac = lerp(start_ease_frac, end_ease_frac, r)
                 interp_frac = unlerp_clamped(eased_head_ease_frac, eased_tail_ease_frac, ease(ease_type, ease_frac))
@@ -412,11 +407,11 @@ def draw_connector(
                 lane = lerp(ref_head_lane, ref_tail_lane, interp_frac)
                 pos = transformed_vec_at(lane, travel)
                 ref_pos = lerp(start_ref, end_ref, unlerp_clamped(start_travel, end_travel, travel))
-                current_pos_offset = pos.x - ref_pos.x
-                total_pos_offsets += abs(current_pos_offset - last_pos_offset) ** 0.6
-                last_pos_offset = current_pos_offset
-            total_pos_offsets += abs(last_pos_offset) ** 0.6
-            curve_change_scale = total_pos_offsets * 1.5
+                screen_offset = abs(pos.x - ref_pos.x)
+                compensation_factor = max(0.1, travel) ** 0.8
+                pos_offset_this_side += screen_offset / compensation_factor
+            pos_offset = max(pos_offset, pos_offset_this_side) * abs(end_progress - start_progress) ** 0.7
+            curve_change_scale = pos_offset**0.4 * 2
     alpha_change_scale = max(
         (abs(start_alpha - end_alpha) * get_connector_alpha_option(kind)) ** 0.8 * 3,
         (abs(start_alpha - end_alpha) * get_connector_alpha_option(kind)) ** 0.5 * abs(start_pos_y - end_pos_y) * 3,
@@ -429,6 +424,11 @@ def draw_connector(
         z_active = get_connector_z(kind, segment_head_target_time, segment_head_lane, active=True, layer=layer)
     else:
         z_active = z_normal
+
+    anim_factor1 = 1.0
+    anim_factor2 = 1.0
+    if visual_state == ConnectorVisualState.ACTIVE and active_sprite.is_available and Options.connector_animation:
+        anim_factor1, anim_factor2 = get_cross_fate_opacities(1.0, time() - segment_head_target_time, 0.5)
 
     last_travel = start_travel
     last_lane = start_lane
@@ -468,9 +468,8 @@ def draw_connector(
 
         if visual_state == ConnectorVisualState.ACTIVE and active_sprite.is_available:
             if Options.connector_animation:
-                a_modifier = (cos(2 * pi * time()) + 1) / 2
-                normal_sprite.draw(layout, z=z_normal, a=base_a * ease_out_cubic(a_modifier))
-                active_sprite.draw(layout, z=z_active, a=base_a * ease_out_cubic(1 - a_modifier))
+                normal_sprite.draw(layout, z=z_normal, a=base_a * anim_factor1)
+                active_sprite.draw(layout, z=z_active, a=base_a * anim_factor2)
             else:
                 active_sprite.draw(layout, z=z_active, a=base_a)
         else:
@@ -485,13 +484,28 @@ def draw_connector(
         last_target_time = next_target_time
 
 
+def get_cross_fate_opacities(a, t, period):
+    time_in_cycle = t % period
+    angle = (time_in_cycle * pi) / period
+    intensity = 0.7
+    no_correction_exp = 1.0
+    full_correction_exp = 1.0 / 2.2
+    final_exponent = no_correction_exp * (1 - intensity) + full_correction_exp * intensity
+    base_opacity_a = cos(angle) ** 2
+    base_opacity_b = sin(angle) ** 2
+    opacity1 = a * base_opacity_a**final_exponent
+    opacity2 = a * base_opacity_b**final_exponent
+
+    return opacity1, opacity2
+
+
 class ActiveConnectorInfo(Record):
     visual_lane: float
     visual_size: float
     input_lane: float
     input_size: float
+    is_active: bool
     active_start_time: float
-    last_active_time: float
     connector_kind: ConnectorKind
 
     def get_hitbox(self, leniency: float) -> Rect:
@@ -499,10 +513,6 @@ class ActiveConnectorInfo(Record):
             self.input_lane - self.input_size - leniency,
             self.input_lane + self.input_size + leniency,
         )
-
-    @property
-    def is_active(self) -> bool:
-        return self.last_active_time >= (SLIDE_TICK_JUDGMENT_WINDOW.perfect + time()).start
 
 
 def update_circular_connector_particle(
@@ -523,7 +533,7 @@ def update_circular_connector_particle(
                 particle @= ActiveParticles.critical_slide_connector.circular
             case _:
                 assert_never(kind)
-        replace_looped_particle(handle, particle, layout, duration=1)
+        replace_looped_particle(handle, particle, layout, duration=1 * Options.note_effect_duration)
     else:
         update_looped_particle(handle, layout)
 
@@ -546,7 +556,7 @@ def update_linear_connector_particle(
                 particle @= ActiveParticles.critical_slide_connector.linear
             case _:
                 assert_never(kind)
-        replace_looped_particle(handle, particle, layout, duration=1)
+        replace_looped_particle(handle, particle, layout, duration=1 * Options.note_effect_duration)
     else:
         update_looped_particle(handle, layout)
 
@@ -566,7 +576,7 @@ def spawn_linear_connector_trail_particle(
             particle @= ActiveParticles.critical_slide_connector.trail_linear
         case _:
             assert_never(kind)
-    particle.spawn(layout, duration=0.5)
+    particle.spawn(layout, duration=0.5 * Options.note_effect_duration)
 
 
 def spawn_connector_slot_particles(
@@ -586,7 +596,7 @@ def spawn_connector_slot_particles(
             assert_never(kind)
     for slot_lane in iter_slot_lanes(lane, size):
         layout = layout_linear_effect(slot_lane, shear=0)
-        particle.spawn(layout, duration=0.5)
+        particle.spawn(layout, duration=0.5 * Options.note_effect_duration)
 
 
 def draw_connector_slot_glow_effect(
@@ -603,10 +613,15 @@ def draw_connector_slot_glow_effect(
             sprite @= ActiveSkin.critical_active_slide_connector.slot_glow
         case _:
             assert_never(kind)
-    height = (3.25 + (cos((time() - start_time) * 8 * pi) + 1) / 2) / 4.25
-    layout = layout_slot_glow_effect(lane, size, height)
+    height = (
+        0.85 + (1.2 - 0.85) * ((cos((time() - start_time) * 8 * pi) + 1) / 2)  # min + (max - min) * osc
+        if Options.version == 0
+        else 0.2 + (1.2 - 0.2) * ((sin((time() - start_time) * 2.5 * pi) + 1) / 2)
+    )
+    ex = 0.035 * abs(2 * size) + 0.08 if Options.version == 0 else 0
+    layout = layout_slot_glow_effect(lane, size + ex, height)
     z = get_z(LAYER_SLOT_GLOW_EFFECT, start_time, lane, invert_time=True)
-    a = remap_clamped(start_time, start_time + 0.25, 0.0, 0.3, time())
+    a = remap_clamped(start_time, start_time + 0.25, 0.0, 0.25, time())
     sprite.draw(layout, z=z, a=a)
 
 
