@@ -53,6 +53,7 @@ from sekai.lib.particle import BaseParticles
 from sekai.lib.timescale import CompositeTime, group_hide_notes, group_scaled_time, group_time_to_scaled_time
 from sekai.play import input_manager
 from sekai.play.custom_elements import spawn_custom
+from sekai.play.events import SkillActive
 from sekai.play.particle_manager import ParticleManager
 
 DEFAULT_BEST_TOUCH_TIME = -1e8
@@ -637,7 +638,7 @@ class BaseNote(PlayArchetype):
     def judge(self, actual_time: float):
         judgment = self.judgment_window.judge(actual_time, self.target_time)
         error = self.judgment_window.good.clamp(actual_time - self.target_time)
-        self.result.judgment = judgment
+        self.result.judgment = judgment if not SkillActive.judgment and judgment != Judgment.MISS else Judgment.PERFECT
         self.result.accuracy = error
         if self.result.bucket.id != -1:
             self.result.bucket_value = error * WINDOW_SCALE
@@ -649,7 +650,7 @@ class BaseNote(PlayArchetype):
         if judgment == Judgment.PERFECT:
             judgment = Judgment.GREAT
         error = self.judgment_window.good.clamp(actual_time - self.target_time)
-        self.result.judgment = judgment
+        self.result.judgment = judgment if not SkillActive.judgment and judgment != Judgment.MISS else Judgment.PERFECT
         if error in self.judgment_window.perfect:
             self.result.accuracy = self.judgment_window.perfect.end
         else:
@@ -658,7 +659,7 @@ class BaseNote(PlayArchetype):
             self.result.bucket_value = error * WINDOW_SCALE
         self.despawn = True
         self.should_play_hit_effects = True
-        self.wrong_way = True
+        self.wrong_way = not SkillActive.judgment and judgment != Judgment.MISS
 
     def complete(self):
         self.result.judgment = Judgment.PERFECT
@@ -670,12 +671,16 @@ class BaseNote(PlayArchetype):
 
     def complete_wrong_way(self):
         self.result.judgment = Judgment.GREAT
-        self.result.accuracy = self.judgment_window.good.end
+        self.result.accuracy = (
+            self.judgment_window.good.end
+            if not SkillActive.judgment and self.result.judgment != Judgment.MISS
+            else Judgment.PERFECT
+        )
         if self.result.bucket.id != -1:
             self.result.bucket_value = 0
         self.despawn = True
         self.should_play_hit_effects = True
-        self.wrong_way = True
+        self.wrong_way = not SkillActive.judgment and self.result.judgment != Judgment.MISS
 
     def complete_damage(self):
         self.result.judgment = Judgment.PERFECT
