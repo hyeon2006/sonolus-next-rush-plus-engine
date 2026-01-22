@@ -514,6 +514,10 @@ def layout_custom_tag() -> Quad:
     )
 
 
+LIFE_BAR_BASE_Y = 0.887
+SCORE_BAR_BASE_Y = 0.865
+
+
 def layout_life_bar() -> Quad:
     ui = runtime_ui()
 
@@ -524,7 +528,7 @@ def layout_life_bar() -> Quad:
 
     MARGIN = 0.28  # noqa: N806
 
-    screen_center = Vec2(x=screen().r - MARGIN - (w / 2), y=0.887)
+    screen_center = Vec2(x=screen().r - MARGIN - (w / 2), y=LIFE_BAR_BASE_Y)
     return Quad(
         bl=Vec2(screen_center.x - w / 2, screen_center.y - h / 2),
         br=Vec2(screen_center.x + w / 2, screen_center.y - h / 2),
@@ -546,7 +550,10 @@ def layout_life_gauge(life) -> Quad:
     bar_center_x = screen().r - MARGIN - (current_bar_w / 2)
     number_center_x = bar_center_x + (margin_offset * final_scale)
 
-    screen_center = Vec2(x=number_center_x - (current_bar_w / 2), y=0.88)
+    y_offset = -0.007
+    center_y = LIFE_BAR_BASE_Y + (y_offset * final_scale)
+
+    screen_center = Vec2(x=number_center_x - (current_bar_w / 2), y=center_y)
 
     h = 0.027 * ui.secondary_metric_config.scale * scale_ratio
     w = 0.495 * ui.secondary_metric_config.scale * scale_ratio
@@ -569,7 +576,7 @@ def layout_score_bar() -> Quad:
 
     MARGIN = 0.3  # noqa: N806
 
-    screen_center = Vec2(x=screen().l + MARGIN + (w / 2), y=0.865)
+    screen_center = Vec2(x=screen().l + MARGIN + (w / 2), y=SCORE_BAR_BASE_Y)
     return Quad(
         bl=Vec2(screen_center.x - w / 2, screen_center.y - h / 2),
         br=Vec2(screen_center.x + w / 2, screen_center.y - h / 2),
@@ -607,11 +614,13 @@ def layout_score_gauge(gauge=0, score_type: ScoreGaugeType = ScoreGaugeType.NORM
     bar_base_w = 0.27 * 4.6
     final_scale = ui.primary_metric_config.scale * scale_ratio
     current_bar_w = bar_base_w * final_scale
-
     bar_center_x = screen().l + MARGIN + (current_bar_w / 2)
     number_center_x = bar_center_x - (margin_offset * final_scale)
 
-    screen_center = Vec2(x=number_center_x + (current_bar_w / 2), y=0.873)
+    y_offset = 0.007
+    center_y = SCORE_BAR_BASE_Y + (y_offset * final_scale)
+
+    screen_center = Vec2(x=number_center_x + (current_bar_w / 2), y=center_y)
 
     return Quad(
         bl=Vec2(screen_center.x - w, screen_center.y - h / 2),
@@ -639,7 +648,10 @@ def layout_score_rank() -> Quad:
     bar_center_x = screen().l + MARGIN + (current_bar_w / 2)
     number_center_x = bar_center_x - (margin_offset * final_scale)
 
-    screen_center = Vec2(x=number_center_x + (current_bar_w / 2), y=0.88)
+    y_offset = 0.015
+    center_y = SCORE_BAR_BASE_Y + (y_offset * final_scale)
+
+    screen_center = Vec2(x=number_center_x + (current_bar_w / 2), y=center_y)
 
     return Quad(
         bl=Vec2(screen_center.x - w / 2, screen_center.y - h / 2),
@@ -667,7 +679,10 @@ def layout_score_rank_text() -> Quad:
     bar_center_x = screen().l + MARGIN + (current_bar_w / 2)
     number_center_x = bar_center_x - (margin_offset * final_scale)
 
-    screen_center = Vec2(x=number_center_x + (current_bar_w / 2), y=0.76)
+    y_offset = -0.1
+    center_y = SCORE_BAR_BASE_Y + (y_offset * final_scale)
+
+    screen_center = Vec2(x=number_center_x + (current_bar_w / 2), y=center_y)
 
     return Quad(
         bl=Vec2(screen_center.x - w / 2, screen_center.y - h / 2),
