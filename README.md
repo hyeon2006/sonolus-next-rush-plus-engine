@@ -205,7 +205,9 @@ Editor: https://next-sekai-editor.sonolus.com/
 | `Flick Warning`                                 |
 | `Damage Flash`                                  |
 | `Auto Live`                                     |
-| `Skill Bar`                                     |
+| `Skill Bar Life`                                |
+| `Skill Bar Score`                               |
+| `Skill Bar Judgment`                            |
 | `Skill Level (1 to 4)`                          |
 | `Skill Percent`                                 |
 | `Skill Value Score`                             |
@@ -213,15 +215,20 @@ Editor: https://next-sekai-editor.sonolus.com/
 | `Skill Value Judgment`                          |
 | `Skill Icon (1 to 5)`                           |
 | `UI Number (0 to 11)`                           |
+| `Life Number (0 to 9)`                          |
 | `Life Bar Pause`                                |
 | `Life Bar Skip`                                 |
 | `Life Bar Disable`                              |
+| `Life Bar Danger Pause`                         |
+| `Life Bar Danger Skip`                          |
+| `Life Bar Danger Disable`                       |
 | `Life Bar Gauge Normal`                         |
 | `Life Bar Gauge Danger`                         |
 | `Score Bar`                                     |
 | `Score Bar Panel`                               |
 | `Score Bar Gauge`                               |
 | `Score Bar Mask`                                |
+| `Score Bar Cover`                               |
 | `Score Rank S`                                  |
 | `Score Rank A`                                  |
 | `Score Rank B`                                  |
