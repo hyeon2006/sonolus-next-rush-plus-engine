@@ -33,6 +33,8 @@ from sekai.watch import custom_elements, note
 from sekai.watch.events import Fever, Skill
 from sekai.watch.stage import WatchScheduledLaneEffect, WatchStage
 
+EPSILON = 1e-9
+
 
 @level_memory
 class LayerCache:
@@ -212,16 +214,16 @@ def setting_combo(head: int, skill: int) -> None:
         current_note_weight = level_score().perfect_multiplier * (
             (
                 min(
-                    floor(count * inv_perfect_step) * level_score().consecutive_perfect_multiplier,
+                    floor(count * inv_perfect_step + EPSILON) * level_score().consecutive_perfect_multiplier,
                     (level_score().consecutive_perfect_cap * inv_perfect_step)
                     * level_score().consecutive_perfect_multiplier,
                 )
                 + min(
-                    floor(count * inv_great_step) * level_score().consecutive_great_multiplier,
+                    floor(count * inv_great_step + EPSILON) * level_score().consecutive_great_multiplier,
                     (level_score().consecutive_great_cap * inv_great_step) * level_score().consecutive_great_multiplier,
                 )
                 + min(
-                    floor(count * inv_good_step) * level_score().consecutive_good_multiplier,
+                    floor(count * inv_good_step + EPSILON) * level_score().consecutive_good_multiplier,
                     (level_score().consecutive_good_cap * inv_good_step) * level_score().consecutive_good_multiplier,
                 )
             )
@@ -297,34 +299,33 @@ def calculate_score(head: int, max_score: int, total_weight: float):
         note_raw_score = judgment_multiplier * (
             (
                 min(
-                    floor(perfect_step * inv_perfect_step) * level_score().consecutive_perfect_multiplier,
+                    floor(perfect_step * inv_perfect_step + EPSILON) * level_score().consecutive_perfect_multiplier,
                     (level_score().consecutive_perfect_cap * inv_perfect_step)
                     * level_score().consecutive_perfect_multiplier,
                 )
                 + min(
-                    floor(great_step * inv_great_step) * level_score().consecutive_great_multiplier,
+                    floor(great_step * inv_great_step + EPSILON) * level_score().consecutive_great_multiplier,
                     (level_score().consecutive_great_cap * inv_great_step) * level_score().consecutive_great_multiplier,
                 )
                 + min(
-                    floor(good_step * inv_good_step) * level_score().consecutive_good_multiplier,
+                    floor(good_step * inv_good_step + EPSILON) * level_score().consecutive_good_multiplier,
                     (level_score().consecutive_good_cap * inv_good_step) * level_score().consecutive_good_multiplier,
                 )
             )
             + note.WatchBaseNote.at(ptr).archetype_score_multiplier
             + note.WatchBaseNote.at(ptr).entity_score_multiplier
         )
-        EPSILON = 1e-9  # noqa: N806
         raw_calc = (note_raw_score * max_score) / total_weight
-        note.WatchBaseNote.at(ptr).note_raw_score = round(raw_calc + EPSILON)
+        note.WatchBaseNote.at(ptr).note_raw_score = raw_calc + EPSILON
 
         y = note_raw_score - raw_score_compensation
         t = current_raw_score + y
         raw_score_compensation = (t - current_raw_score) - y
         current_raw_score = t
 
-        final_calc = (current_raw_score * max_score) / total_weight
+        final_calc = (current_raw_score / total_weight) * max_score
         score = clamp(
-            round(final_calc + EPSILON),
+            final_calc + EPSILON,
             0,
             max_score,
         )
@@ -337,17 +338,17 @@ def calculate_score(head: int, max_score: int, total_weight: float):
                 note_ideal_weight = level_score().perfect_multiplier * (
                     (
                         min(
-                            floor(count * inv_perfect_step) * level_score().consecutive_perfect_multiplier,
+                            floor(count * inv_perfect_step + EPSILON) * level_score().consecutive_perfect_multiplier,
                             (level_score().consecutive_perfect_cap * inv_perfect_step)
                             * level_score().consecutive_perfect_multiplier,
                         )
                         + min(
-                            floor(count * inv_great_step) * level_score().consecutive_great_multiplier,
+                            floor(count * inv_great_step + EPSILON) * level_score().consecutive_great_multiplier,
                             (level_score().consecutive_great_cap * inv_great_step)
                             * level_score().consecutive_great_multiplier,
                         )
                         + min(
-                            floor(count * inv_good_step) * level_score().consecutive_good_multiplier,
+                            floor(count * inv_good_step + EPSILON) * level_score().consecutive_good_multiplier,
                             (level_score().consecutive_good_cap * inv_good_step)
                             * level_score().consecutive_good_multiplier,
                         )

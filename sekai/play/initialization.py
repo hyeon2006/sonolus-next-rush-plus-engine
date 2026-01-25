@@ -28,6 +28,8 @@ from sekai.lib.ui import init_ui
 from sekai.play import custom_elements, input_manager, note, stage
 from sekai.play.events import Fever, Skill
 
+EPSILON = 1e-9
+
 
 @level_memory
 class LayerCache:
@@ -174,16 +176,16 @@ def setting_count(head: int, skill: int) -> None:
         current_note_weight = level_score().perfect_multiplier * (
             (
                 min(
-                    floor(count * inv_perfect_step) * level_score().consecutive_perfect_multiplier,
+                    floor(count * inv_perfect_step + EPSILON) * level_score().consecutive_perfect_multiplier,
                     (level_score().consecutive_perfect_cap * inv_perfect_step)
                     * level_score().consecutive_perfect_multiplier,
                 )
                 + min(
-                    floor(count * inv_great_step) * level_score().consecutive_great_multiplier,
+                    floor(count * inv_great_step + EPSILON) * level_score().consecutive_great_multiplier,
                     (level_score().consecutive_great_cap * inv_great_step) * level_score().consecutive_great_multiplier,
                 )
                 + min(
-                    floor(count * inv_good_step) * level_score().consecutive_good_multiplier,
+                    floor(count * inv_good_step + EPSILON) * level_score().consecutive_good_multiplier,
                     (level_score().consecutive_good_cap * inv_good_step) * level_score().consecutive_good_multiplier,
                 )
             )

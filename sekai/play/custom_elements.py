@@ -18,6 +18,8 @@ from sekai.lib.options import Options
 from sekai.play import initialization, note
 from sekai.play.events import Fever
 
+EPSILON = 1e-9
+
 
 def spawn_custom(
     judgment: Judgment,
@@ -191,26 +193,27 @@ class ComboJudge(PlayArchetype):
         note_raw_score = judgment_multiplier * (
             (
                 min(
-                    floor(ScoreIndicator.perfect_step * inv_perfect_step)
+                    floor(ScoreIndicator.perfect_step * inv_perfect_step + EPSILON)
                     * level_score().consecutive_perfect_multiplier,
                     (level_score().consecutive_perfect_cap * inv_perfect_step)
                     * level_score().consecutive_perfect_multiplier,
                 )
                 + min(
-                    floor(ScoreIndicator.great_step * inv_great_step) * level_score().consecutive_great_multiplier,
+                    floor(ScoreIndicator.great_step * inv_great_step + EPSILON)
+                    * level_score().consecutive_great_multiplier,
                     (level_score().consecutive_great_cap * inv_great_step) * level_score().consecutive_great_multiplier,
                 )
                 + min(
-                    floor(ScoreIndicator.good_step * inv_good_step) * level_score().consecutive_good_multiplier,
+                    floor(ScoreIndicator.good_step * inv_good_step + EPSILON)
+                    * level_score().consecutive_good_multiplier,
                     (level_score().consecutive_good_cap * inv_good_step) * level_score().consecutive_good_multiplier,
                 )
             )
             + note.BaseNote.at(self.index).archetype_score_multiplier
             + note.BaseNote.at(self.index).entity_score_multiplier
         )
-        EPSILON = 1e-9  # noqa: N806
         raw_calc = (note_raw_score * ScoreIndicator.max_score) / ScoreIndicator.total_weight
-        note_score = round(raw_calc + EPSILON)
+        note_score = raw_calc + EPSILON
         ScoreIndicator.note_score = note_score if note_score > 0 else ScoreIndicator.note_score
         ScoreIndicator.note_time = self.spawn_time if note_score > 0 else ScoreIndicator.note_time
 
@@ -219,9 +222,9 @@ class ComboJudge(PlayArchetype):
         ScoreIndicator.raw_score_compensation = (t - ScoreIndicator.current_raw_score) - y
         ScoreIndicator.current_raw_score = t
 
-        final_calc = (ScoreIndicator.current_raw_score * ScoreIndicator.max_score) / ScoreIndicator.total_weight
+        final_calc = (ScoreIndicator.current_raw_score / ScoreIndicator.total_weight) * ScoreIndicator.max_score
         ScoreIndicator.score = clamp(
-            round(final_calc + EPSILON),
+            final_calc + EPSILON,
             0,
             ScoreIndicator.max_score,
         )
@@ -233,17 +236,18 @@ class ComboJudge(PlayArchetype):
                 note_ideal_weight = level_score().perfect_multiplier * (
                     (
                         min(
-                            floor(ideal_combo * inv_perfect_step) * level_score().consecutive_perfect_multiplier,
+                            floor(ideal_combo * inv_perfect_step + EPSILON)
+                            * level_score().consecutive_perfect_multiplier,
                             (level_score().consecutive_perfect_cap * inv_perfect_step)
                             * level_score().consecutive_perfect_multiplier,
                         )
                         + min(
-                            floor(ideal_combo * inv_great_step) * level_score().consecutive_great_multiplier,
+                            floor(ideal_combo * inv_great_step + EPSILON) * level_score().consecutive_great_multiplier,
                             (level_score().consecutive_great_cap * inv_great_step)
                             * level_score().consecutive_great_multiplier,
                         )
                         + min(
-                            floor(ideal_combo * inv_good_step) * level_score().consecutive_good_multiplier,
+                            floor(ideal_combo * inv_good_step + EPSILON) * level_score().consecutive_good_multiplier,
                             (level_score().consecutive_good_cap * inv_good_step)
                             * level_score().consecutive_good_multiplier,
                         )
