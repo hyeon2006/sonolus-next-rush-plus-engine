@@ -1,3 +1,5 @@
+from math import floor
+
 from sonolus.script.archetype import EntityRef, PlayArchetype, callback, entity_info_at, imported
 from sonolus.script.containers import sort_linked_entities
 from sonolus.script.globals import level_data, level_memory
@@ -145,6 +147,12 @@ def setting_count(head: int, skill: int) -> None:
     ptr = head
     skill_ptr = skill
     count = 0
+    current_note_weight = 0.0
+    inv_perfect_step = (
+        1.0 / level_score().consecutive_perfect_step if level_score().consecutive_perfect_step > 0 else 0.0
+    )
+    inv_great_step = 1.0 / level_score().consecutive_great_step if level_score().consecutive_great_step > 0 else 0.0
+    inv_good_step = 1.0 / level_score().consecutive_good_step if level_score().consecutive_good_step > 0 else 0.0
 
     custom_elements.ScoreIndicator.max_score = 1000000
     while ptr > 0:
@@ -163,9 +171,29 @@ def setting_count(head: int, skill: int) -> None:
         note.BaseNote.at(ptr).count += count
 
         # arcade score = judgmentMultiplier * (consecutiveJudgmentMultiplier + archetypeMultiplier + entityMultiplier)
-        custom_elements.ScoreIndicator.total_weight += level_score().perfect_multiplier * (
-            note.BaseNote.at(ptr).archetype_score_multiplier + note.BaseNote.at(ptr).entity_score_multiplier
+        current_note_weight = level_score().perfect_multiplier * (
+            (
+                min(
+                    floor(count * inv_perfect_step) * level_score().consecutive_perfect_multiplier,
+                    (level_score().consecutive_perfect_cap * inv_perfect_step)
+                    * level_score().consecutive_perfect_multiplier,
+                )
+                + min(
+                    floor(count * inv_great_step) * level_score().consecutive_great_multiplier,
+                    (level_score().consecutive_great_cap * inv_great_step) * level_score().consecutive_great_multiplier,
+                )
+                + min(
+                    floor(count * inv_good_step) * level_score().consecutive_good_multiplier,
+                    (level_score().consecutive_good_cap * inv_good_step) * level_score().consecutive_good_multiplier,
+                )
+            )
+            + note.BaseNote.at(ptr).archetype_score_multiplier
+            + note.BaseNote.at(ptr).entity_score_multiplier
         )
+        y = current_note_weight - custom_elements.ScoreIndicator.total_weight_compensation
+        t = custom_elements.ScoreIndicator.total_weight + y
+        custom_elements.ScoreIndicator.total_weight_compensation = (t - custom_elements.ScoreIndicator.total_weight) - y
+        custom_elements.ScoreIndicator.total_weight = t
 
         if Fever.fever_chance_time <= note.BaseNote.at(ptr).target_time < Fever.fever_start_time:
             Fever.fever_first_count = (
@@ -180,9 +208,6 @@ def setting_count(head: int, skill: int) -> None:
 
     if Options.custom_score == 2:
         custom_elements.ScoreIndicator.percentage = 100
-    custom_elements.ScoreIndicator.scale_factor = (
-        custom_elements.ScoreIndicator.max_score / custom_elements.ScoreIndicator.total_weight
-    )
 
     custom_elements.LifeManager.life = 1000
 
