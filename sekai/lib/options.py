@@ -11,6 +11,11 @@ class ScoreMode(IntEnum):
     UNWEIGHTED_COMBO = 3
 
 
+class SekaiVersion(IntEnum):
+    v3 = 0
+    v1 = 1
+
+
 @options
 class Options:
     speed: float = slider_option(
@@ -23,13 +28,6 @@ class Options:
         step=0.05,
         unit=StandardText.PERCENTAGE_UNIT,
     )
-    version: int = select_option(
-        name=StandardText.VERSION,
-        description="Adjusts UI, skins, particles, etc. to match the Sekai version.",
-        scope="Rush",
-        default=0,
-        values=["v3", "v1"],
-    )
     note_speed: float = slider_option(
         name=StandardText.NOTE_SPEED,
         scope="Sekai",
@@ -38,7 +36,6 @@ class Options:
         max=12,
         step=0.01,
     )
-
     stage_cover: float = slider_option(
         name=StandardText.STAGE_COVER_VERTICAL,
         advanced=True,
@@ -115,7 +112,6 @@ class Options:
         name=StandardText.MIRROR,
         default=False,
     )
-
     custom_combo: bool = toggle_option(
         name="Custom Combo",
         scope="Rush",
