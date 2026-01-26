@@ -320,7 +320,6 @@ class Options:
             "Weighted Combo (Sekai)",
             "Unweighted Flat (Tournament)",
             "Unweighted Combo (Classic)",
-            "Sekai",
         ],
         standard=True,
         advanced=True,
