@@ -15,7 +15,7 @@ from sonolus.script.archetype import (
     shared_memory,
 )
 from sonolus.script.array import Dim
-from sonolus.script.bucket import Judgment, JudgmentWindow
+from sonolus.script.bucket import Judgment
 from sonolus.script.containers import VarArray
 from sonolus.script.globals import level_memory
 from sonolus.script.interval import Interval, remap_clamped, unlerp_clamped
@@ -24,7 +24,7 @@ from sonolus.script.runtime import Touch, delta_time, input_offset, offset_adjus
 from sonolus.script.timing import beat_to_time
 
 from sekai.lib import archetype_names
-from sekai.lib.buckets import WINDOW_SCALE
+from sekai.lib.buckets import WINDOW_SCALE, SekaiWindow
 from sekai.lib.connector import ActiveConnectorInfo, ConnectorKind, ConnectorLayer
 from sekai.lib.ease import EaseType
 from sekai.lib.layout import FlickDirection, Layout, layout_hitbox, progress_to
@@ -77,9 +77,10 @@ class BaseNote(PlayArchetype):
     visual_start_time: float = entity_data()
     start_time: float = entity_data()
     target_scaled_time: CompositeTime = entity_data()
-    judgment_window: JudgmentWindow = entity_data()
-    input_interval: Interval = entity_data()
-    unadjusted_input_interval: Interval = entity_data()
+
+    judgment_window: SekaiWindow = shared_memory()
+    input_interval: Interval = shared_memory()
+    unadjusted_input_interval: Interval = shared_memory()
 
     # The id of the tap that activated this note, for tap notes and flicks or released the note, for release notes.
     # This is set by the input manager rather than the note itself.
@@ -112,8 +113,8 @@ class BaseNote(PlayArchetype):
 
         self.target_time = beat_to_time(self.beat)
         self.judgment_window = get_note_window(self.kind)
-        self.input_interval = self.judgment_window.good + self.target_time + input_offset()
-        self.unadjusted_input_interval = self.judgment_window.good + self.target_time
+        self.input_interval = self.judgment_window.bad + self.target_time + input_offset()
+        self.unadjusted_input_interval = self.judgment_window.bad + self.target_time
 
         if not self.is_attached:
             self.target_scaled_time = group_time_to_scaled_time(self.timescale_group, self.target_time)

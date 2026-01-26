@@ -3,7 +3,7 @@ from enum import IntEnum, auto
 from typing import assert_never, cast
 
 from sonolus.script.archetype import EntityRef, HapticType, PlayArchetype, WatchArchetype, get_archetype_by_name
-from sonolus.script.bucket import Bucket, Judgment, JudgmentWindow
+from sonolus.script.bucket import Bucket, Judgment
 from sonolus.script.easing import ease_in_cubic
 from sonolus.script.effect import Effect
 from sonolus.script.interval import lerp, remap_clamped
@@ -29,6 +29,7 @@ from sekai.lib.buckets import (
     TRACE_FLICK_NORMAL_WINDOW,
     TRACE_NORMAL_WINDOW,
     Buckets,
+    SekaiWindow,
 )
 from sekai.lib.connector import ActiveConnectorKind, ConnectorKind
 from sekai.lib.ease import EaseType, ease
@@ -882,8 +883,8 @@ def draw_tutorial_note_slot_effects(
         )
 
 
-def get_note_window(kind: NoteKind) -> JudgmentWindow:
-    result = +JudgmentWindow
+def get_note_window(kind: NoteKind) -> SekaiWindow:
+    result = +SekaiWindow
     match kind:
         case NoteKind.NORM_TAP | NoteKind.NORM_HEAD_TAP | NoteKind.NORM_TAIL_TAP:
             result @= TAP_NORMAL_WINDOW

@@ -1,7 +1,8 @@
 from typing import Literal, assert_never
 
-from sonolus.script.bucket import Bucket, JudgmentWindow, bucket, bucket_sprite, buckets
+from sonolus.script.bucket import Bucket, Judgment, JudgmentWindow, bucket, bucket_sprite, buckets
 from sonolus.script.interval import Interval
+from sonolus.script.record import Record
 from sonolus.script.sprite import Sprite
 from sonolus.script.text import StandardText
 
@@ -352,30 +353,63 @@ class Buckets:
 
 
 def init_buckets():
-    Buckets.normal_tap.window @= TAP_NORMAL_WINDOW * WINDOW_SCALE
-    Buckets.critical_tap.window @= TAP_CRITICAL_WINDOW * WINDOW_SCALE
-    Buckets.normal_flick.window @= FLICK_NORMAL_WINDOW * WINDOW_SCALE
-    Buckets.critical_flick.window @= FLICK_CRITICAL_WINDOW * WINDOW_SCALE
-    Buckets.normal_trace.window @= TRACE_NORMAL_WINDOW * WINDOW_SCALE
-    Buckets.critical_trace.window @= TRACE_CRITICAL_WINDOW * WINDOW_SCALE
-    Buckets.normal_trace_flick.window @= TRACE_FLICK_NORMAL_WINDOW * WINDOW_SCALE
-    Buckets.critical_trace_flick.window @= TRACE_FLICK_CRITICAL_WINDOW * WINDOW_SCALE
-    Buckets.normal_head_tap.window @= TAP_NORMAL_WINDOW * WINDOW_SCALE
-    Buckets.critical_head_tap.window @= TAP_CRITICAL_WINDOW * WINDOW_SCALE
-    Buckets.normal_head_flick.window @= FLICK_NORMAL_WINDOW * WINDOW_SCALE
-    Buckets.critical_head_flick.window @= FLICK_CRITICAL_WINDOW * WINDOW_SCALE
-    Buckets.normal_head_trace.window @= TRACE_NORMAL_WINDOW * WINDOW_SCALE
-    Buckets.critical_head_trace.window @= TRACE_CRITICAL_WINDOW * WINDOW_SCALE
-    Buckets.normal_head_trace_flick.window @= TRACE_FLICK_NORMAL_WINDOW * WINDOW_SCALE
-    Buckets.critical_head_trace_flick.window @= TRACE_FLICK_CRITICAL_WINDOW * WINDOW_SCALE
-    Buckets.normal_tail_flick.window @= SLIDE_END_FLICK_NORMAL_WINDOW * WINDOW_SCALE
-    Buckets.critical_tail_flick.window @= SLIDE_END_FLICK_CRITICAL_WINDOW * WINDOW_SCALE
-    Buckets.normal_tail_trace.window @= SLIDE_END_TRACE_NORMAL_WINDOW * WINDOW_SCALE
-    Buckets.critical_tail_trace.window @= SLIDE_END_TRACE_CRITICAL_WINDOW * WINDOW_SCALE
-    Buckets.normal_tail_trace_flick.window @= TRACE_FLICK_NORMAL_WINDOW * WINDOW_SCALE
-    Buckets.critical_tail_trace_flick.window @= TRACE_FLICK_CRITICAL_WINDOW * WINDOW_SCALE
-    Buckets.normal_tail_release.window @= SLIDE_END_NORMAL_WINDOW * WINDOW_SCALE
-    Buckets.critical_tail_release.window @= SLIDE_END_CRITICAL_WINDOW * WINDOW_SCALE
+    Buckets.normal_tap.window @= TAP_NORMAL_WINDOW.bucket_window
+    Buckets.critical_tap.window @= TAP_CRITICAL_WINDOW.bucket_window
+    Buckets.normal_flick.window @= FLICK_NORMAL_WINDOW.bucket_window
+    Buckets.critical_flick.window @= FLICK_CRITICAL_WINDOW.bucket_window
+    Buckets.normal_trace.window @= TRACE_NORMAL_WINDOW.bucket_window
+    Buckets.critical_trace.window @= TRACE_CRITICAL_WINDOW.bucket_window
+    Buckets.normal_trace_flick.window @= TRACE_FLICK_NORMAL_WINDOW.bucket_window
+    Buckets.critical_trace_flick.window @= TRACE_FLICK_CRITICAL_WINDOW.bucket_window
+    Buckets.normal_head_tap.window @= TAP_NORMAL_WINDOW.bucket_window
+    Buckets.critical_head_tap.window @= TAP_CRITICAL_WINDOW.bucket_window
+    Buckets.normal_head_flick.window @= FLICK_NORMAL_WINDOW.bucket_window
+    Buckets.critical_head_flick.window @= FLICK_CRITICAL_WINDOW.bucket_window
+    Buckets.normal_head_trace.window @= TRACE_NORMAL_WINDOW.bucket_window
+    Buckets.critical_head_trace.window @= TRACE_CRITICAL_WINDOW.bucket_window
+    Buckets.normal_head_trace_flick.window @= TRACE_FLICK_NORMAL_WINDOW.bucket_window
+    Buckets.critical_head_trace_flick.window @= TRACE_FLICK_CRITICAL_WINDOW.bucket_window
+    Buckets.normal_tail_flick.window @= SLIDE_END_FLICK_NORMAL_WINDOW.bucket_window
+    Buckets.critical_tail_flick.window @= SLIDE_END_FLICK_CRITICAL_WINDOW.bucket_window
+    Buckets.normal_tail_trace.window @= SLIDE_END_TRACE_NORMAL_WINDOW.bucket_window
+    Buckets.critical_tail_trace.window @= SLIDE_END_TRACE_CRITICAL_WINDOW.bucket_window
+    Buckets.normal_tail_trace_flick.window @= TRACE_FLICK_NORMAL_WINDOW.bucket_window
+    Buckets.critical_tail_trace_flick.window @= TRACE_FLICK_CRITICAL_WINDOW.bucket_window
+    Buckets.normal_tail_release.window @= SLIDE_END_NORMAL_WINDOW.bucket_window
+    Buckets.critical_tail_release.window @= SLIDE_END_CRITICAL_WINDOW.bucket_window
+
+
+def round_interval(interval: Interval) -> Interval:
+    return Interval(
+        start=round(interval.start),
+        end=round(interval.end),
+    )
+
+
+class SekaiWindow(Record):
+    perfect: Interval
+    great: Interval
+    good: Interval
+    bad: Interval
+
+    @property
+    def bucket_window(self):
+        return JudgmentWindow(
+            perfect=round_interval(self.perfect * WINDOW_SCALE),
+            great=round_interval(self.great * WINDOW_SCALE),
+            good=round_interval(self.good * WINDOW_SCALE),
+        )
+
+    def judge(self, actual: float, target: float) -> Judgment:
+        diff = actual - target
+        if diff in self.perfect:
+            return Judgment.PERFECT
+        elif diff in self.great:
+            return Judgment.GREAT
+        elif diff in self.good:
+            return Judgment.GOOD
+        else:
+            return Judgment.MISS
 
 
 def frames_to_window(
@@ -383,7 +417,7 @@ def frames_to_window(
     great: float | tuple[float, float] | None,
     good: float | tuple[float, float] | None,
     bad: float | tuple[float, float] | None,  # Unused
-) -> JudgmentWindow:
+) -> SekaiWindow:
     if great is None:
         great = perfect
     if good is None:
@@ -393,12 +427,12 @@ def frames_to_window(
     perfect = perfect if isinstance(perfect, tuple) else (perfect, perfect)
     great = great if isinstance(great, tuple) else (great, great)
     good = good if isinstance(good, tuple) else (good, good)
-    # noinspection PyUnusedLocal
     bad = bad if isinstance(bad, tuple) else (bad, bad)
-    return JudgmentWindow(
+    return SekaiWindow(
         perfect=Interval(-perfect[0] / 60, perfect[1] / 60),
         great=Interval(-great[0] / 60, great[1] / 60),
         good=Interval(-good[0] / 60, good[1] / 60),
+        bad=Interval(-bad[0] / 60, bad[1] / 60),
     )
 
 
