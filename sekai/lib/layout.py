@@ -11,7 +11,8 @@ from sonolus.script.runtime import aspect_ratio, runtime_ui, screen
 from sonolus.script.values import swap
 from sonolus.script.vec import Vec2
 
-from sekai.lib.options import Options
+from sekai.lib.level_config import LevelConfig
+from sekai.lib.options import Options, SekaiVersion
 from sekai.lib.timescale import CompositeTime
 
 LANE_T = 47 / 850
@@ -351,16 +352,16 @@ def layout_life_bar() -> Quad:
 
     scale_ratio = min(1, aspect_ratio() / (16 / 9))
 
-    MARGIN = 0.28 if Options.version == 0 else 0.275  # noqa: N806
-    LIFE_BAR_BASE_Y = 0.887 if Options.version == 0 else 0.875  # noqa: N806
+    MARGIN = 0.28 if LevelConfig.ui_version == SekaiVersion.v3 else 0.275  # noqa: N806
+    LIFE_BAR_BASE_Y = 0.887 if LevelConfig.ui_version == SekaiVersion.v3 else 0.875  # noqa: N806
 
     h = 0
     w = 0
-    match Options.version:
-        case 0:
+    match LevelConfig.ui_version:
+        case SekaiVersion.v3:
             h = 0.196 * ui.secondary_metric_config.scale * scale_ratio
             w = h * 4.22
-        case 1:
+        case SekaiVersion.v1:
             h = 0.23 * ui.secondary_metric_config.scale * scale_ratio
             w = h * 4.22
 
@@ -377,20 +378,20 @@ def layout_life_gauge(life) -> Quad:
     ui = runtime_ui()
 
     scale_ratio = min(1, aspect_ratio() / (16 / 9))
-    MARGIN = 0.28 if Options.version == 0 else 0.275  # noqa: N806
-    LIFE_BAR_BASE_Y = 0.887 if Options.version == 0 else 0.875  # noqa: N806
+    MARGIN = 0.28 if LevelConfig.ui_version == SekaiVersion.v3 else 0.275  # noqa: N806
+    LIFE_BAR_BASE_Y = 0.887 if LevelConfig.ui_version == SekaiVersion.v3 else 0.875  # noqa: N806
 
     y_offset = 0
     margin_offset = 0
     h = 0
     w = 0
-    match Options.version:
-        case 0:
+    match LevelConfig.ui_version:
+        case SekaiVersion.v3:
             margin_offset = 0.121
             y_offset = -0.007
             h = 0.027 * ui.secondary_metric_config.scale * scale_ratio
             w = h * 18.3
-        case 1:
+        case SekaiVersion.v1:
             margin_offset = 0.07
             y_offset = 0.007
             h = 0.022 * ui.secondary_metric_config.scale * scale_ratio
@@ -424,15 +425,15 @@ def layout_score_bar() -> Quad:
     h = 0.27 * ui.primary_metric_config.scale * scale_ratio
     w = h * 4.6
 
-    MARGIN = 0.3 if Options.version == 0 else 0.2  # noqa: N806
+    MARGIN = 0.3 if LevelConfig.ui_version == SekaiVersion.v3 else 0.2  # noqa: N806
 
     h = 0
     w = 0
-    match Options.version:
-        case 0:
+    match LevelConfig.ui_version:
+        case SekaiVersion.v3:
             h = 0.27 * ui.primary_metric_config.scale * scale_ratio
             w = h * 4.6
-        case 1:
+        case SekaiVersion.v1:
             h = 0.32 * ui.primary_metric_config.scale * scale_ratio
             w = h * 4.6
 
@@ -462,14 +463,14 @@ def layout_score_gauge(gauge=0, score_type: ScoreGaugeType = ScoreGaugeType.NORM
         (h * 20 * ((1 - gauge) if score_type == ScoreGaugeType.MASK else 1)),
         1e-3,
     )  # c = 0-0.44 b = 0.44-0.6 a= 0.6-0.75 s=0.75-0.9
-    MARGIN = 0.3 if Options.version == 0 else 0.2  # noqa: N806
+    MARGIN = 0.3 if LevelConfig.ui_version == SekaiVersion.v3 else 0.2  # noqa: N806
 
     margin_offset = 0
     y_offset = 0
     h = 0
     w = 0
-    match Options.version:
-        case 0:
+    match LevelConfig.ui_version:
+        case SekaiVersion.v3:
             margin_offset = 0.04
             y_offset = 0.008
             h = max(
@@ -480,7 +481,7 @@ def layout_score_gauge(gauge=0, score_type: ScoreGaugeType = ScoreGaugeType.NORM
                 (h * 20 * ((1 - gauge) if score_type == ScoreGaugeType.MASK else 1)),
                 1e-3,
             )
-        case 1:
+        case SekaiVersion.v1:
             margin_offset = -0.155
             y_offset = 0.021
             h = max(
@@ -518,19 +519,19 @@ def layout_score_rank() -> Quad:
     h = 0.22 * ui.primary_metric_config.scale * scale_ratio
     w = h * 0.882
 
-    MARGIN = 0.3 if Options.version == 0 else 0.2  # noqa: N806
+    MARGIN = 0.3 if LevelConfig.ui_version == SekaiVersion.v3 else 0.2  # noqa: N806
 
     y_offset = 0.015
     margin_offset = 1.138
     h = 0
     w = 0
-    match Options.version:
-        case 0:
+    match LevelConfig.ui_version:
+        case SekaiVersion.v3:
             margin_offset = 1.138
             y_offset = 0.015
             h = 0.22 * ui.primary_metric_config.scale * scale_ratio
             w = h * 0.882
-        case 1:
+        case SekaiVersion.v1:
             margin_offset = 1.102
             y_offset = 0.002
             h = 0.17 * ui.primary_metric_config.scale * scale_ratio
@@ -935,7 +936,7 @@ def layout_skill_bar(
     h: float,
 ) -> Quad:
     layout = +Quad
-    if Options.version == 1:
+    if LevelConfig.ui_version == SekaiVersion.v1:
         h, w = transform_fixed_size(h, w)
         layout @= transform_quad(
             Quad(
