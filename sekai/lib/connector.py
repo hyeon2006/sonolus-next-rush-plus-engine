@@ -34,7 +34,8 @@ from sekai.lib.layout import (
     layout_slot_glow_effect,
     transformed_vec_at,
 )
-from sekai.lib.options import Options
+from sekai.lib.level_config import LevelConfig
+from sekai.lib.options import Options, SekaiVersion
 from sekai.lib.particle import ActiveParticles
 from sekai.lib.skin import ActiveConnectorSpriteSet, ActiveSkin
 from sekai.lib.timescale import iter_timescale_changes_in_group_after_time_inclusive
@@ -615,10 +616,10 @@ def draw_connector_slot_glow_effect(
             assert_never(kind)
     height = (
         0.85 + (1.2 - 0.85) * ((cos((time() - start_time) * 8 * pi) + 1) / 2)  # min + (max - min) * osc
-        if Options.version == 0
+        if LevelConfig.ui_version == SekaiVersion.v3
         else 0.2 + (1.2 - 0.2) * ((sin((time() - start_time) * 2.5 * pi) + 1) / 2)
     )
-    ex = 0.035 * abs(2 * size) + 0.08 if Options.version == 0 else 0
+    ex = 0.035 * abs(2 * size) + 0.08 if LevelConfig.ui_version == SekaiVersion.v3 else 0
     layout = layout_slot_glow_effect(lane, size + ex, height)
     z = get_z(LAYER_SLOT_GLOW_EFFECT, start_time, lane, invert_time=True)
     a = remap_clamped(start_time, start_time + 0.25, 0.0, 0.25, time())
