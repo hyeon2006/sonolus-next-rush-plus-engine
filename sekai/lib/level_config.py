@@ -24,4 +24,4 @@ def init_level_config(
     if score_mode_option != ScoreMode.LEVEL_DEFAULT:
         LevelConfig.score_mode = score_mode_option
     else:
-        LevelConfig.score_mode = ScoreMode.WEIGHTED_COMBO
+        LevelConfig.score_mode = ScoreMode.UNWEIGHTED_FLAT
