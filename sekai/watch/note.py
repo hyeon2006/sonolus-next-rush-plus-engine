@@ -17,7 +17,7 @@ from sonolus.script.runtime import is_replay, is_skip, time
 from sonolus.script.timing import beat_to_time
 
 from sekai.debug import DISABLE_NOTES, SHOW_TICK_HITBOX_SIZE
-from sekai.lib.buckets import get_judgment_interval
+from sekai.lib.buckets import SekaiWindow, get_judgment_interval
 from sekai.lib.connector import ActiveConnectorInfo, ConnectorKind, ConnectorLayer
 from sekai.lib.ease import EaseType, ease
 from sekai.lib.layout import FlickDirection, progress_to
@@ -89,14 +89,12 @@ class WatchBaseNote(WatchArchetype):
     not_render: float = entity_data()
 
     active_connector_info: ActiveConnectorInfo = shared_memory()
-
     hitbox_l: float = entity_memory()
     hitbox_r: float = entity_memory()
 
     next_ref_accuracy: EntityRef[WatchBaseNote] = shared_memory()
     next_ref_damage_flash: EntityRef[WatchBaseNote] = shared_memory()
-    judgment_window: JudgmentWindow = shared_memory()
-    judgment_window_bad: Interval = shared_memory()
+    judgment_window: SekaiWindow = shared_memory()
     combo: int = shared_memory()
     count: int = shared_memory()
     ap: bool = shared_memory()
@@ -129,6 +127,7 @@ class WatchBaseNote(WatchArchetype):
 
         self.target_time = beat_to_time(self.beat)
         self.judgment_window = get_note_window(self.kind)
+        self.judgment_window = get_note_window(self.kind)
         self.judgment_window_bad = get_judgment_interval(
             bad_window=get_note_window_bad(self.kind), good_window=self.judgment_window.good
         )
@@ -137,10 +136,6 @@ class WatchBaseNote(WatchArchetype):
             self.target_scaled_time = group_time_to_scaled_time(self.timescale_group, self.target_time)
             self.visual_start_time = get_visual_spawn_time(self.timescale_group, self.target_scaled_time)
             self.start_time = self.get_min_start_time()
-
-        if self.stage_ref.index > 0:
-            self.rel_lane = self.lane
-            self.lane += get_stage_props(self.stage_ref.get(), self.target_time).pivot_lane
 
         if self.next_ref.index > 0:
             self.next_ref.get().prev_ref = self.ref()
