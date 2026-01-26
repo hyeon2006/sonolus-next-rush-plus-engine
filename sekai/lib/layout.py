@@ -331,15 +331,20 @@ def layout_life_bar() -> Quad:
 
     h = 0
     w = 0
+    base_h_unscaled = 0
     match LevelConfig.ui_version:
         case SekaiVersion.v3:
-            h = 0.196 * ui.secondary_metric_config.scale * scale_ratio
+            base_h_unscaled = 0.196 * ui.secondary_metric_config.scale
+            h = base_h_unscaled * scale_ratio
             w = h * 4.22
         case SekaiVersion.v1:
-            h = 0.23 * ui.secondary_metric_config.scale * scale_ratio
+            base_h_unscaled = 0.23 * ui.secondary_metric_config.scale
+            h = base_h_unscaled * scale_ratio
             w = h * 4.22
 
-    screen_center = Vec2(x=screen().r - MARGIN - (w / 2), y=LIFE_BAR_BASE_Y)
+    y_shift = (base_h_unscaled - h) / 2
+
+    screen_center = Vec2(x=screen().r - MARGIN * scale_ratio - (w / 2), y=LIFE_BAR_BASE_Y + y_shift)
     return Quad(
         bl=Vec2(screen_center.x - w / 2, screen_center.y - h / 2),
         br=Vec2(screen_center.x + w / 2, screen_center.y - h / 2),
@@ -354,6 +359,14 @@ def layout_life_gauge(life) -> Quad:
     scale_ratio = min(1, aspect_ratio() / (16 / 9))
     MARGIN = 0.28 if LevelConfig.ui_version == SekaiVersion.v3 else 0.0  # noqa: N806
     LIFE_BAR_BASE_Y = 0.887 if LevelConfig.ui_version == SekaiVersion.v3 else 0.87  # noqa: N806
+
+    bar_h_unscaled = (
+        0.196 * ui.secondary_metric_config.scale
+        if LevelConfig.ui_version == SekaiVersion.v3
+        else 0.23 * ui.secondary_metric_config.scale
+    )
+    bar_h_current = bar_h_unscaled * scale_ratio
+    y_shift = (bar_h_unscaled - bar_h_current) / 2
 
     y_offset = 0
     margin_offset = 0
@@ -375,10 +388,10 @@ def layout_life_gauge(life) -> Quad:
     final_scale = ui.secondary_metric_config.scale * scale_ratio
     current_bar_w = bar_base_w * final_scale
 
-    bar_center_x = screen().r - MARGIN - (current_bar_w / 2)
+    bar_center_x = screen().r - MARGIN * scale_ratio - (current_bar_w / 2)
     number_center_x = bar_center_x + (margin_offset * final_scale)
 
-    center_y = LIFE_BAR_BASE_Y + (y_offset * final_scale)
+    center_y = LIFE_BAR_BASE_Y + (y_offset * final_scale) + y_shift
 
     screen_center = Vec2(x=number_center_x - (current_bar_w / 2), y=center_y)
 
@@ -396,22 +409,24 @@ def layout_score_bar() -> Quad:
 
     scale_ratio = min(1, aspect_ratio() / (16 / 9))
 
-    h = 0.27 * ui.primary_metric_config.scale * scale_ratio
-    w = h * 4.6
-
-    MARGIN = 0.3 if LevelConfig.ui_version == SekaiVersion.v3 else 0.05  # noqa: N806
-
+    base_h_unscaled = 0
     h = 0
     w = 0
     match LevelConfig.ui_version:
         case SekaiVersion.v3:
-            h = 0.27 * ui.primary_metric_config.scale * scale_ratio
+            base_h_unscaled = 0.27 * ui.primary_metric_config.scale
+            h = base_h_unscaled * scale_ratio
             w = h * 4.6
         case SekaiVersion.v1:
-            h = 0.32 * ui.primary_metric_config.scale * scale_ratio
+            base_h_unscaled = 0.32 * ui.primary_metric_config.scale
+            h = base_h_unscaled * scale_ratio
             w = h * 4.6
 
-    screen_center = Vec2(x=screen().l + MARGIN + (w / 2), y=SCORE_BAR_BASE_Y)
+    MARGIN = 0.3 if LevelConfig.ui_version == SekaiVersion.v3 else 0.05  # noqa: N806
+
+    y_shift = (base_h_unscaled - h) / 2
+
+    screen_center = Vec2(x=screen().l + MARGIN * scale_ratio + (w / 2), y=SCORE_BAR_BASE_Y + y_shift)
     return Quad(
         bl=Vec2(screen_center.x - w / 2, screen_center.y - h / 2),
         br=Vec2(screen_center.x + w / 2, screen_center.y - h / 2),
@@ -429,14 +444,16 @@ def layout_score_gauge(gauge=0, score_type: ScoreGaugeType = ScoreGaugeType.NORM
     ui = runtime_ui()
 
     scale_ratio = min(1, aspect_ratio() / (16 / 9))
-    h = max(
-        (0.049 * ui.primary_metric_config.scale * scale_ratio),
-        1e-3,
+
+    bar_h_unscaled = (
+        0.27 * ui.primary_metric_config.scale
+        if LevelConfig.ui_version == SekaiVersion.v3
+        else 0.32 * ui.primary_metric_config.scale
     )
-    w = max(
-        (h * 20 * ((1 - gauge) if score_type == ScoreGaugeType.MASK else 1)),
-        1e-3,
-    )  # c = 0-0.44 b = 0.44-0.6 a= 0.6-0.75 s=0.75-0.9
+    bar_h_current = bar_h_unscaled * scale_ratio
+    y_shift = (bar_h_unscaled - bar_h_current) / 2
+
+    # c = 0-0.44 b = 0.44-0.6 a= 0.6-0.75 s=0.75-0.9
     MARGIN = 0.3 if LevelConfig.ui_version == SekaiVersion.v3 else 0.05  # noqa: N806
 
     margin_offset = 0
@@ -470,10 +487,10 @@ def layout_score_gauge(gauge=0, score_type: ScoreGaugeType = ScoreGaugeType.NORM
     bar_base_w = 0.27 * 4.6
     final_scale = ui.primary_metric_config.scale * scale_ratio
     current_bar_w = bar_base_w * final_scale
-    bar_center_x = screen().l + MARGIN + (current_bar_w / 2)
+    bar_center_x = screen().l + MARGIN * scale_ratio + (current_bar_w / 2)
     number_center_x = bar_center_x - (margin_offset * final_scale)
 
-    center_y = SCORE_BAR_BASE_Y + (y_offset * final_scale)
+    center_y = SCORE_BAR_BASE_Y + (y_offset * final_scale) + y_shift
 
     screen_center = Vec2(x=number_center_x + (current_bar_w / 2), y=center_y)
 
@@ -490,8 +507,13 @@ def layout_score_rank() -> Quad:
 
     scale_ratio = min(1, aspect_ratio() / (16 / 9))
 
-    h = 0.22 * ui.primary_metric_config.scale * scale_ratio
-    w = h * 0.882
+    bar_h_unscaled = (
+        0.27 * ui.primary_metric_config.scale
+        if LevelConfig.ui_version == SekaiVersion.v3
+        else 0.32 * ui.primary_metric_config.scale
+    )
+    bar_h_current = bar_h_unscaled * scale_ratio
+    y_shift = (bar_h_unscaled - bar_h_current) / 2
 
     MARGIN = 0.3 if LevelConfig.ui_version == SekaiVersion.v3 else 0.05  # noqa: N806
 
@@ -503,8 +525,8 @@ def layout_score_rank() -> Quad:
         case SekaiVersion.v3:
             margin_offset = 1.138
             y_offset = 0.015
-            h = 0.22 * ui.primary_metric_config.scale * scale_ratio
-            w = h * 0.882
+            h = 0.29 * ui.primary_metric_config.scale * scale_ratio
+            w = h * 0.772
         case SekaiVersion.v1:
             margin_offset = 1.102
             y_offset = 0.002
@@ -515,10 +537,10 @@ def layout_score_rank() -> Quad:
     final_scale = ui.primary_metric_config.scale * scale_ratio
     current_bar_w = bar_base_w * final_scale
 
-    bar_center_x = screen().l + MARGIN + (current_bar_w / 2)
+    bar_center_x = screen().l + MARGIN * scale_ratio + (current_bar_w / 2)
     number_center_x = bar_center_x - (margin_offset * final_scale)
 
-    center_y = SCORE_BAR_BASE_Y + (y_offset * final_scale)
+    center_y = SCORE_BAR_BASE_Y + (y_offset * final_scale) + y_shift
 
     screen_center = Vec2(x=number_center_x + (current_bar_w / 2), y=center_y)
 
@@ -535,6 +557,14 @@ def layout_score_rank_text() -> Quad:
 
     scale_ratio = min(1, aspect_ratio() / (16 / 9))
 
+    bar_h_unscaled = (
+        0.27 * ui.primary_metric_config.scale
+        if LevelConfig.ui_version == SekaiVersion.v3
+        else 0.32 * ui.primary_metric_config.scale
+    )
+    bar_h_current = bar_h_unscaled * scale_ratio
+    y_shift = (bar_h_unscaled - bar_h_current) / 2
+
     h = 0.02 * ui.primary_metric_config.scale * scale_ratio
     w = h * 7.5
 
@@ -545,11 +575,11 @@ def layout_score_rank_text() -> Quad:
     final_scale = ui.primary_metric_config.scale * scale_ratio
     current_bar_w = bar_base_w * final_scale
 
-    bar_center_x = screen().l + MARGIN + (current_bar_w / 2)
+    bar_center_x = screen().l + MARGIN * scale_ratio + (current_bar_w / 2)
     number_center_x = bar_center_x - (margin_offset * final_scale)
 
     y_offset = -0.1
-    center_y = SCORE_BAR_BASE_Y + (y_offset * final_scale)
+    center_y = SCORE_BAR_BASE_Y + (y_offset * final_scale) + y_shift
 
     screen_center = Vec2(x=number_center_x + (current_bar_w / 2), y=center_y)
 
