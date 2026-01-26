@@ -21,6 +21,8 @@ Editor: https://next-sekai-editor.sonolus.com/
 
 | Name                                            |
 | ----------------------------------------------- |
+| `Never delete the sekai version checker=v3`     |
+| `Never delete the sekai version checker=v1`     |
 | `Sekai Stage`                                   |
 | `Sekai Stage Lane`                              |
 | `Sekai Stage Cover`                             |
@@ -257,6 +259,8 @@ Editor: https://next-sekai-editor.sonolus.com/
 
 | Name                                          |
 | --------------------------------------------- |
+| `Never delete the sekai version checker=v3`   |
+| `Never delete the sekai version checker=v1`   |
 | `Sekai Note Lane Linear`                      |
 | `Sekai Slide Lane Linear`                     |
 | `Sekai Flick Lane Linear`                     |
