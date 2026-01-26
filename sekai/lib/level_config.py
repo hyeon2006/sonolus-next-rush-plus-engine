@@ -24,6 +24,4 @@ def init_level_config(
     if score_mode_option != ScoreMode.LEVEL_DEFAULT:
         LevelConfig.score_mode = score_mode_option
     else:
-        LevelConfig.score_mode = (
-            ScoreMode.WEIGHTED_COMBO if revision >= EngineRevision.SONOLUS_1_1_0 else ScoreMode.UNWEIGHTED_COMBO
-        )
+        LevelConfig.score_mode = ScoreMode.WEIGHTED_COMBO
