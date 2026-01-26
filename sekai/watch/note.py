@@ -111,9 +111,6 @@ class WatchBaseNote(WatchArchetype):
     judgment: StandardImport.JUDGMENT = imported()
     accuracy: StandardImport.ACCURACY = imported()
 
-    # cache
-    attach_frac: float = shared_memory()
-
     def init_data(self):
         if self.data_init_done:
             return
