@@ -326,8 +326,8 @@ def layout_life_bar() -> Quad:
 
     scale_ratio = min(1, aspect_ratio() / (16 / 9))
 
-    MARGIN = 0.28 if LevelConfig.ui_version == SekaiVersion.v3 else 0.275  # noqa: N806
-    LIFE_BAR_BASE_Y = 0.887 if LevelConfig.ui_version == SekaiVersion.v3 else 0.875  # noqa: N806
+    MARGIN = 0.28 if LevelConfig.ui_version == SekaiVersion.v3 else 0.0  # noqa: N806
+    LIFE_BAR_BASE_Y = 0.887 if LevelConfig.ui_version == SekaiVersion.v3 else 0.87  # noqa: N806
 
     h = 0
     w = 0
@@ -352,8 +352,8 @@ def layout_life_gauge(life) -> Quad:
     ui = runtime_ui()
 
     scale_ratio = min(1, aspect_ratio() / (16 / 9))
-    MARGIN = 0.28 if LevelConfig.ui_version == SekaiVersion.v3 else 0.275  # noqa: N806
-    LIFE_BAR_BASE_Y = 0.887 if LevelConfig.ui_version == SekaiVersion.v3 else 0.875  # noqa: N806
+    MARGIN = 0.28 if LevelConfig.ui_version == SekaiVersion.v3 else 0.0  # noqa: N806
+    LIFE_BAR_BASE_Y = 0.887 if LevelConfig.ui_version == SekaiVersion.v3 else 0.87  # noqa: N806
 
     y_offset = 0
     margin_offset = 0
@@ -366,10 +366,10 @@ def layout_life_gauge(life) -> Quad:
             h = 0.027 * ui.secondary_metric_config.scale * scale_ratio
             w = h * 18.3
         case SekaiVersion.v1:
-            margin_offset = 0.07
-            y_offset = 0.007
-            h = 0.022 * ui.secondary_metric_config.scale * scale_ratio
-            w = h * 23.5
+            margin_offset = 0.031
+            y_offset = 0.01
+            h = 0.0221 * ui.secondary_metric_config.scale * scale_ratio
+            w = h * 23
 
     bar_base_w = 0.827
     final_scale = ui.secondary_metric_config.scale * scale_ratio
@@ -399,7 +399,7 @@ def layout_score_bar() -> Quad:
     h = 0.27 * ui.primary_metric_config.scale * scale_ratio
     w = h * 4.6
 
-    MARGIN = 0.3 if LevelConfig.ui_version == SekaiVersion.v3 else 0.2  # noqa: N806
+    MARGIN = 0.3 if LevelConfig.ui_version == SekaiVersion.v3 else 0.05  # noqa: N806
 
     h = 0
     w = 0
@@ -437,7 +437,7 @@ def layout_score_gauge(gauge=0, score_type: ScoreGaugeType = ScoreGaugeType.NORM
         (h * 20 * ((1 - gauge) if score_type == ScoreGaugeType.MASK else 1)),
         1e-3,
     )  # c = 0-0.44 b = 0.44-0.6 a= 0.6-0.75 s=0.75-0.9
-    MARGIN = 0.3 if LevelConfig.ui_version == SekaiVersion.v3 else 0.2  # noqa: N806
+    MARGIN = 0.3 if LevelConfig.ui_version == SekaiVersion.v3 else 0.05  # noqa: N806
 
     margin_offset = 0
     y_offset = 0
@@ -493,7 +493,7 @@ def layout_score_rank() -> Quad:
     h = 0.22 * ui.primary_metric_config.scale * scale_ratio
     w = h * 0.882
 
-    MARGIN = 0.3 if LevelConfig.ui_version == SekaiVersion.v3 else 0.2  # noqa: N806
+    MARGIN = 0.3 if LevelConfig.ui_version == SekaiVersion.v3 else 0.05  # noqa: N806
 
     y_offset = 0.015
     margin_offset = 1.138
