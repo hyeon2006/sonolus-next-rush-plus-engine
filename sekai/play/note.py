@@ -15,7 +15,7 @@ from sonolus.script.archetype import (
     shared_memory,
 )
 from sonolus.script.array import Dim
-from sonolus.script.bucket import Judgment, Bucket
+from sonolus.script.bucket import Bucket, Judgment
 from sonolus.script.containers import VarArray
 from sonolus.script.globals import level_memory
 from sonolus.script.interval import Interval, remap_clamped, unlerp_clamped
@@ -430,8 +430,6 @@ class BaseNote(PlayArchetype):
                 judgment=self.result.judgment,
                 accuracy=self.result.accuracy,
                 windows=self.judgment_window,
-                windows_bad=self.judgment_window_bad,
-                check_pass=self.should_play_hit_effects,
                 wrong_way=self.wrong_way,
                 target_time=self.target_time,
                 index=self.index,
@@ -638,7 +636,7 @@ class BaseNote(PlayArchetype):
 
     def judge(self, actual_time: float):
         judgment = self.judgment_window.judge(actual_time, self.target_time)
-        error = self.judgment_window.good.clamp(actual_time - self.target_time)
+        error = self.judgment_window.bad.clamp(actual_time - self.target_time)
         self.result.judgment = judgment if not SkillActive.judgment and judgment != Judgment.MISS else Judgment.PERFECT
         self.result.accuracy = error
         if self.result.bucket.id != -1:
@@ -651,7 +649,7 @@ class BaseNote(PlayArchetype):
         judgment = self.judgment_window.judge(actual_time, self.target_time)
         if judgment == Judgment.PERFECT:
             judgment = Judgment.GREAT
-        error = self.judgment_window.good.clamp(actual_time - self.target_time)
+        error = self.judgment_window.bad.clamp(actual_time - self.target_time)
         self.result.judgment = judgment if not SkillActive.judgment and judgment != Judgment.MISS else Judgment.PERFECT
         if error in self.judgment_window.perfect:
             self.result.accuracy = self.judgment_window.perfect.end
@@ -696,7 +694,7 @@ class BaseNote(PlayArchetype):
 
     def fail_late(self, accuracy: float | None = None):
         if accuracy is None:
-            accuracy = self.judgment_window.good.end
+            accuracy = self.judgment_window.bad.end
         self.result.judgment = Judgment.MISS
         self.result.accuracy = accuracy
         self.result.bucket = Bucket(-1)
