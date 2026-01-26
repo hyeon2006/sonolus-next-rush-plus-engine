@@ -1,9 +1,10 @@
-from sonolus.script.archetype import PreviewArchetype, callback
+from sonolus.script.archetype import PreviewArchetype, callback, imported
 from sonolus.script.printing import PrintColor, PrintFormat
 from sonolus.script.timing import beat_to_time
 
 from sekai.lib import archetype_names
 from sekai.lib.layer import LAYER_BEAT_LINE, get_z
+from sekai.lib.level_config import EngineRevision, init_level_config
 from sekai.lib.particle import init_particles
 from sekai.lib.skin import ActiveSkin, init_skin
 from sekai.lib.ui import init_ui
@@ -21,8 +22,11 @@ from sekai.preview.stage import draw_preview_cover, draw_preview_stage
 class PreviewInitialization(PreviewArchetype):
     name = archetype_names.INITIALIZATION
 
+    revision: EngineRevision = imported(name="revision")
+
     @callback(order=1)
     def preprocess(self):
+        init_level_config(self.revision)
         init_ui()
         init_skin()
         init_particles()

@@ -3,9 +3,8 @@ from sonolus.script.archetype import PlayArchetype, callback, imported
 from sekai.lib import archetype_names
 from sekai.lib.buckets import init_buckets
 from sekai.lib.layout import init_layout
-from sekai.lib.level_config import init_level_config
+from sekai.lib.level_config import EngineRevision, init_level_config
 from sekai.lib.note import init_life, init_score
-from sekai.lib.options import ConcreteScoreMode, ScoreMode
 from sekai.lib.particle import init_particles
 from sekai.lib.skin import init_skin
 from sekai.lib.ui import init_ui
@@ -17,12 +16,12 @@ from sekai.play.stage import Stage
 class Initialization(PlayArchetype):
     name = archetype_names.INITIALIZATION
 
-    score_mode: ConcreteScoreMode = imported(name="scoreMode", default=ScoreMode.UNWEIGHTED_COMBO)
+    revision: EngineRevision = imported(name="revision")
     initial_life: int = imported(name="initialLife", default=1000)
 
     @callback(order=-1)
     def preprocess(self):
-        init_level_config(self.score_mode)
+        init_level_config(self.revision)
         init_layout()
         init_skin()
         init_particles()
