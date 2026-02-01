@@ -354,7 +354,7 @@ class Options:
         ],
         standard=True,
         advanced=True,
-        default=1,
+        default=2,
     )
 
     replay_fallback_option_names = (
