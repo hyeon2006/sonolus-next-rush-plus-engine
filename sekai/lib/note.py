@@ -1005,141 +1005,41 @@ def get_leniency(kind: NoteKind) -> float:
 
 
 def has_tap_input(kind: NoteKind) -> bool:
-    match kind:
-        case (
-            NoteKind.NORM_TAP
-            | NoteKind.CRIT_TAP
-            | NoteKind.NORM_FLICK
-            | NoteKind.CRIT_FLICK
-            | NoteKind.NORM_HEAD_TAP
-            | NoteKind.CRIT_HEAD_TAP
-            | NoteKind.NORM_HEAD_FLICK
-            | NoteKind.CRIT_HEAD_FLICK
-            | NoteKind.NORM_TAIL_TAP
-            | NoteKind.CRIT_TAIL_TAP
-        ):
-            return True
-        case (
-            NoteKind.NORM_TRACE
-            | NoteKind.CRIT_TRACE
-            | NoteKind.NORM_TRACE_FLICK
-            | NoteKind.CRIT_TRACE_FLICK
-            | NoteKind.NORM_RELEASE
-            | NoteKind.CRIT_RELEASE
-            | NoteKind.NORM_HEAD_TRACE
-            | NoteKind.CRIT_HEAD_TRACE
-            | NoteKind.NORM_HEAD_TRACE_FLICK
-            | NoteKind.CRIT_HEAD_TRACE_FLICK
-            | NoteKind.NORM_HEAD_RELEASE
-            | NoteKind.CRIT_HEAD_RELEASE
-            | NoteKind.NORM_TAIL_FLICK
-            | NoteKind.CRIT_TAIL_FLICK
-            | NoteKind.NORM_TAIL_TRACE
-            | NoteKind.CRIT_TAIL_TRACE
-            | NoteKind.NORM_TAIL_TRACE_FLICK
-            | NoteKind.CRIT_TAIL_TRACE_FLICK
-            | NoteKind.NORM_TAIL_RELEASE
-            | NoteKind.CRIT_TAIL_RELEASE
-            | NoteKind.NORM_TICK
-            | NoteKind.CRIT_TICK
-            | NoteKind.HIDE_TICK
-            | NoteKind.ANCHOR
-            | NoteKind.DAMAGE
-        ):
-            return False
-        case _:
-            assert_never(kind)
+    return kind in {
+        NoteKind.NORM_TAP,
+        NoteKind.CRIT_TAP,
+        NoteKind.NORM_FLICK,
+        NoteKind.CRIT_FLICK,
+        NoteKind.NORM_HEAD_TAP,
+        NoteKind.CRIT_HEAD_TAP,
+        NoteKind.NORM_HEAD_FLICK,
+        NoteKind.CRIT_HEAD_FLICK,
+        NoteKind.NORM_TAIL_TAP,
+        NoteKind.CRIT_TAIL_TAP,
+    }
 
 
 def has_release_input(kind: NoteKind) -> bool:
-    match kind:
-        case (
-            NoteKind.NORM_RELEASE
-            | NoteKind.CRIT_RELEASE
-            | NoteKind.NORM_HEAD_RELEASE
-            | NoteKind.CRIT_HEAD_RELEASE
-            | NoteKind.NORM_TAIL_RELEASE
-            | NoteKind.CRIT_TAIL_RELEASE
-        ):
-            return True
-        case (
-            NoteKind.NORM_TAP
-            | NoteKind.CRIT_TAP
-            | NoteKind.NORM_FLICK
-            | NoteKind.CRIT_FLICK
-            | NoteKind.NORM_TRACE
-            | NoteKind.CRIT_TRACE
-            | NoteKind.NORM_TRACE_FLICK
-            | NoteKind.CRIT_TRACE_FLICK
-            | NoteKind.NORM_HEAD_TAP
-            | NoteKind.CRIT_HEAD_TAP
-            | NoteKind.NORM_HEAD_FLICK
-            | NoteKind.CRIT_HEAD_FLICK
-            | NoteKind.NORM_HEAD_TRACE
-            | NoteKind.CRIT_HEAD_TRACE
-            | NoteKind.NORM_HEAD_TRACE_FLICK
-            | NoteKind.CRIT_HEAD_TRACE_FLICK
-            | NoteKind.NORM_TAIL_TAP
-            | NoteKind.CRIT_TAIL_TAP
-            | NoteKind.NORM_TAIL_FLICK
-            | NoteKind.CRIT_TAIL_FLICK
-            | NoteKind.NORM_TAIL_TRACE
-            | NoteKind.CRIT_TAIL_TRACE
-            | NoteKind.NORM_TAIL_TRACE_FLICK
-            | NoteKind.CRIT_TAIL_TRACE_FLICK
-            | NoteKind.NORM_TICK
-            | NoteKind.CRIT_TICK
-            | NoteKind.HIDE_TICK
-            | NoteKind.ANCHOR
-            | NoteKind.DAMAGE
-        ):
-            return False
-        case _:
-            assert_never(kind)
+    return kind in {
+        NoteKind.NORM_RELEASE,
+        NoteKind.CRIT_RELEASE,
+        NoteKind.NORM_HEAD_RELEASE,
+        NoteKind.CRIT_HEAD_RELEASE,
+        NoteKind.NORM_TAIL_RELEASE,
+        NoteKind.CRIT_TAIL_RELEASE,
+    }
 
 
 def is_head(kind: NoteKind) -> bool:
-    match kind:
-        case (
-            NoteKind.NORM_HEAD_TAP
-            | NoteKind.CRIT_HEAD_TAP
-            | NoteKind.NORM_HEAD_FLICK
-            | NoteKind.CRIT_HEAD_FLICK
-            | NoteKind.NORM_HEAD_TRACE
-            | NoteKind.CRIT_HEAD_TRACE
-            | NoteKind.NORM_HEAD_TRACE_FLICK
-            | NoteKind.CRIT_HEAD_TRACE_FLICK
-            | NoteKind.NORM_HEAD_RELEASE
-            | NoteKind.CRIT_HEAD_RELEASE
-        ):
-            return True
-        case (
-            NoteKind.NORM_TAP
-            | NoteKind.CRIT_TAP
-            | NoteKind.NORM_FLICK
-            | NoteKind.CRIT_FLICK
-            | NoteKind.NORM_TRACE
-            | NoteKind.CRIT_TRACE
-            | NoteKind.NORM_TRACE_FLICK
-            | NoteKind.CRIT_TRACE_FLICK
-            | NoteKind.NORM_RELEASE
-            | NoteKind.CRIT_RELEASE
-            | NoteKind.NORM_TAIL_TAP
-            | NoteKind.CRIT_TAIL_TAP
-            | NoteKind.NORM_TAIL_FLICK
-            | NoteKind.CRIT_TAIL_FLICK
-            | NoteKind.NORM_TAIL_TRACE
-            | NoteKind.CRIT_TAIL_TRACE
-            | NoteKind.NORM_TAIL_TRACE_FLICK
-            | NoteKind.CRIT_TAIL_TRACE_FLICK
-            | NoteKind.NORM_TAIL_RELEASE
-            | NoteKind.CRIT_TAIL_RELEASE
-            | NoteKind.NORM_TICK
-            | NoteKind.CRIT_TICK
-            | NoteKind.HIDE_TICK
-            | NoteKind.ANCHOR
-            | NoteKind.DAMAGE
-        ):
-            return False
-        case _:
-            assert_never(kind)
+    return kind in {
+        NoteKind.NORM_HEAD_TAP,
+        NoteKind.CRIT_HEAD_TAP,
+        NoteKind.NORM_HEAD_FLICK,
+        NoteKind.CRIT_HEAD_FLICK,
+        NoteKind.NORM_HEAD_TRACE,
+        NoteKind.CRIT_HEAD_TRACE,
+        NoteKind.NORM_HEAD_TRACE_FLICK,
+        NoteKind.CRIT_HEAD_TRACE_FLICK,
+        NoteKind.NORM_HEAD_RELEASE,
+        NoteKind.CRIT_HEAD_RELEASE,
+    }

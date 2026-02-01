@@ -276,6 +276,8 @@ def group_scaled_time(group: int | EntityRef) -> CompositeTime:
 
 
 def group_hide_notes(group: int | EntityRef) -> bool:
+    if Options.disable_timescale:
+        return False
     if isinstance(group, EntityRef):
         group = group.index
     if group <= 0:

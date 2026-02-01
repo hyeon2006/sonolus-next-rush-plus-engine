@@ -275,6 +275,12 @@ def draw_connector(
     ):
         return
 
+    if Options.disable_fake_notes and kind in {
+        ConnectorKind.ACTIVE_FAKE_NORMAL,
+        ConnectorKind.ACTIVE_FAKE_CRITICAL,
+    }:
+        return
+
     if ease_type == EaseType.NONE:
         tail_lane = head_lane
         tail_size = head_size

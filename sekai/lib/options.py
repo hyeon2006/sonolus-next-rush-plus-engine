@@ -189,6 +189,12 @@ class Options:
         advanced=True,
         default=False,
     )
+    disable_fake_notes: bool = toggle_option(
+        name="Disable Fake Notes",
+        standard=True,
+        advanced=True,
+        default=False,
+    )
     score_mode: ScoreMode = select_option(
         name="Score Mode",
         scope="Sekai",

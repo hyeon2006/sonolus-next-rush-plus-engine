@@ -259,6 +259,8 @@ class BaseNote(PlayArchetype):
             return
         if group_hide_notes(self.timescale_group):
             return
+        if Options.disable_fake_notes and not self.is_scored:
+            return
         draw_note(self.kind, self.lane, self.size, self.progress, self.direction, self.target_time)
 
     def should_do_delayed_trigger(self) -> bool:
