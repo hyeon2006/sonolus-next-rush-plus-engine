@@ -1,24 +1,14 @@
 from enum import IntEnum
-from typing import Literal
 
 from sonolus.script.options import options, select_option, slider_option, toggle_option
 from sonolus.script.text import StandardText
 
 
 class ScoreMode(IntEnum):
-    LEVEL_DEFAULT = 0
-    WEIGHTED_FLAT = 1
-    WEIGHTED_COMBO = 2
-    UNWEIGHTED_FLAT = 3
-    UNWEIGHTED_COMBO = 4
-
-
-ConcreteScoreMode = Literal[
-    ScoreMode.WEIGHTED_FLAT,
-    ScoreMode.WEIGHTED_COMBO,
-    ScoreMode.UNWEIGHTED_FLAT,
-    ScoreMode.UNWEIGHTED_COMBO,
-]
+    WEIGHTED_FLAT = 0
+    WEIGHTED_COMBO = 1
+    UNWEIGHTED_FLAT = 2
+    UNWEIGHTED_COMBO = 3
 
 
 @options
@@ -203,7 +193,6 @@ class Options:
         name="Score Mode",
         scope="Sekai",
         values=[
-            "Level Default",
             "Weighted Flat",
             "Weighted Combo (Sekai)",
             "Unweighted Flat (Tournament)",
@@ -211,7 +200,7 @@ class Options:
         ],
         standard=True,
         advanced=True,
-        default=0,
+        default=1,
     )
 
     replay_fallback_option_names = (

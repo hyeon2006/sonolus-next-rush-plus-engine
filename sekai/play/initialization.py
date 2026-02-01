@@ -1,4 +1,4 @@
-from sonolus.script.archetype import PlayArchetype, callback, imported
+from sonolus.script.archetype import PlayArchetype, callback, exported, imported
 
 from sekai.lib import archetype_names
 from sekai.lib.buckets import init_buckets
@@ -16,8 +16,10 @@ from sekai.play.stage import Stage
 class Initialization(PlayArchetype):
     name = archetype_names.INITIALIZATION
 
-    revision: EngineRevision = imported(name="revision")
+    revision: EngineRevision = imported(name="revision", default=EngineRevision.SONOLUS_1_1_0)
     initial_life: int = imported(name="initialLife", default=1000)
+
+    replay_revision: EngineRevision = exported(name="replayRevision")
 
     @callback(order=-1)
     def preprocess(self):
@@ -33,6 +35,7 @@ class Initialization(PlayArchetype):
     def initialize(self):
         Stage.spawn()
         InputManager.spawn()
+        self.replay_revision = self.revision
 
     def spawn_order(self) -> float:
         return -1e8

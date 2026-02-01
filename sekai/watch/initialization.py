@@ -1,4 +1,5 @@
 from sonolus.script.archetype import WatchArchetype, callback, imported
+from sonolus.script.runtime import is_replay
 
 from sekai.lib import archetype_names
 from sekai.lib.buckets import init_buckets
@@ -17,11 +18,14 @@ from sekai.watch.stage import WatchScheduledLaneEffect, WatchStage
 class WatchInitialization(WatchArchetype):
     name = archetype_names.INITIALIZATION
 
-    revision: EngineRevision = imported(name="revision")
+    revision: EngineRevision = imported(name="revision", default=EngineRevision.LATEST)
+    replay_revision: EngineRevision = imported(name="replayRevision", default=EngineRevision.BASE)
     initial_life: int = imported(name="initialLife", default=1000)
 
     @callback(order=-1)
     def preprocess(self):
+        if is_replay():
+            self.revision = self.replay_revision
         init_level_config(self.revision)
         init_layout()
         init_ui()

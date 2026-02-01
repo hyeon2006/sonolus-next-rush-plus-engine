@@ -22,7 +22,7 @@ from sekai.preview.stage import draw_preview_cover, draw_preview_stage
 class PreviewInitialization(PreviewArchetype):
     name = archetype_names.INITIALIZATION
 
-    revision: EngineRevision = imported(name="revision")
+    revision: EngineRevision = imported(name="revision", default=EngineRevision.LATEST)
 
     @callback(order=1)
     def preprocess(self):
