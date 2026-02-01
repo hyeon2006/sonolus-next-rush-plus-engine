@@ -27,7 +27,7 @@ def init_level_config(
     if revision >= EngineRevision.SONOLUS_1_1_0:
         LevelConfig.score_mode = Options.score_mode
     else:
-        LevelConfig.score_mode = ScoreMode.WEIGHTED_COMBO
+        LevelConfig.score_mode = ScoreMode.UNWEIGHTED_FLAT
 
 
 def init_ui_version(ui_version: SekaiVersion):
