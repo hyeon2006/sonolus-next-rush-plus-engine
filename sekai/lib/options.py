@@ -11,6 +11,29 @@ class ScoreMode(IntEnum):
     UNWEIGHTED_COMBO = 3
 
 
+class SkillMode(IntEnum):
+    LEVEL_DEFAULT = 0
+    SCORE = 1
+    HEAL = 2
+    JUDGMENT = 3
+
+    @classmethod
+    def from_options(cls, option_val: int, legacy_val: int) -> "SkillMode":
+        if option_val == 1:
+            return cls.SCORE
+        if option_val == 2:
+            return cls.HEAL
+        if option_val == 3:
+            return cls.JUDGMENT
+
+        if legacy_val == 1:
+            return cls.HEAL
+        if legacy_val == 2:
+            return cls.JUDGMENT
+
+        return cls.SCORE
+
+
 class SekaiVersion(IntEnum):
     v3 = 0
     v1 = 1
@@ -307,6 +330,18 @@ class Options:
         description="Enables Fever Chance even in solo play.",
         scope="Rush",
         default=False,
+    )
+    skill_mode: SkillMode = select_option(
+        name="Skill Mode",
+        scope="Rush",
+        values=[
+            "Level Default",
+            "Score Up",
+            "Life Up",
+            "Accuracy Up",
+        ],
+        standard=True,
+        default=SkillMode.LEVEL_DEFAULT,
     )
     score_mode: ScoreMode = select_option(
         name="Score Mode",
