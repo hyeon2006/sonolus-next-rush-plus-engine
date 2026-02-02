@@ -772,10 +772,10 @@ def play_note_hit_effects(
     if Options.note_effect_enabled:
         if particles.linear.is_available:
             layout = layout_linear_effect(lane, shear=0)
-            particles.linear.spawn(layout, duration=0.5)
+            particles.linear.spawn(layout, duration=0.5 / Options.effect_animation_speed)
         if particles.circular.is_available:
             layout = layout_circular_effect(lane, w=1.75, h=1.05)
-            particles.circular.spawn(layout, duration=0.6)
+            particles.circular.spawn(layout, duration=0.6 / Options.effect_animation_speed)
         if particles.directional.is_available:
             match direction:
                 case FlickDirection.UP_OMNI | FlickDirection.DOWN_OMNI:
@@ -787,20 +787,20 @@ def play_note_hit_effects(
                 case _:
                     assert_never(direction)
             layout = layout_rotated_linear_effect(lane, shear=shear)
-            particles.directional.spawn(layout, duration=0.32)
+            particles.directional.spawn(layout, duration=0.32 / Options.effect_animation_speed)
         if particles.tick.is_available:
             layout = layout_tick_effect(lane)
-            particles.tick.spawn(layout, duration=0.6)
+            particles.tick.spawn(layout, duration=0.6 / Options.effect_animation_speed)
         if particles.slot_linear.is_available:
             for slot_lane in iter_slot_lanes(lane, size):
                 layout = layout_linear_effect(slot_lane, shear=0)
-                particles.slot_linear.spawn(layout, duration=0.5)
+                particles.slot_linear.spawn(layout, duration=0.5 / Options.effect_animation_speed)
     if Options.lane_effect_enabled:
         layout = layout_lane(lane, size)
         if particles.lane.is_available:
-            particles.lane.spawn(layout, duration=1)
+            particles.lane.spawn(layout, duration=1 / Options.effect_animation_speed)
         elif particles.lane_basic.is_available:
-            particles.lane_basic.spawn(layout, duration=0.3)
+            particles.lane_basic.spawn(layout, duration=0.3 / Options.effect_animation_speed)
     if Options.slot_effect_enabled and not is_watch():
         schedule_note_slot_effects(kind, lane, size, time(), direction)
 
@@ -864,20 +864,23 @@ def draw_tutorial_note_slot_effects(
 ):
     sprite_set = get_note_sprite_set(kind, direction)
     slot_sprite = sprite_set.slot
-    if slot_sprite.is_available and time() < start_time + SLOT_EFFECT_DURATION:
+    if slot_sprite.is_available and time() < start_time + SLOT_EFFECT_DURATION / Options.effect_animation_speed:
         for slot_lane in iter_slot_lanes(lane, size):
             draw_slot_effect(
                 sprite=slot_sprite,
                 start_time=start_time,
-                end_time=start_time + SLOT_EFFECT_DURATION,
+                end_time=start_time + SLOT_EFFECT_DURATION / Options.effect_animation_speed,
                 lane=slot_lane,
             )
     slot_glow_sprite = sprite_set.slot_glow
-    if slot_glow_sprite.is_available and time() < start_time + SLOT_GLOW_EFFECT_DURATION:
+    if (
+        slot_glow_sprite.is_available
+        and time() < start_time + SLOT_GLOW_EFFECT_DURATION / Options.effect_animation_speed
+    ):
         draw_slot_glow_effect(
             sprite=slot_glow_sprite,
             start_time=start_time,
-            end_time=start_time + SLOT_GLOW_EFFECT_DURATION,
+            end_time=start_time + SLOT_GLOW_EFFECT_DURATION / Options.effect_animation_speed,
             lane=lane,
             size=size,
         )

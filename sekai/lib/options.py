@@ -177,6 +177,15 @@ class Options:
         max=0.2,
         step=0.01,
     )
+    effect_animation_speed: float = slider_option(
+        name="Effect Animation Speed",
+        scope="Next Sekai",
+        default=1,
+        min=0.25,
+        max=4,
+        step=0.05,
+        unit=StandardText.PERCENTAGE_UNIT,
+    )
     alternative_approach_curve: bool = toggle_option(
         name="Alternative Approach Curve",
         advanced=True,

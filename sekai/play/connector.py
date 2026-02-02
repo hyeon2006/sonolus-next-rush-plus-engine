@@ -296,16 +296,18 @@ class SlideManager(PlayArchetype):
                 if self.last_effect_kind != info.connector_kind:
                     connector_effect_kind_stream[offset_adjusted_time()] = info.connector_kind
                     self.last_effect_kind = info.connector_kind
+                trail_period = CONNECTOR_TRAIL_SPAWN_PERIOD / Options.effect_animation_speed
                 if time() >= self.next_trail_spawn_time:
                     self.next_trail_spawn_time = max(
-                        self.next_trail_spawn_time + CONNECTOR_TRAIL_SPAWN_PERIOD,
-                        time() + CONNECTOR_TRAIL_SPAWN_PERIOD / 2,
+                        self.next_trail_spawn_time + trail_period,
+                        time() + trail_period / 2,
                     )
                     spawn_linear_connector_trail_particle(info.connector_kind, info.visual_lane)
+                slot_period = CONNECTOR_SLOT_SPAWN_PERIOD / Options.effect_animation_speed
                 if time() >= self.next_slot_spawn_time:
                     self.next_slot_spawn_time = max(
-                        self.next_slot_spawn_time + CONNECTOR_SLOT_SPAWN_PERIOD,
-                        time() + CONNECTOR_SLOT_SPAWN_PERIOD / 2,
+                        self.next_slot_spawn_time + slot_period,
+                        time() + slot_period / 2,
                     )
                     spawn_connector_slot_particles(info.connector_kind, info.visual_lane, info.visual_size)
                 draw_connector_slot_glow_effect(
