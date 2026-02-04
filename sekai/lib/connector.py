@@ -578,7 +578,7 @@ def update_circular_connector_particle(
                 particle @= ActiveParticles.critical_slide_connector.circular
             case _:
                 assert_never(kind)
-        replace_looped_particle(handle, particle, layout, duration=1 * Options.note_effect_duration)
+        replace_looped_particle(handle, particle, layout, duration=1 / Options.effect_animation_speed)
     else:
         update_looped_particle(handle, layout)
 
@@ -602,7 +602,7 @@ def update_linear_connector_particle(
                 particle @= ActiveParticles.critical_slide_connector.linear
             case _:
                 assert_never(kind)
-        replace_looped_particle(handle, particle, layout, duration=1 * Options.note_effect_duration)
+        replace_looped_particle(handle, particle, layout, duration=1 / Options.effect_animation_speed)
     else:
         update_looped_particle(handle, layout)
 
