@@ -209,9 +209,9 @@ class Options:
         scope="Sekai",
         values=[
             "Weighted Flat",
-            "Weighted Combo (Sekai)",
-            "Unweighted Flat (Tournament)",
-            "Unweighted Combo (Classic)",
+            "Weighted Combo (Sekai Standard)",
+            "Unweighted Flat (Sekai Rank Match)",
+            "Unweighted Combo",
         ],
         standard=True,
         advanced=True,
