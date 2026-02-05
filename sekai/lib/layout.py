@@ -356,17 +356,17 @@ def layout_custom_tag() -> Quad:
 def init_ui_margin():
     match LevelConfig.ui_version:
         case SekaiVersion.v3:
-            UIMargin.life_bar_x = 0.28
-            UIMargin.score_bar_x = 0.3
+            UIMargin.life_bar_x = 0.28 if not Options.full_screen_ui else 0.05
+            UIMargin.score_bar_x = 0.3 if not Options.full_screen_ui else 0.1
             UIMargin.life_bar_y = 0.887
             UIMargin.score_bar_y = 0.865
-            UIMargin.ui_x = 0.23
+            UIMargin.ui_x = 0.23 if not Options.full_screen_ui else 0.0
         case SekaiVersion.v1:
             UIMargin.life_bar_x = 0.28 if not Options.full_screen_ui else 0.0
             UIMargin.score_bar_x = 0.3 if not Options.full_screen_ui else 0.05
             UIMargin.life_bar_y = 0.84
             UIMargin.score_bar_y = 0.83
-            UIMargin.ui_x = 0.28
+            UIMargin.ui_x = 0.28 if not Options.full_screen_ui else 0.0
 
 
 def layout_life_bar() -> Quad:
