@@ -163,8 +163,8 @@ class Buckets:
         sprites=create_bucket_sprites(
             connector=BaseSkin.normal_active_slide_connection_normal,
             connector_fallback=BaseSkin.active_slide_connection_green_fallback,
-            body=BaseSkin.normal_note_basic,
-            body_fallback=BaseSkin.note_cyan_fallback,
+            body=BaseSkin.slide_note_basic,
+            body_fallback=BaseSkin.note_green_fallback,
             body_pos="left",
         ),
         unit=StandardText.MILLISECOND_UNIT,
@@ -259,8 +259,8 @@ class Buckets:
         sprites=create_bucket_sprites(
             connector=BaseSkin.normal_active_slide_connection_normal,
             connector_fallback=BaseSkin.active_slide_connection_green_fallback,
-            body=BaseSkin.normal_note_basic,
-            body_fallback=BaseSkin.note_cyan_fallback,
+            body=BaseSkin.slide_note_basic,
+            body_fallback=BaseSkin.note_green_fallback,
             body_pos="right",
         ),
         unit=StandardText.MILLISECOND_UNIT,
