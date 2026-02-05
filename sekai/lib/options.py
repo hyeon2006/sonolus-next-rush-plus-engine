@@ -210,7 +210,7 @@ class Options:
         values=[
             "Weighted Flat",
             "Weighted Combo (Sekai Standard)",
-            "Unweighted Flat (Sekai Rank Match)",
+            "Unweighted Flat (Sekai Ranked Match)",
             "Unweighted Combo",
         ],
         standard=True,
