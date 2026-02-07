@@ -649,7 +649,7 @@ class BaseNote(PlayArchetype):
     def judge(self, actual_time: float):
         judgment = self.judgment_window.judge(actual_time, self.target_time)
         error = self.judgment_window.bad.clamp(actual_time - self.target_time)
-        self.result.judgment = judgment if not SkillActive.judgment and judgment != Judgment.MISS else Judgment.PERFECT
+        self.result.judgment = judgment if not SkillActive.judgment or judgment == Judgment.MISS else Judgment.PERFECT
         self.result.accuracy = error
         if self.result.bucket.id != -1:
             self.result.bucket_value = error * WINDOW_SCALE
@@ -662,7 +662,7 @@ class BaseNote(PlayArchetype):
         if judgment == Judgment.PERFECT:
             judgment = Judgment.GREAT
         error = self.judgment_window.bad.clamp(actual_time - self.target_time)
-        self.result.judgment = judgment if not SkillActive.judgment and judgment != Judgment.MISS else Judgment.PERFECT
+        self.result.judgment = judgment if not SkillActive.judgment or judgment == Judgment.MISS else Judgment.PERFECT
         if error in self.judgment_window.perfect:
             self.result.accuracy = self.judgment_window.perfect.end
         else:
@@ -684,18 +684,14 @@ class BaseNote(PlayArchetype):
         self.post_judge()
 
     def complete_wrong_way(self):
-        self.result.judgment = Judgment.GREAT
-        self.result.accuracy = (
-            self.judgment_window.good.end
-            if not SkillActive.judgment and self.result.judgment != Judgment.MISS
-            else Judgment.PERFECT
-        )
+        self.result.judgment = Judgment.GREAT if not SkillActive.judgment else Judgment.PERFECT
+        self.result.accuracy = self.judgment_window.good.end
         if self.result.bucket.id != -1:
             self.result.bucket_value = 0
         self.despawn = True
         self.should_play_hit_effects = True
         self.post_judge()
-        self.wrong_way = not SkillActive.judgment and self.result.judgment != Judgment.MISS
+        self.wrong_way = not SkillActive.judgment
 
     def complete_damage(self):
         self.result.judgment = Judgment.PERFECT
