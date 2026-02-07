@@ -659,7 +659,7 @@ class BaseNote(PlayArchetype):
             self.result.bucket_value = error * WINDOW_SCALE
         self.despawn = True
         self.should_play_hit_effects = True
-        self.wrong_way = not SkillActive.judgment or judgment != Judgment.MISS
+        self.wrong_way = not SkillActive.judgment and judgment != Judgment.MISS
 
     def complete(self):
         self.result.judgment = Judgment.PERFECT
@@ -670,15 +670,13 @@ class BaseNote(PlayArchetype):
         self.should_play_hit_effects = True
 
     def complete_wrong_way(self):
-        self.result.judgment = (
-            Judgment.GREAT if not SkillActive.judgment or self.result.judgment != Judgment.MISS else 0
-        )
+        self.result.judgment = Judgment.GREAT if not SkillActive.judgment else Judgment.PERFECT
         self.result.accuracy = self.judgment_window.good.end
         if self.result.bucket.id != -1:
             self.result.bucket_value = 0
         self.despawn = True
         self.should_play_hit_effects = True
-        self.wrong_way = not SkillActive.judgment or self.result.judgment != Judgment.MISS
+        self.wrong_way = not SkillActive.judgment
 
     def complete_damage(self):
         self.result.judgment = Judgment.PERFECT
