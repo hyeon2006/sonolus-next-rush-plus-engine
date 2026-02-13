@@ -303,6 +303,7 @@ class BaseNote(PlayArchetype):
             play_note_hit_effects(
                 self.kind, self.effect_kind, self.lane, self.size, self.direction, self.result.judgment
             )
+        if self.is_scored:
             self.result.haptic = get_note_haptic_feedback(self.kind, self.result.judgment)
         self.end_time = offset_adjusted_time()
         self.played_hit_effects = self.should_play_hit_effects

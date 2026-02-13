@@ -17,6 +17,12 @@ class StageCoverMode(IntEnum):
     FULL_WIDTH = 2
 
 
+class VibrateMode(IntEnum):
+    DISABLED = 0
+    MISS = 1
+    MISS_AND_GOOD = 2
+
+
 @options
 class Options:
     speed: float = slider_option(
@@ -51,10 +57,20 @@ class Options:
         scope="Sekai",
         default=False,
     )
-    haptics_enabled: bool = toggle_option(
+    tap_haptics_enabled: bool = toggle_option(
         name=StandardText.HAPTIC,
         scope="Sekai",
         default=False,
+    )
+    vibrate_mode: VibrateMode = select_option(
+        name="Vibration Mode",
+        scope="Sekai",
+        values=[
+            "Disabled",
+            "On Miss",
+            "On Miss and Good",
+        ],
+        default=0,
     )
     note_effect_enabled: bool = toggle_option(
         name=StandardText.NOTE_EFFECT,

@@ -64,7 +64,7 @@ from sekai.lib.layout import (
     progress_to,
 )
 from sekai.lib.level_config import LevelConfig
-from sekai.lib.options import Options, ScoreMode
+from sekai.lib.options import Options, ScoreMode, VibrateMode
 from sekai.lib.particle import (
     EMPTY_NOTE_PARTICLE_SET,
     ActiveParticles,
@@ -806,7 +806,11 @@ def play_note_hit_effects(
 
 
 def get_note_haptic_feedback(kind: NoteKind, judgment: Judgment) -> HapticType:
-    if not Options.haptics_enabled or judgment not in {Judgment.PERFECT, Judgment.GREAT}:
+    if judgment == Judgment.MISS and Options.vibrate_mode in {VibrateMode.MISS, VibrateMode.MISS_AND_GOOD}:
+        return HapticType.LONG
+    if judgment == Judgment.GOOD and Options.vibrate_mode in {VibrateMode.MISS_AND_GOOD}:
+        return HapticType.LONG
+    if not Options.tap_haptics_enabled or judgment not in {Judgment.PERFECT, Judgment.GREAT}:
         return HapticType.NONE
     match kind:
         case (
