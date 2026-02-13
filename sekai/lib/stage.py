@@ -1,14 +1,18 @@
+from typing import assert_never
+
 from sekai.lib.effect import SFX_DISTANCE, Effects
 from sekai.lib.layer import LAYER_COVER, LAYER_JUDGMENT_LINE, LAYER_STAGE, get_z
 from sekai.lib.layout import (
     layout_fallback_judge_line,
+    layout_full_width_stage_cover,
     layout_hidden_cover,
     layout_lane,
     layout_lane_by_edges,
     layout_sekai_stage,
     layout_stage_cover,
+    layout_stage_cover_and_line,
 )
-from sekai.lib.options import Options
+from sekai.lib.options import Options, StageCoverMode
 from sekai.lib.particle import ActiveParticles
 from sekai.lib.skin import ActiveSkin
 
@@ -48,8 +52,19 @@ def draw_fallback_stage():
 
 def draw_stage_cover():
     if Options.stage_cover > 0:
-        layout = layout_stage_cover()
-        ActiveSkin.cover.draw(layout, z=get_z(LAYER_COVER), a=1)
+        match Options.stage_cover_mode:
+            case StageCoverMode.STAGE:
+                layout = layout_stage_cover()
+                ActiveSkin.cover.draw(layout, z=get_z(LAYER_COVER), a=Options.stage_cover_alpha)
+            case StageCoverMode.STAGE_AND_LINE:
+                cover_layout, line_layout = layout_stage_cover_and_line()
+                ActiveSkin.cover.draw(cover_layout, z=get_z(LAYER_COVER), a=Options.stage_cover_alpha)
+                ActiveSkin.guide_neutral.draw(line_layout, z=get_z(LAYER_COVER, etc=1), a=0.75)
+            case StageCoverMode.FULL_WIDTH:
+                layout = layout_full_width_stage_cover()
+                ActiveSkin.cover.draw(layout, z=get_z(LAYER_COVER), a=Options.stage_cover_alpha)
+            case _:
+                assert_never(Options.stage_cover_mode)
     if Options.hidden > 0:
         layout = layout_hidden_cover()
         ActiveSkin.cover.draw(layout, z=get_z(LAYER_COVER), a=1)

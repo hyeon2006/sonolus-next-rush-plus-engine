@@ -202,6 +202,32 @@ def layout_stage_cover() -> Quad:
     )
 
 
+def layout_stage_cover_and_line() -> tuple[Quad, Quad]:
+    b = lerp(approach(0), 1.0, Options.stage_cover)
+    cover_b = b + 0.002
+    return perspective_rect(
+        l=-6,
+        r=6,
+        t=LANE_T,
+        b=cover_b,
+    ), perspective_rect(
+        l=-6,
+        r=6,
+        t=cover_b,
+        b=b,
+    )
+
+
+def layout_full_width_stage_cover() -> Rect:
+    b = transform_vec(Vec2(0, lerp(approach(0), 1.0, Options.stage_cover))).y
+    return Rect(
+        l=screen().l,
+        r=screen().r,
+        t=1,
+        b=b,
+    )
+
+
 def layout_hidden_cover() -> Quad:
     b = 1 - NOTE_H
     t = min(b, max(lerp(1.0, approach(0), Options.hidden), lerp(approach(0), 1.0, Options.stage_cover)))

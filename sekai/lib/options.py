@@ -11,6 +11,12 @@ class ScoreMode(IntEnum):
     UNWEIGHTED_COMBO = 3
 
 
+class StageCoverMode(IntEnum):
+    STAGE = 0
+    STAGE_AND_LINE = 1
+    FULL_WIDTH = 2
+
+
 @options
 class Options:
     speed: float = slider_option(
@@ -121,6 +127,27 @@ class Options:
         advanced=True,
         scope="Sekai",
         default=0,
+        min=0,
+        max=1,
+        step=0.01,
+        unit=StandardText.PERCENTAGE_UNIT,
+    )
+    stage_cover_mode: StageCoverMode = select_option(
+        name="Stage Cover Mode",
+        advanced=True,
+        scope="Sekai",
+        values=[
+            "Stage",
+            "Stage and Line",
+            "Full Width",
+        ],
+        default=0,
+    )
+    stage_cover_alpha: float = slider_option(
+        name=StandardText.STAGE_COVER_ALPHA,
+        advanced=True,
+        scope="Sekai",
+        default=1,
         min=0,
         max=1,
         step=0.01,
