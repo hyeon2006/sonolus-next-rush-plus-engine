@@ -1,16 +1,17 @@
 from sonolus.script import runtime
 from sonolus.script.numtools import make_comparable_float, quantize_to_step
 
-LAYER_BACKGROUND = -1
-LAYER_BACKGROUND_SIDE = 0
-LAYER_BACKGROUND_COVER = 1
-LAYER_STAGE_COVER = 2
-LAYER_GAUGE = 3
-LAYER_STAGE = 4
-LAYER_COVER = 5
-LAYER_COVER_LINE = 6
-LAYER_STAGE_LANE = 7
-LAYER_JUDGMENT_LINE = 8
+LAYER_BACKGROUND = -2
+LAYER_BACKGROUND_SIDE = -1
+LAYER_BACKGROUND_COVER = 0
+LAYER_STAGE_COVER = 1
+LAYER_GAUGE = 2
+LAYER_STAGE = 3
+LAYER_COVER = 4
+LAYER_COVER_LINE = 5
+LAYER_STAGE_LANE = 6
+LAYER_JUDGMENT_LINE = 7
+LAYER_JUDGMENT_SKILL = 8
 LAYER_SLOT_EFFECT = 9
 
 LAYER_BEAT_LINE = 10
@@ -44,7 +45,7 @@ LAYER_JUDGMENT = 34
 def get_z(layer: int, time: float = 0.0, lane: float = 0.0, etc: int = 0, *, invert_time: bool = False) -> float:
     quantized_time = (runtime.time() * 256) // 256
     return make_comparable_float(
-        quantize_to_step(layer, start=-1, stop=63, step=1),
+        quantize_to_step(layer, start=-2, stop=62, step=1),
         quantize_to_step(
             time - quantized_time if invert_time else quantized_time - time, start=-30, stop=30, step=1 / 256
         ),
