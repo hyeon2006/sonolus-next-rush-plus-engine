@@ -8,6 +8,7 @@ from sekai.lib.note import init_life, init_score
 from sekai.lib.particle import init_particles
 from sekai.lib.skin import init_skin
 from sekai.lib.ui import init_ui
+from sekai.play.common import init_play_common
 from sekai.play.input_manager import InputManager
 from sekai.play.note import NOTE_ARCHETYPES
 from sekai.play.stage import Stage
@@ -31,6 +32,7 @@ class Initialization(PlayArchetype):
         init_buckets()
         init_score(NOTE_ARCHETYPES)
         init_life(NOTE_ARCHETYPES, self.initial_life)
+        init_play_common()
 
     def initialize(self):
         Stage.spawn()

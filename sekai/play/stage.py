@@ -2,12 +2,13 @@ from sonolus.script.archetype import PlayArchetype, callback
 from sonolus.script.array import Dim
 from sonolus.script.containers import VarArray
 from sonolus.script.interval import clamp
-from sonolus.script.runtime import offset_adjusted_time, touches
+from sonolus.script.runtime import offset_adjusted_time, time, touches
 
 from sekai.lib import archetype_names
 from sekai.lib.layout import layout_hitbox
 from sekai.lib.stage import draw_stage_and_accessories, play_lane_hit_effects
 from sekai.lib.streams import Streams
+from sekai.play.common import PlayLevelMemory
 from sekai.play.input_manager import is_allowed_empty
 
 
@@ -33,14 +34,14 @@ class Stage(PlayArchetype):
             lane = (touch.position.x - total_hitbox.l) / w_scale - 7
             rounded_lane = clamp(round(lane - 0.5) + 0.5, -5.5, 5.5)
             if touch.started:
-                play_lane_hit_effects(rounded_lane)
+                play_lane_hit_effects(rounded_lane, sfx=time() > PlayLevelMemory.last_note_sfx_time + 0.6)
                 if not empty_lanes.is_full():
                     empty_lanes.append(rounded_lane)
             else:
                 prev_lane = (touch.prev_position.x - total_hitbox.l) / w_scale - 7
                 prev_rounded_lane = clamp(round(prev_lane - 0.5) + 0.5, -5.5, 5.5)
                 if rounded_lane != prev_rounded_lane:
-                    play_lane_hit_effects(rounded_lane)
+                    play_lane_hit_effects(rounded_lane, sfx=time() > PlayLevelMemory.last_note_sfx_time + 0.6)
                     if not empty_lanes.is_full():
                         empty_lanes.append(rounded_lane)
         if len(empty_lanes) > 0:

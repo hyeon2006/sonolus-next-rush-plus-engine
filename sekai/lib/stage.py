@@ -70,8 +70,9 @@ def draw_stage_cover():
         ActiveSkin.cover.draw(layout, z=get_z(LAYER_COVER), a=1)
 
 
-def play_lane_hit_effects(lane: float):
-    play_lane_sfx(lane)
+def play_lane_hit_effects(lane: float, sfx: bool = True):
+    if sfx:
+        play_lane_sfx(lane)
     play_lane_particle(lane)
 
 
