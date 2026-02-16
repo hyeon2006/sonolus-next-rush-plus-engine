@@ -224,6 +224,9 @@ class BaseNote(PlayArchetype):
             else:
                 self.judge_wrong_way(self.best_touch_time)
             return
+        if self.tick_trigger():
+            self.complete()
+            return
         if time() > self.input_interval.end:
             self.handle_late_miss()
             return
@@ -306,18 +309,6 @@ class BaseNote(PlayArchetype):
             self.despawn = True
             return
         if time() < self.visual_start_time:
-            return
-        if self.should_do_delayed_trigger():
-            if self.best_touch_matches_direction:
-                self.judge(self.best_touch_time)
-            else:
-                self.judge_wrong_way(self.best_touch_time)
-            return
-        if self.tick_trigger():
-            self.complete()
-            return
-        if time() > self.input_interval.end:
-            self.handle_late_miss()
             return
         if is_head(self.kind) and time() > self.target_time:
             return
