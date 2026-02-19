@@ -176,9 +176,6 @@ class BaseNote(PlayArchetype):
             else:
                 self.judge_wrong_way(self.best_touch_time)
             return
-        if time() > self.input_interval.end:
-            self.handle_late_miss()
-            return
         if self.is_scored and time() in self.input_interval and self.captured_touch_id == 0:
             if has_tap_input(self.kind):
                 NoteMemory.active_tap_input_notes.append(self.ref())
@@ -255,6 +252,9 @@ class BaseNote(PlayArchetype):
             self.despawn = True
             return
         if time() < self.visual_start_time:
+            return
+        if time() > self.input_interval.end:
+            self.handle_late_miss()
             return
         if is_head(self.kind) and time() > self.target_time:
             return
@@ -568,7 +568,6 @@ class BaseNote(PlayArchetype):
         if self.result.bucket.id != -1:
             self.result.bucket_value = 0
         self.despawn = True
-        self.post_judge()
 
     def fail_late(self, accuracy: float | None = None):
         if accuracy is None:
@@ -578,7 +577,6 @@ class BaseNote(PlayArchetype):
         if self.result.bucket.id != -1:
             self.result.bucket_value = self.judgment_window.good.end * WINDOW_SCALE
         self.despawn = True
-        self.post_judge()
 
     def fail_damage(self):
         self.result.judgment = Judgment.MISS
