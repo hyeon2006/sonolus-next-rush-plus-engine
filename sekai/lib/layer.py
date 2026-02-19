@@ -36,15 +36,15 @@ LAYER_NOTE_ARROW = 27
 LAYER_NOTE_ARROW_CRITICAL = 28
 LAYER_SLOT_GLOW_EFFECT = 29
 
-LAYER_DAMAGE = 31
-LAYER_SKILL_BAR = 32
-LAYER_SKILL_ETC = 33
-LAYER_JUDGMENT = 34
+LAYER_DAMAGE = 30
+LAYER_SKILL_BAR = 31
+LAYER_SKILL_ETC = 32
+LAYER_JUDGMENT = 33
 
 
 def get_z(layer: int, time: float = 0.0, lane: float = 0.0, etc: int = 0, *, invert_time: bool = False) -> float:
     return make_comparable_float(
-        quantize_to_step(layer, start=-2, stop=62, step=1),
+        quantize_to_step(layer, start=-2, stop=34, step=1),
         quantize_to_step(
             time - runtime.time() if invert_time else runtime.time() - time, start=-30, stop=30, step=1 / 256
         ),
