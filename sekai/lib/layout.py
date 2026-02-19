@@ -398,7 +398,7 @@ def layout_life_bar() -> Quad:
     )
 
 
-def layout_life_gauge(life) -> Quad:
+def layout_life_gauge(life, edge=False) -> Quad:
     ui = runtime_ui()
 
     scale_ratio = min(1, aspect_ratio() / (16 / 9))
@@ -417,14 +417,14 @@ def layout_life_gauge(life) -> Quad:
     w = 0
     match LevelConfig.ui_version:
         case SekaiVersion.v3:
-            margin_offset = 0.121
+            margin_offset = 0.118
             y_offset = -0.007
-            h = 0.027 * ui.secondary_metric_config.scale * scale_ratio
-            w = h * 18.3
+            h = 0.033 * ui.secondary_metric_config.scale * scale_ratio
+            w = h * 15.3
         case SekaiVersion.v1:
-            margin_offset = 0.031
+            margin_offset = 0.02
             y_offset = 0.01
-            h = 0.0221 * ui.secondary_metric_config.scale * scale_ratio
+            h = 0.023 * ui.secondary_metric_config.scale * scale_ratio
             w = h * 23
 
     bar_base_w = 0.827
@@ -439,12 +439,28 @@ def layout_life_gauge(life) -> Quad:
     screen_center = Vec2(x=number_center_x - (current_bar_w / 2), y=center_y)
 
     life = clamp((life / 1000), 0, 1)
-    return Quad(
-        bl=Vec2(screen_center.x, screen_center.y - h / 2),
-        br=Vec2(screen_center.x + w * life, screen_center.y - h / 2),
-        tl=Vec2(screen_center.x, screen_center.y + h / 2),
-        tr=Vec2(screen_center.x + w * life, screen_center.y + h / 2),
-    )
+    if not edge:
+        return Quad(
+            bl=Vec2(screen_center.x, screen_center.y - h / 2),
+            br=Vec2(screen_center.x + w * life, screen_center.y - h / 2),
+            tl=Vec2(screen_center.x, screen_center.y + h / 2),
+            tr=Vec2(screen_center.x + w * life, screen_center.y + h / 2),
+        )
+    else:
+        active_ratio = 0.9625 if LevelConfig.ui_version == SekaiVersion.v3 else 0.915
+
+        travel_distance = w * active_ratio
+
+        shift_amount = travel_distance * (1 - life)
+
+        base_x = screen_center.x
+
+        return Quad(
+            bl=Vec2(base_x - shift_amount, screen_center.y - h / 2),
+            br=Vec2(base_x + w - shift_amount, screen_center.y - h / 2),
+            tl=Vec2(base_x - shift_amount, screen_center.y + h / 2),
+            tr=Vec2(base_x + w - shift_amount, screen_center.y + h / 2),
+        )
 
 
 def layout_score_bar() -> Quad:
