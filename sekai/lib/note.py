@@ -499,6 +499,7 @@ def get_note_body_layer(kind: NoteKind) -> int:
             | NoteKind.CRIT_TAIL_TRACE
             | NoteKind.NORM_TAIL_TRACE_FLICK
             | NoteKind.CRIT_TAIL_TRACE_FLICK
+            | NoteKind.DAMAGE
         ):
             return LAYER_NOTE_SLIM_BODY
         case _:
