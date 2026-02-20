@@ -39,7 +39,7 @@ from sekai.lib.layout import (
 from sekai.lib.options import Options
 from sekai.lib.particle import ActiveParticles
 from sekai.lib.skin import ActiveConnectorSpriteSet, ActiveSkin
-from sekai.lib.timescale import iter_timescale_changes_in_group_after_time_inclusive
+from sekai.lib.timescale import iter_timescale_changes_in_group_from_time
 
 CONNECTOR_TRAIL_SPAWN_PERIOD = 0.1
 CONNECTOR_SLOT_SPAWN_PERIOD = 0.2
@@ -657,8 +657,11 @@ def schedule_connector_sfx(
             assert_never(kind)
     last_start_time = start_time
     hide = False
-    for group in iter_timescale_changes_in_group_after_time_inclusive(timescale_group, start_time):
+    for group in iter_timescale_changes_in_group_from_time(timescale_group, start_time):
         group_time = beat_to_time(group.beat)
+        if group_time <= start_time:
+            hide = group.hide_notes
+            continue
         if group_time >= end_time:
             break
         if hide and not group.hide_notes:

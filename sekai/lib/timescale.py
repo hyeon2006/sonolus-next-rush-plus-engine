@@ -285,7 +285,7 @@ def group_hide_notes(group: int | EntityRef) -> bool:
     return timescale_group_archetype().at(group).hide_notes
 
 
-def iter_timescale_changes_in_group_after_time_inclusive(
+def iter_timescale_changes_in_group_from_time(
     group: int | EntityRef,
     time: float,
 ) -> Iterator[TimescaleChangeLike]:
@@ -295,6 +295,8 @@ def iter_timescale_changes_in_group_after_time_inclusive(
         return
     group_entity = timescale_group_archetype().at(group)
     next_index = group_entity.time_to_last_change_index.get(time)
+    if next_index <= 0:
+        next_index = group_entity.first_ref.index
     while next_index > 0:
         change = timescale_change_archetype().at(next_index)
         change_time = beat_to_time(change.beat)
