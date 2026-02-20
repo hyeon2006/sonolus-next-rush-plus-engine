@@ -318,7 +318,7 @@ def draw_note(kind: NoteKind, lane: float, size: float, progress: float, directi
     travel = approach(progress)
     sprite_set = get_note_sprite_set(kind, direction)
     draw_note_body(sprite_set.body, kind, lane, size, travel, target_time)
-    draw_note_arrow(sprite_set.arrow, lane, size, travel, target_time, direction)
+    draw_note_arrow(sprite_set.arrow, kind, lane, size, travel, target_time, direction)
     draw_note_tick(sprite_set.tick, lane, travel, target_time)
 
 
@@ -537,7 +537,13 @@ def draw_note_tick(sprite: Sprite, lane: float, travel: float, target_time: floa
 
 
 def draw_note_arrow(
-    sprites: ArrowSpriteSet, lane: float, size: float, travel: float, target_time: float, direction: FlickDirection
+    sprites: ArrowSpriteSet,
+    kind: NoteKind,
+    lane: float,
+    size: float,
+    travel: float,
+    target_time: float,
+    direction: FlickDirection,
 ):
     match direction:
         case _ if Options.marker_animation:
@@ -551,7 +557,7 @@ def draw_note_arrow(
             assert_never(direction)
     animation_alpha = (1 - ease_in_cubic(animation_progress)) if Options.marker_animation else 1
     a = get_alpha(target_time) * animation_alpha
-    z = get_z(LAYER_NOTE_ARROW, time=target_time, lane=lane)
+    z = get_z(LAYER_NOTE_ARROW, time=target_time + (1 / 128) * is_critical(kind), lane=lane, etc=direction)
     match sprites.render_type:
         case ArrowRenderType.NORMAL:
             layout = layout_flick_arrow(lane, size, direction, travel, animation_progress)
@@ -1050,4 +1056,25 @@ def is_head(kind: NoteKind) -> bool:
         NoteKind.CRIT_HEAD_TRACE_FLICK,
         NoteKind.NORM_HEAD_RELEASE,
         NoteKind.CRIT_HEAD_RELEASE,
+    }
+
+
+def is_critical(kind: NoteKind) -> bool:
+    return kind in {
+        NoteKind.CRIT_TAP,
+        NoteKind.CRIT_FLICK,
+        NoteKind.CRIT_TRACE,
+        NoteKind.CRIT_TRACE_FLICK,
+        NoteKind.CRIT_RELEASE,
+        NoteKind.CRIT_HEAD_TAP,
+        NoteKind.CRIT_HEAD_FLICK,
+        NoteKind.CRIT_HEAD_TRACE,
+        NoteKind.CRIT_HEAD_TRACE_FLICK,
+        NoteKind.CRIT_HEAD_RELEASE,
+        NoteKind.CRIT_TAIL_TAP,
+        NoteKind.CRIT_TAIL_FLICK,
+        NoteKind.CRIT_TAIL_TRACE,
+        NoteKind.CRIT_TAIL_TRACE_FLICK,
+        NoteKind.CRIT_TAIL_RELEASE,
+        NoteKind.CRIT_TICK,
     }

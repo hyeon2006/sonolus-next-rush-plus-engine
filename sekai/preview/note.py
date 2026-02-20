@@ -21,6 +21,7 @@ from sekai.lib.note import (
     get_note_body_layer,
     get_note_sprite_set,
     map_note_kind,
+    is_critical,
     mirror_flick_direction,
 )
 from sekai.lib.options import Options
@@ -134,7 +135,7 @@ def draw_note(kind: NoteKind, lane: float, size: float, direction: FlickDirectio
     y = time_to_preview_y(target_time, col)
     sprite_set = get_note_sprite_set(kind, direction)
     draw_note_body(sprite_set.body, kind, lane, size, target_time, col, y)
-    draw_note_arrow(sprite_set.arrow, lane, size, target_time, direction, col, y)
+    draw_note_arrow(sprite_set.arrow, kind, lane, size, target_time, direction, col, y)
     draw_note_tick(sprite_set.tick, lane, target_time, col, y)
 
 
@@ -163,9 +164,21 @@ def draw_note_body(
 
 
 def draw_note_arrow(
-    sprites: ArrowSpriteSet, lane: float, size: float, target_time: float, direction: FlickDirection, col: int, y: float
+    sprites: ArrowSpriteSet,
+    kind: NoteKind,
+    lane: float,
+    size: float,
+    target_time: float,
+    direction: FlickDirection,
+    col: int,
+    y: float,
 ):
-    z = get_z(LAYER_NOTE_ARROW, time=get_adjusted_time(target_time, col), lane=lane)
+    z = get_z(
+        LAYER_NOTE_ARROW,
+        time=get_adjusted_time(target_time, col) + (1 / 128) * is_critical(kind),
+        lane=lane,
+        etc=direction,
+    )
     match sprites.render_type:
         case ArrowRenderType.NORMAL:
             layout = layout_preview_flick_arrow(lane, size, direction, col, y)
