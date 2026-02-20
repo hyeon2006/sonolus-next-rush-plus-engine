@@ -175,9 +175,9 @@ def draw_note_arrow(
 ):
     z = get_z(
         LAYER_NOTE_ARROW,
-        time=get_adjusted_time(target_time, col) + (1 / 128) * is_critical(kind),
+        time=get_adjusted_time(target_time, col),
         lane=lane,
-        etc=direction,
+        etc=direction + 6 * (not is_critical(kind)),
     )
     match sprites.render_type:
         case ArrowRenderType.NORMAL:

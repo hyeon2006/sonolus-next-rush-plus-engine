@@ -557,7 +557,7 @@ def draw_note_arrow(
             assert_never(direction)
     animation_alpha = (1 - ease_in_cubic(animation_progress)) if Options.marker_animation else 1
     a = get_alpha(target_time) * animation_alpha
-    z = get_z(LAYER_NOTE_ARROW, time=target_time + (1 / 128) * is_critical(kind), lane=lane, etc=direction)
+    z = get_z(LAYER_NOTE_ARROW, time=target_time, lane=lane, etc=direction + 6 * (not is_critical(kind)))
     match sprites.render_type:
         case ArrowRenderType.NORMAL:
             layout = layout_flick_arrow(lane, size, direction, travel, animation_progress)
