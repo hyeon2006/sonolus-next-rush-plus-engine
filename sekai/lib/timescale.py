@@ -299,10 +299,7 @@ def iter_timescale_changes_in_group_from_time(
         next_index = group_entity.first_ref.index
     while next_index > 0:
         change = timescale_change_archetype().at(next_index)
-        change_time = beat_to_time(change.beat)
         next_index = change.next_ref.index
-        if change_time < time:
-            continue
         yield change
 
 
