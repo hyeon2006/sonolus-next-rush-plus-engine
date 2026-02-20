@@ -20,8 +20,8 @@ from sekai.lib.note import (
     get_attach_params,
     get_note_body_layer,
     get_note_sprite_set,
-    map_note_kind,
     is_critical,
+    map_note_kind,
     mirror_flick_direction,
 )
 from sekai.lib.options import Options

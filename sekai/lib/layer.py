@@ -33,6 +33,6 @@ def get_z(layer: int, time: float = 0.0, lane: float = 0.0, etc: int = 0, *, inv
         quantize_to_step(
             time - quantized_time if invert_time else quantized_time - time, start=-30, stop=30, step=1 / 256
         ),
-        quantize_to_step(abs(lane), start=0, stop=20, step=1 / 32),
+        quantize_to_step(abs(lane) + (1 / 32) * (lane > 0), start=0, stop=20, step=1 / 32),
         quantize_to_step(etc, start=0, stop=8, step=1),
     )
