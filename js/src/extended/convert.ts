@@ -108,6 +108,13 @@ const guideKindMapping: Record<number, number> = {
     7: ConnectorKind.GUIDE_BLACK,
 }
 
+const getNum = (data: Record<string, number | string>, key: string, defaultValue = 0): number => {
+    const val = data[key]
+    if (val === undefined || val === null) return defaultValue
+    const n = Number(val)
+    return isNaN(n) ? defaultValue : n
+}
+
 /** Convert a PJSekaiExtendedLevelData to a Level Data (Next Sekai) */
 export const extendedToLevelData = (data: ExtendedLevelData, offset = 0): LevelData => {
     const allIntermediateEntities: IntermediateEntity[] = []
@@ -126,8 +133,8 @@ export const extendedToLevelData = (data: ExtendedLevelData, offset = 0): LevelD
     for (const entity of data.entities) {
         if (entity.archetype === '#BPM_CHANGE') {
             createIntermediate('#BPM_CHANGE', {
-                '#BEAT': entity.data['#BEAT'] as number,
-                '#BPM': entity.data['#BPM'] as number,
+                '#BEAT': getNum(entity.data, '#BEAT'),
+                '#BPM': getNum(entity.data, '#BPM'),
             })
         }
     }
@@ -135,98 +142,96 @@ export const extendedToLevelData = (data: ExtendedLevelData, offset = 0): LevelD
     const timescaleGroupsByIndex = new Map<number, IntermediateEntity>()
     for (let i = 0; i < data.entities.length; i++) {
         const entity = data.entities[i]
-        if (entity.archetype === 'TimeScaleGroup') {
-            const groupIntermediate = createIntermediate('TimeScaleGroup', {})
-            timescaleGroupsByIndex.set(i, groupIntermediate)
+        if (entity.archetype !== 'TimeScaleGroup') continue
 
-            let rawChangeIdx = entity.data['first'] as number
-            let lastChangeIntermediate: IntermediateEntity | null = null
+        const groupIntermediate = createIntermediate('TimeScaleGroup', {})
+        timescaleGroupsByIndex.set(i, groupIntermediate)
 
-            while (rawChangeIdx !== undefined && rawChangeIdx > 0) {
-                const rawChange = data.entities[rawChangeIdx]
-                const changeIntermediate = createIntermediate('TimeScaleChange', {
-                    '#BEAT': rawChange.data['#BEAT'] as number,
-                    timeScale: rawChange.data['timeScale'] as number,
-                    timeScaleSkip: 0.0,
-                    timeScaleGroup: groupIntermediate,
-                    timeScaleEase: 0,
-                })
+        let rawChangeIdx = getNum(entity.data, 'first', -1)
+        if (rawChangeIdx < 0) continue
 
-                if (lastChangeIntermediate) {
-                    lastChangeIntermediate.data['next'] = changeIntermediate
-                } else {
-                    groupIntermediate.data['first'] = changeIntermediate
-                }
+        let lastChangeIntermediate: IntermediateEntity | null = null
 
-                lastChangeIntermediate = changeIntermediate
+        while (true) {
+            const rawChange = data.entities[rawChangeIdx]
+            if (!rawChange) break
 
-                const nextIdx = rawChange.data['next'] as number
-                if (nextIdx !== undefined && nextIdx > 0) {
-                    rawChangeIdx = nextIdx
-                } else {
-                    break
-                }
+            const changeIntermediate = createIntermediate('TimeScaleChange', {
+                '#BEAT': getNum(rawChange.data, '#BEAT'),
+                timeScale: getNum(rawChange.data, 'timeScale'),
+                timeScaleSkip: 0.0,
+                timeScaleGroup: groupIntermediate,
+                timeScaleEase: 0,
+            })
+
+            if (lastChangeIntermediate) {
+                lastChangeIntermediate.data['next'] = changeIntermediate
+            } else {
+                groupIntermediate.data['first'] = changeIntermediate
             }
+            lastChangeIntermediate = changeIntermediate
+
+            const nextIdx = getNum(rawChange.data, 'next', 0)
+            if (nextIdx <= 0) break
+            rawChangeIdx = nextIdx
         }
     }
 
     const notesByOriginalIndex = new Map<number, IntermediateEntity>()
     for (let i = 0; i < data.entities.length; i++) {
         const entity = data.entities[i]
-        if (noteTypeMapping[entity.archetype]) {
-            const mappedArchetype = noteTypeMapping[entity.archetype]
-            const directionData = (entity.data['direction'] as number) ?? 0
-            const noteIntermediate = createIntermediate(mappedArchetype, {
-                '#BEAT': entity.data['#BEAT'] as number,
-                lane: (entity.data['lane'] as number) ?? 0.0,
-                size: (entity.data['size'] as number) ?? 0.0,
-                direction: flickDirectionMapping[directionData],
-                segmentKind: ConnectorKind.ACTIVE_NORMAL,
-            })
-            notesByOriginalIndex.set(i, noteIntermediate)
-        }
+        const mappedArchetype = noteTypeMapping[entity.archetype]
+        if (!mappedArchetype) continue
+
+        const noteIntermediate = createIntermediate(mappedArchetype, {
+            '#BEAT': getNum(entity.data, '#BEAT'),
+            lane: getNum(entity.data, 'lane', 0),
+            size: getNum(entity.data, 'size', 0),
+            direction: flickDirectionMapping[getNum(entity.data, 'direction', 0)],
+            segmentKind: ConnectorKind.ACTIVE_NORMAL,
+        })
+        notesByOriginalIndex.set(i, noteIntermediate)
     }
 
     const connectorsByOriginalIndex = new Map<number, IntermediateEntity>()
     for (let i = 0; i < data.entities.length; i++) {
         const entity = data.entities[i]
-        if (activeConnectorKindMapping[entity.archetype]) {
-            const connectorKind = activeConnectorKindMapping[entity.archetype]
+        const connectorKind = activeConnectorKindMapping[entity.archetype]
+        if (!connectorKind) continue
 
-            const head = notesByOriginalIndex.get(entity.data['head'] as number)
-            const tail = notesByOriginalIndex.get(entity.data['tail'] as number)
-            const segmentHead = notesByOriginalIndex.get(entity.data['start'] as number)
-            const segmentTail = notesByOriginalIndex.get(entity.data['end'] as number)
+        const head = notesByOriginalIndex.get(getNum(entity.data, 'head'))
+        const tail = notesByOriginalIndex.get(getNum(entity.data, 'tail'))
+        const segmentHead = notesByOriginalIndex.get(getNum(entity.data, 'start'))
+        const segmentTail = notesByOriginalIndex.get(getNum(entity.data, 'end'))
 
-            if (!head || !tail || !segmentHead || !segmentTail) continue
+        if (!head || !tail || !segmentHead || !segmentTail) continue
 
-            const connectorIntermediate = createIntermediate('Connector', {
-                head,
-                tail,
-                segmentHead,
-                segmentTail,
-                activeHead: segmentHead,
-                activeTail: segmentTail,
-            })
+        const connectorIntermediate = createIntermediate('Connector', {
+            head,
+            tail,
+            segmentHead,
+            segmentTail,
+            activeHead: segmentHead,
+            activeTail: segmentTail,
+        })
 
-            head.data['connectorEase'] = easeTypeMapping[(entity.data['ease'] as number) ?? 0]
-            head.data['segmentKind'] = connectorKind
-            tail.data['segmentKind'] = connectorKind
-            segmentHead.data['segmentKind'] = connectorKind
+        head.data['connectorEase'] = easeTypeMapping[getNum(entity.data, 'ease', 0)]
+        head.data['segmentKind'] = connectorKind
+        tail.data['segmentKind'] = connectorKind
+        segmentHead.data['segmentKind'] = connectorKind
 
-            connectorsByOriginalIndex.set(i, connectorIntermediate)
-        }
+        connectorsByOriginalIndex.set(i, connectorIntermediate)
     }
 
     for (const [i, note] of notesByOriginalIndex.entries()) {
         const entity = data.entities[i]
 
-        const timescaleGroupIndex = (entity.data['timeScaleGroup'] as number) ?? -1
+        const timescaleGroupIndex = getNum(entity.data, 'timeScaleGroup', -1)
         if (timescaleGroupIndex >= 0 && timescaleGroupsByIndex.has(timescaleGroupIndex)) {
             note.data['#TIMESCALE_GROUP'] = timescaleGroupsByIndex.get(timescaleGroupIndex)!
         }
 
-        const attachIndex = (entity.data['attach'] as number) ?? -1
+        const attachIndex = getNum(entity.data, 'attach', -1)
         if (attachIndex > 0) {
             const attachConnector = connectorsByOriginalIndex.get(attachIndex)
             if (attachConnector) {
@@ -236,7 +241,7 @@ export const extendedToLevelData = (data: ExtendedLevelData, offset = 0): LevelD
             }
         }
 
-        const slideIndex = (entity.data['slide'] as number) ?? -1
+        const slideIndex = getNum(entity.data, 'slide', -1)
         if (slideIndex > 0) {
             const slideConnector = connectorsByOriginalIndex.get(slideIndex)
             if (slideConnector) {
@@ -247,12 +252,12 @@ export const extendedToLevelData = (data: ExtendedLevelData, offset = 0): LevelD
 
     for (let i = 0; i < data.entities.length; i++) {
         const entity = data.entities[i]
-        if (entity.archetype === 'SimLine') {
-            const left = notesByOriginalIndex.get(entity.data['a'] as number)
-            const right = notesByOriginalIndex.get(entity.data['b'] as number)
-            if (left && right) {
-                createIntermediate('SimLine', { left, right })
-            }
+        if (entity.archetype !== 'SimLine') continue
+
+        const left = notesByOriginalIndex.get(getNum(entity.data, 'a'))
+        const right = notesByOriginalIndex.get(getNum(entity.data, 'b'))
+        if (left && right) {
+            createIntermediate('SimLine', { left, right })
         }
     }
 
@@ -265,11 +270,11 @@ export const extendedToLevelData = (data: ExtendedLevelData, offset = 0): LevelD
         size: number,
         timescaleGroup: IntermediateEntity | undefined,
         pos: 'segmentHead' | 'segmentTail' | 'head' | 'tail',
-        segmentKind: number = -1,
-        segmentAlpha: number = -1,
-        connectorEase: number = -1,
-    ) => {
-        let anchors = anchorsByBeat.get(beat)
+        segmentKind = -1,
+        segmentAlpha = -1,
+        connectorEase = -1,
+    ): IntermediateEntity => {
+        const anchors = anchorsByBeat.get(beat)
         if (anchors) {
             for (const anchor of anchors) {
                 if (anchorPositions.get(anchor)?.has(pos)) continue
@@ -288,15 +293,12 @@ export const extendedToLevelData = (data: ExtendedLevelData, offset = 0): LevelD
                         anchor.data['connectorEase'] === connectorEase ||
                         anchor.data['connectorEase'] === -1)
                 ) {
-                    if (segmentKind !== -1 && anchor.data['segmentKind'] === -1) {
+                    if (segmentKind !== -1 && anchor.data['segmentKind'] === -1)
                         anchor.data['segmentKind'] = segmentKind
-                    }
-                    if (segmentAlpha !== -1 && anchor.data['segmentAlpha'] === -1) {
+                    if (segmentAlpha !== -1 && anchor.data['segmentAlpha'] === -1)
                         anchor.data['segmentAlpha'] = segmentAlpha
-                    }
-                    if (connectorEase !== -1 && anchor.data['connectorEase'] === -1) {
+                    if (connectorEase !== -1 && anchor.data['connectorEase'] === -1)
                         anchor.data['connectorEase'] = connectorEase
-                    }
                     anchorPositions.get(anchor)!.add(pos)
                     return anchor
                 }
@@ -307,117 +309,102 @@ export const extendedToLevelData = (data: ExtendedLevelData, offset = 0): LevelD
             '#BEAT': beat,
             lane,
             size,
-            '#TIMESCALE_GROUP': timescaleGroup!,
+            ...(timescaleGroup !== undefined ? { '#TIMESCALE_GROUP': timescaleGroup } : {}),
             segmentKind,
             segmentAlpha,
             connectorEase,
         })
 
-        if (!anchorsByBeat.has(beat)) {
-            anchorsByBeat.set(beat, [])
-        }
+        if (!anchorsByBeat.has(beat)) anchorsByBeat.set(beat, [])
         anchorsByBeat.get(beat)!.push(anchor)
-
         anchorPositions.set(anchor, new Set([pos]))
         return anchor
     }
 
     for (let i = 0; i < data.entities.length; i++) {
         const entity = data.entities[i]
-        if (entity.archetype === 'Guide') {
-            const startBeat = entity.data['startBeat'] as number
-            const startLane = entity.data['startLane'] as number
-            const startSize = entity.data['startSize'] as number
-            const startTimeScaleGroup = timescaleGroupsByIndex.get(
-                entity.data['startTimeScaleGroup'] as number,
-            )
+        if (entity.archetype !== 'Guide') continue
 
-            const headBeat = entity.data['headBeat'] as number
-            const headLane = entity.data['headLane'] as number
-            const headSize = entity.data['headSize'] as number
-            const headTimeScaleGroup = timescaleGroupsByIndex.get(
-                entity.data['headTimeScaleGroup'] as number,
-            )
+        const startBeat = getNum(entity.data, 'startBeat')
+        const startLane = getNum(entity.data, 'startLane')
+        const startSize = getNum(entity.data, 'startSize')
+        const startTimeScaleGroup = timescaleGroupsByIndex.get(
+            getNum(entity.data, 'startTimeScaleGroup'),
+        )
 
-            const tailBeat = entity.data['tailBeat'] as number
-            const tailLane = entity.data['tailLane'] as number
-            const tailSize = entity.data['tailSize'] as number
-            const tailTimeScaleGroup = timescaleGroupsByIndex.get(
-                entity.data['tailTimeScaleGroup'] as number,
-            )
+        const headBeat = getNum(entity.data, 'headBeat')
+        const headLane = getNum(entity.data, 'headLane')
+        const headSize = getNum(entity.data, 'headSize')
+        const headTimeScaleGroup = timescaleGroupsByIndex.get(
+            getNum(entity.data, 'headTimeScaleGroup'),
+        )
 
-            const endBeat = entity.data['endBeat'] as number
-            const endLane = entity.data['endLane'] as number
-            const endSize = entity.data['endSize'] as number
-            const endTimeScaleGroup = timescaleGroupsByIndex.get(
-                entity.data['endTimeScaleGroup'] as number,
-            )
+        const tailBeat = getNum(entity.data, 'tailBeat')
+        const tailLane = getNum(entity.data, 'tailLane')
+        const tailSize = getNum(entity.data, 'tailSize')
+        const tailTimeScaleGroup = timescaleGroupsByIndex.get(
+            getNum(entity.data, 'tailTimeScaleGroup'),
+        )
 
-            const ease = easeTypeMapping[(entity.data['ease'] as number) ?? 0]
-            const fade = (entity.data['fade'] as number) ?? 1
-            const [startAlpha, endAlpha] = fadeAlphaMapping[fade]
-            const kind = guideKindMapping[(entity.data['color'] as number) ?? 0]
+        const endBeat = getNum(entity.data, 'endBeat')
+        const endLane = getNum(entity.data, 'endLane')
+        const endSize = getNum(entity.data, 'endSize')
+        const endTimeScaleGroup = timescaleGroupsByIndex.get(
+            getNum(entity.data, 'endTimeScaleGroup'),
+        )
 
-            const start = getAnchor(
-                startBeat,
-                startLane,
-                startSize,
-                startTimeScaleGroup,
-                'segmentHead',
-                kind,
-                startAlpha,
-            )
-            const end = getAnchor(
-                endBeat,
-                endLane,
-                endSize,
-                endTimeScaleGroup,
-                'segmentTail',
-                kind,
-                endAlpha,
-            )
-            const head = getAnchor(
-                headBeat,
-                headLane,
-                headSize,
-                headTimeScaleGroup,
-                'head',
-                kind,
-                -1,
-                ease,
-            )
-            const tail = getAnchor(tailBeat, tailLane, tailSize, tailTimeScaleGroup, 'tail', kind)
+        const ease = easeTypeMapping[getNum(entity.data, 'ease', 0)]
+        const [startAlpha, endAlpha] = fadeAlphaMapping[getNum(entity.data, 'fade', 1)]
+        const kind = guideKindMapping[getNum(entity.data, 'color', 0)]
 
-            createIntermediate('Connector', {
-                head,
-                tail,
-                segmentHead: start,
-                segmentTail: end,
-            })
-        }
+        const start = getAnchor(
+            startBeat,
+            startLane,
+            startSize,
+            startTimeScaleGroup,
+            'segmentHead',
+            kind,
+            startAlpha,
+        )
+        const end = getAnchor(
+            endBeat,
+            endLane,
+            endSize,
+            endTimeScaleGroup,
+            'segmentTail',
+            kind,
+            endAlpha,
+        )
+        const head = getAnchor(
+            headBeat,
+            headLane,
+            headSize,
+            headTimeScaleGroup,
+            'head',
+            kind,
+            -1,
+            ease,
+        )
+        const tail = getAnchor(tailBeat, tailLane, tailSize, tailTimeScaleGroup, 'tail', kind)
+
+        createIntermediate('Connector', { head, tail, segmentHead: start, segmentTail: end })
     }
 
     for (const anchorList of anchorsByBeat.values()) {
         for (const anchor of anchorList) {
-            if (anchor.data['segmentKind'] === -1) {
+            if (anchor.data['segmentKind'] === -1)
                 anchor.data['segmentKind'] = ConnectorKind.GUIDE_NEUTRAL
-            }
-            if (anchor.data['segmentAlpha'] === -1) {
-                anchor.data['segmentAlpha'] = 1.0
-            }
-            if (anchor.data['connectorEase'] === -1) {
-                anchor.data['connectorEase'] = EaseType.LINEAR
-            }
+            if (anchor.data['segmentAlpha'] === -1) anchor.data['segmentAlpha'] = 1.0
+            if (anchor.data['connectorEase'] === -1) anchor.data['connectorEase'] = EaseType.LINEAR
         }
     }
 
     for (const entity of allIntermediateEntities) {
-        if (entity.archetype === 'Connector') {
-            const head = entity.data['head'] as IntermediateEntity
-            const tail = entity.data['tail'] as IntermediateEntity
-            if (head && tail) {
-                head.data['next'] = tail
-            }
+        if (entity.archetype !== 'Connector') continue
+        const head = entity.data['head'] as IntermediateEntity
+        const tail = entity.data['tail'] as IntermediateEntity
+        if (head && tail) {
+            head.data['next'] = tail
         }
     }
 
@@ -437,7 +424,7 @@ export const extendedToLevelData = (data: ExtendedLevelData, offset = 0): LevelD
 
     const getRef = (intermediateEntity: IntermediateEntity): string => {
         let ref = intermediateToRef.get(intermediateEntity)
-        if (ref) return ref
+        if (ref !== undefined) return ref
         ref = (entityRefCounter++).toString(16)
         intermediateToRef.set(intermediateEntity, ref)
         return ref
@@ -453,6 +440,11 @@ export const extendedToLevelData = (data: ExtendedLevelData, offset = 0): LevelD
         for (const [dataName, dataValue] of Object.entries(intermediateEntity.data)) {
             if (typeof dataValue === 'number') {
                 entity.data.push({ name: dataName, value: dataValue })
+            } else if (typeof dataValue === 'string') {
+                const asNum = Number(dataValue)
+                if (!isNaN(asNum)) {
+                    entity.data.push({ name: dataName, value: asNum })
+                }
             } else if (dataValue !== undefined && dataValue !== null) {
                 entity.data.push({ name: dataName, ref: getRef(dataValue as IntermediateEntity) })
             }
