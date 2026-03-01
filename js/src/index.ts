@@ -9,9 +9,21 @@ import { isUSC } from './usc/analyze.js'
 import { isLevelData } from './LevelData/analyze.js'
 import { isPJSK } from './pjsk/analyze.js'
 import { pjskToUSC } from './pjsk/convert.js'
-import { extendedToLevelData } from './extended/convert.js'
+import {
+    extendedToLevelData,
+    type ExtendedEntityData,
+    type ExtendedLevelData,
+} from './extended/convert.js'
 
-export { susToUSC, mmwsToUSC, uscToLevelData, ucmmwsToLevelData, extendedToLevelData }
+export {
+    susToUSC,
+    mmwsToUSC,
+    uscToLevelData,
+    ucmmwsToLevelData,
+    extendedToLevelData,
+    type ExtendedEntityData,
+    type ExtendedLevelData,
+}
 export * from './usc/index.js'
 
 export const convertToLevelData = (
