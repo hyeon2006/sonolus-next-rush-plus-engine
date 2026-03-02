@@ -354,6 +354,7 @@ class SlideManager(PlayArchetype):
                     info.visual_lane,
                     info.visual_size,
                     self.active_head.target_time,
+                    not_sekai_p=True,
                 )
             case _:
                 pass
