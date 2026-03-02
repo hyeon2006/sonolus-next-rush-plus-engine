@@ -668,7 +668,7 @@ def layout_note_body_by_edges(l: float, r: float, h: float, travel: float):
         reference_h = 1 / reference_d - 1 / reference_d_offset
         h *= current_h / reference_h
 
-    p = 0.5 if l >= -6 or r <= 6 else 1
+    p = 0.5 if l >= -6 and r <= 6 else 1
     return transform_quad(
         Quad(
             bl=Vec2(l * (1 + h * p) * travel, (1 + h) * travel),
