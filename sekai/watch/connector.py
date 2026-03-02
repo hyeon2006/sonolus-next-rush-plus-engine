@@ -394,6 +394,7 @@ class WatchSlideManager(WatchArchetype):
                     info.visual_size,
                     self.active_head.target_time,
                     1.0 - info.visual_y_offset,
+                    not_sekai_p=True,
                 )
             case _:
                 pass
