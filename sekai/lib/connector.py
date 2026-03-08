@@ -437,6 +437,31 @@ def draw_connector(
     if visual_state == ConnectorVisualState.ACTIVE and active_sprite.is_available and Options.connector_animation:
         anim_factor1, anim_factor2 = get_cross_fate_opacities(1.0, time() - segment_head_target_time, 0.5)
 
+    # cache
+    last_travel = start_travel
+    last_lane = start_lane
+    last_size = start_size
+    last_alpha = start_alpha
+    last_target_time = lerp(head_target_time, tail_target_time, start_frac)
+
+    inv_segment_count = 1.0 / segment_count
+
+    diff_frac = end_frac - start_frac
+    diff_ease_frac = end_ease_frac - start_ease_frac
+    diff_progress = end_progress - start_progress
+    diff_lane = tail_lane - head_lane
+    diff_size = tail_size - head_size
+    diff_alpha = tail_alpha - head_alpha
+    diff_target_time = tail_target_time - head_target_time
+
+    ease_diff = eased_tail_ease_frac - eased_head_ease_frac
+    inv_ease_diff = 1.0 / ease_diff if ease_diff != 0.0 else 0.0
+
+    alpha_option_half = get_connector_alpha_option(kind) * 0.5
+    is_active_draw = visual_state == ConnectorVisualState.ACTIVE and active_sprite.is_available
+    has_anim = Options.connector_animation
+    inactive_alpha_mult = 0.5 if visual_state == ConnectorVisualState.INACTIVE else 1.0
+
     last_travel = start_travel
     last_lane = start_lane
     last_size = start_size
@@ -444,25 +469,38 @@ def draw_connector(
     last_target_time = lerp(head_target_time, tail_target_time, start_frac)
 
     for i in range(1, segment_count + 1):
-        segment_frac = i / segment_count
-        next_frac = lerp(start_frac, end_frac, segment_frac)
-        next_ease_frac = lerp(start_ease_frac, end_ease_frac, segment_frac)
-        next_interp_frac = unlerp_clamped(eased_head_ease_frac, eased_tail_ease_frac, ease(ease_type, next_ease_frac))
-        next_progress = lerp(start_progress, end_progress, segment_frac)
+        segment_frac = i * inv_segment_count
+
+        next_frac = start_frac + diff_frac * segment_frac
+        next_ease_frac = start_ease_frac + diff_ease_frac * segment_frac
+
+        eased_next = ease(ease_type, next_ease_frac)
+        if inv_ease_diff != 0.0:
+            next_interp_frac = clamp((eased_next - eased_head_ease_frac) * inv_ease_diff, 0.0, 1.0)
+        else:
+            next_interp_frac = 0.0
+
+        next_progress = start_progress + diff_progress * segment_frac
         next_travel = approach(next_progress)
-        next_lane = lerp(head_lane, tail_lane, next_interp_frac)
-        next_size = max(1e-3, lerp(head_size, tail_size, next_interp_frac))
-        next_alpha = lerp(head_alpha, tail_alpha, next_frac)
-        next_target_time = lerp(head_target_time, tail_target_time, next_frac)
+        next_lane = head_lane + diff_lane * next_interp_frac
+        next_size = max(1e-3, head_size + diff_size * next_interp_frac)
+        next_alpha = head_alpha + diff_alpha * next_frac
+        next_target_time = head_target_time + diff_target_time * next_frac
 
         base_a = clamp(
-            get_alpha((last_target_time + next_target_time) / 2)
-            * (last_alpha + next_alpha)
-            / 2
-            * get_connector_alpha_option(kind),
+            get_alpha((last_target_time + next_target_time) * 0.5) * (last_alpha + next_alpha) * alpha_option_half,
             0,
             1,
         )
+
+        if base_a <= 0.005:
+            last_travel = next_travel
+            last_travel = next_travel
+            last_lane = next_lane
+            last_size = next_size
+            last_alpha = next_alpha
+            last_target_time = next_target_time
+            continue
 
         layout = layout_slide_connector_segment(
             start_lane=last_lane,
@@ -473,16 +511,14 @@ def draw_connector(
             end_travel=next_travel,
         )
 
-        if visual_state == ConnectorVisualState.ACTIVE and active_sprite.is_available:
-            if Options.connector_animation:
+        if is_active_draw:
+            if has_anim:
                 normal_sprite.draw(layout, z=z_normal, a=base_a * anim_factor1)
                 active_sprite.draw(layout, z=z_active, a=base_a * anim_factor2)
             else:
                 active_sprite.draw(layout, z=z_active, a=base_a)
         else:
-            normal_sprite.draw(
-                layout, z=z_normal, a=base_a * (1 if visual_state != ConnectorVisualState.INACTIVE else 0.5)
-            )
+            normal_sprite.draw(layout, z=z_normal, a=base_a * inactive_alpha_mult)
 
         last_travel = next_travel
         last_lane = next_lane
