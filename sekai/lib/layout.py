@@ -705,6 +705,7 @@ def layout_regular_note_body(
         h=NOTE_H,
         edge_w=NOTE_EDGE_W,
         travel=travel,
+        not_sekai_p=not_sekai_p,
     )
 
 
