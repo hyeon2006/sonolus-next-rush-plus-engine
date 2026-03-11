@@ -700,6 +700,8 @@ def draw_connector_slot_glow_effect(
     size: float,
     y_offset: float = 0.0,
 ):
+    if not Options.slot_effect_enabled:
+        return
     sprite = +Sprite
     match kind:
         case ConnectorKind.ACTIVE_NORMAL | ConnectorKind.ACTIVE_FAKE_NORMAL:
