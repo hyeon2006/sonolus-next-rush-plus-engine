@@ -648,6 +648,8 @@ def draw_connector_slot_glow_effect(
     lane: float,
     size: float,
 ):
+    if not Options.slot_effect_enabled:
+        return
     sprite = +Sprite
     match kind:
         case ConnectorKind.ACTIVE_NORMAL | ConnectorKind.ACTIVE_FAKE_NORMAL:
