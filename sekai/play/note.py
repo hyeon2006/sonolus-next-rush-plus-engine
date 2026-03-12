@@ -102,6 +102,7 @@ class BaseNote(PlayArchetype):
     # For trace early touches
     best_touch_time: float = entity_memory()
     best_touch_matches_direction: bool = entity_memory()
+    best_touch_id: int = entity_memory()
 
     should_play_hit_effects: bool = entity_memory()
 
@@ -149,6 +150,7 @@ class BaseNote(PlayArchetype):
         self.result.bucket = get_note_bucket(self.kind)
 
         self.best_touch_time = DEFAULT_BEST_TOUCH_TIME
+        self.best_touch_id = -1
 
         if self.is_attached:
             attach_head = self.attach_head_ref.get()
@@ -412,8 +414,14 @@ class BaseNote(PlayArchetype):
             if self.best_touch_matches_direction:
                 return True
 
-            hitbox = self.get_full_hitbox()
-            has_ongoing_touch = any(not t.ended and hitbox.contains_point(t.position) for t in touches())
+            if self.best_touch_id != -1:
+                last_resolved_time = NoteMemory.flick_resolved_times[self.best_touch_id % 32]
+                if last_resolved_time > self.target_time:
+                    return True
+                has_ongoing_touch = any(t.id == self.best_touch_id and not t.ended for t in touches())
+            else:
+                has_ongoing_touch = False
+
             return not has_ongoing_touch
 
         # Give until the end of the perfect window to give a right-way touch if we've only had wrong-way touches.
@@ -554,6 +562,7 @@ class BaseNote(PlayArchetype):
         hitbox = self.get_full_hitbox()
         has_touch = False
         has_correct_direction_touch = False
+        current_touch_id = -1
         for touch in touches():
             if not self.check_touch_is_eligible_for_trace(hitbox, touch):
                 continue
@@ -561,8 +570,10 @@ class BaseNote(PlayArchetype):
             if not self.check_touch_is_eligible_for_trace_flick(hitbox, touch):
                 continue
             has_touch = True
+            current_touch_id = touch.id
             if self.check_direction_matches(touch.angle):
                 has_correct_direction_touch = True
+                current_touch_id = touch.id
         if not has_touch:
             return
 
@@ -572,6 +583,7 @@ class BaseNote(PlayArchetype):
             if self.is_slide_end_flick and is_just_reached:
                 pass
             else:
+                NoteMemory.flick_resolved_times[current_touch_id % 32] = time()
                 if is_just_reached:
                     self.complete()
                 else:
@@ -590,6 +602,7 @@ class BaseNote(PlayArchetype):
         if incoming_abs_error < current_abs_error:
             self.best_touch_time = offset_adjusted_time()
             self.best_touch_matches_direction = has_correct_direction_touch
+            self.best_touch_id = current_touch_id
 
     def handle_tick_input(self):
         hitbox = self.get_full_hitbox()
@@ -831,6 +844,7 @@ class BaseNote(PlayArchetype):
 class NoteMemory:
     active_tap_input_notes: VarArray[EntityRef[BaseNote], Dim[256]]
     active_release_input_notes: VarArray[EntityRef[BaseNote], Dim[256]]
+    flick_resolved_times: VarArray[float, Dim[32]]
 
 
 NormalTapNote = BaseNote.derive(archetype_names.NORMAL_TAP_NOTE, is_scored=True, key=NoteKind.NORM_TAP)
