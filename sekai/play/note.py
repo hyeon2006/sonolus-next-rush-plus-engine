@@ -15,7 +15,7 @@ from sonolus.script.archetype import (
     shared_memory,
 )
 from sonolus.script.array import Dim
-from sonolus.script.bucket import Judgment, Bucket
+from sonolus.script.bucket import Bucket, Judgment
 from sonolus.script.containers import VarArray
 from sonolus.script.globals import level_memory
 from sonolus.script.interval import Interval, remap_clamped, unlerp_clamped
@@ -276,8 +276,6 @@ class BaseNote(PlayArchetype):
 
         # Give until the end of the perfect window to give a right-way touch if we've only had wrong-way touches.
         # After that, wrong-way has no impact anyway.
-        # If we get a wrong-way touch after the target time, we will still trigger immediately from the touch
-        # callback though.
         if (
             not self.best_touch_matches_direction
             and offset_adjusted_time() < self.target_time + self.judgment_window.perfect.end
@@ -395,18 +393,23 @@ class BaseNote(PlayArchetype):
         if not has_touch:
             return
         if offset_adjusted_time() >= self.target_time:
-            if offset_adjusted_time() - delta_time() <= self.target_time <= offset_adjusted_time():
-                if has_correct_direction_touch:
+            if has_correct_direction_touch:
+                if offset_adjusted_time() - delta_time() <= self.target_time <= offset_adjusted_time():
                     self.complete()
                 else:
-                    self.complete_wrong_way()
-            elif has_correct_direction_touch:
-                self.judge(offset_adjusted_time())
-            else:
+                    self.judge(offset_adjusted_time())
+                return
+            elif offset_adjusted_time() > self.target_time + self.judgment_window.perfect.end:
                 self.judge_wrong_way(offset_adjusted_time())
-        elif (
-            has_correct_direction_touch or self.best_touch_time < self.judgment_window.perfect.start + self.target_time
-        ):
+                return
+        # Either pre-target, or post-target within perfect window with wrong direction
+        current_abs_error = abs(self.best_touch_time - self.target_time)
+        if not self.best_touch_matches_direction:
+            current_abs_error = max(current_abs_error, self.judgment_window.perfect.end)
+        incoming_abs_error = abs(offset_adjusted_time() - self.target_time)
+        if not has_correct_direction_touch:
+            incoming_abs_error = max(incoming_abs_error, self.judgment_window.perfect.end)
+        if incoming_abs_error < current_abs_error:
             self.best_touch_time = offset_adjusted_time()
             self.best_touch_matches_direction = has_correct_direction_touch
 
@@ -547,15 +550,6 @@ class BaseNote(PlayArchetype):
     def complete(self):
         self.result.judgment = Judgment.PERFECT
         self.result.accuracy = 0
-        if self.result.bucket.id != -1:
-            self.result.bucket_value = 0
-        self.despawn = True
-        self.should_play_hit_effects = True
-        self.post_judge()
-
-    def complete_wrong_way(self):
-        self.result.judgment = Judgment.GREAT
-        self.result.accuracy = self.judgment_window.good.end
         if self.result.bucket.id != -1:
             self.result.bucket_value = 0
         self.despawn = True
