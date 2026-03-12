@@ -404,16 +404,17 @@ class BaseNote(PlayArchetype):
             return False
 
         if self.is_trace_flick or self.is_slide_end_flick:
-            if not self.best_touch_matches_direction:
-                hitbox = self.get_full_hitbox()
-                # Checking if something is happening inside the hitbox.
-                has_ongoing_touch = False
-                for touch in touches():
-                    if not touch.ended and hitbox.contains_point(touch.position):
-                        has_ongoing_touch = True
-                        break
-                return not has_ongoing_touch
-            return True
+            is_just_reached = offset_adjusted_time() - delta_time() <= self.target_time <= offset_adjusted_time()
+
+            if self.is_slide_end_flick and is_just_reached:
+                return False
+
+            if self.best_touch_matches_direction:
+                return True
+
+            hitbox = self.get_full_hitbox()
+            has_ongoing_touch = any(not t.ended and hitbox.contains_point(t.position) for t in touches())
+            return not has_ongoing_touch
 
         # Give until the end of the perfect window to give a right-way touch if we've only had wrong-way touches.
         # After that, wrong-way has no impact anyway.
