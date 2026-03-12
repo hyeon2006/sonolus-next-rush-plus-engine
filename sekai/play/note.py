@@ -105,6 +105,8 @@ class BaseNote(PlayArchetype):
 
     should_play_hit_effects: bool = entity_memory()
 
+    pending_post_judge: bool = entity_memory()
+
     # Check wrong way
     wrong_way: bool = entity_memory()
     wrong_way_check: bool = exported()
@@ -217,6 +219,10 @@ class BaseNote(PlayArchetype):
 
     def update_sequential(self):
         if self.despawn:
+            return
+        if self.pending_post_judge:
+            self.pending_post_judge = False
+            self.post_judge()
             return
         if self.should_do_delayed_trigger():
             if self.best_touch_matches_direction:
@@ -369,6 +375,24 @@ class BaseNote(PlayArchetype):
             )
         )
 
+    @property
+    def is_slide_end_flick(self) -> bool:
+        return self.kind in (
+            NoteKind.NORM_TAIL_FLICK,
+            NoteKind.CRIT_TAIL_FLICK,
+            NoteKind.NORM_TAIL_TRACE_FLICK,
+            NoteKind.CRIT_TAIL_TRACE_FLICK,
+        )
+
+    @property
+    def is_trace_flick(self) -> bool:
+        return self.kind in (
+            NoteKind.NORM_TRACE_FLICK,
+            NoteKind.CRIT_TRACE_FLICK,
+            NoteKind.NORM_HEAD_TRACE_FLICK,
+            NoteKind.CRIT_HEAD_TRACE_FLICK,
+        )
+
     def should_do_delayed_trigger(self) -> bool:
         # Don't trigger if the previous frame was before the target time.
         # This gives the regular touch handling a chance to trigger on time the first time we pass the target time.
@@ -378,6 +402,18 @@ class BaseNote(PlayArchetype):
         # Don't trigger if we never had a touch recorded.
         if self.best_touch_time == DEFAULT_BEST_TOUCH_TIME:
             return False
+
+        if self.is_trace_flick or self.is_slide_end_flick:
+            if not self.best_touch_matches_direction:
+                hitbox = self.get_full_hitbox()
+                # Checking if something is happening inside the hitbox.
+                has_ongoing_touch = False
+                for touch in touches():
+                    if not touch.ended and hitbox.contains_point(touch.position):
+                        has_ongoing_touch = True
+                        break
+                return not has_ongoing_touch
+            return True
 
         # Give until the end of the perfect window to give a right-way touch if we've only had wrong-way touches.
         # After that, wrong-way has no impact anyway.
@@ -528,16 +564,19 @@ class BaseNote(PlayArchetype):
                 has_correct_direction_touch = True
         if not has_touch:
             return
-        if offset_adjusted_time() >= self.target_time:
-            if has_correct_direction_touch:
-                if offset_adjusted_time() - delta_time() <= self.target_time <= offset_adjusted_time():
+
+        is_just_reached = offset_adjusted_time() - delta_time() <= self.target_time <= offset_adjusted_time()
+
+        if offset_adjusted_time() >= self.target_time and has_correct_direction_touch:
+            if self.is_slide_end_flick and is_just_reached:
+                pass
+            else:
+                if is_just_reached:
                     self.complete()
                 else:
                     self.judge(offset_adjusted_time())
                 return
-            elif offset_adjusted_time() > self.target_time + self.judgment_window.perfect.end:
-                self.judge_wrong_way(offset_adjusted_time())
-                return
+
         # Either pre-target, or post-target within perfect window with wrong direction
         current_abs_error = abs(self.best_touch_time - self.target_time)
         if not self.best_touch_matches_direction:
@@ -570,7 +609,30 @@ class BaseNote(PlayArchetype):
         else:
             self.complete_damage()
 
+    def judge_slide_end_good_late(self):
+        self.result.judgment = (
+            Judgment.GOOD if not SkillActive.judgment or Judgment.GOOD == Judgment.MISS else Judgment.PERFECT
+        )
+        self.result.accuracy = self.judgment_window.good.end
+        if self.result.bucket.id != -1:
+            self.result.bucket_value = self.result.accuracy * WINDOW_SCALE
+        self.despawn = True
+        self.should_play_hit_effects = True
+        self.wrong_way = False
+        self.pending_post_judge = True
+
     def handle_late_miss(self):
+        if (
+            (self.is_slide_end_flick or self.is_trace_flick)
+            and self.best_touch_time != DEFAULT_BEST_TOUCH_TIME
+            and not self.best_touch_matches_direction
+        ):
+            if self.is_slide_end_flick:
+                self.judge_slide_end_good_late()
+            else:
+                self.fail_late()
+            return
+
         kind = self.kind
         match kind:
             case NoteKind.NORM_TICK | NoteKind.CRIT_TICK | NoteKind.HIDE_TICK:
