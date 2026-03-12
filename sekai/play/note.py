@@ -267,6 +267,17 @@ class BaseNote(PlayArchetype):
             self.pending_post_judge = False
             self.post_judge()
             return
+        is_just_reached = offset_adjusted_time() - delta_time() <= self.target_time <= offset_adjusted_time()
+        if is_just_reached and self.best_touch_matches_direction:
+            if self.is_trace_flick:
+                self.complete()
+                return
+            elif self.is_slide_end_flick:
+                has_ongoing_touch = any(t.id == self.best_touch_id and not t.ended for t in touches())
+                if not has_ongoing_touch:
+                    self.complete()
+                    return
+
         if self.is_scored and time() in self.input_interval:
             self.hitbox @= compute_hitbox(
                 self.lane,
@@ -468,6 +479,11 @@ class BaseNote(PlayArchetype):
             return False
 
         if self.is_trace_flick or self.is_slide_end_flick:
+            if self.is_slide_end_flick and self.best_touch_id != -1:
+                has_ongoing_touch = any(t.id == self.best_touch_id and not t.ended for t in touches())
+                if has_ongoing_touch:
+                    return False
+
             if self.best_touch_matches_direction:
                 return True
 
@@ -630,11 +646,13 @@ class BaseNote(PlayArchetype):
                     current_touch_id = touch.id
             elif not has_correct_direction_touch:
                 current_touch_id = touch.id
+                if not has_correct_direction_touch:
+                    has_correct_direction_touch = True
+                    current_touch_id = touch.id
+            elif not has_correct_direction_touch:
+                current_touch_id = touch.id
         if not has_touch:
             return
-
-        if self.is_slide_end_flick and offset_adjusted_time() < self.target_time:
-            has_correct_direction_touch = False
 
         is_just_reached = offset_adjusted_time() - delta_time() <= self.target_time <= offset_adjusted_time()
 
@@ -702,7 +720,7 @@ class BaseNote(PlayArchetype):
         if (
             (self.is_slide_end_flick or self.is_trace_flick)
             and self.best_touch_time != DEFAULT_BEST_TOUCH_TIME
-            and not self.best_touch_matches_direction
+            and (not self.best_touch_matches_direction or self.is_slide_end_flick)
         ):
             if self.is_slide_end_flick:
                 self.judge_slide_end_good_late()
