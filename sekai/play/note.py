@@ -578,6 +578,8 @@ class BaseNote(PlayArchetype):
                     self.judge(offset_adjusted_time())
                 return
 
+        if self.is_slide_end_flick and offset_adjusted_time() < self.target_time:
+            return
         # Either pre-target, or post-target within perfect window with wrong direction
         current_abs_error = abs(self.best_touch_time - self.target_time)
         if not self.best_touch_matches_direction:
