@@ -704,21 +704,27 @@ class BaseNote(PlayArchetype):
                 assert_never(kind)
 
     def check_touch_touch_is_eligible_for_flick(self, hitbox: Rect, touch: Touch) -> bool:
+        in_hitbox = hitbox.contains_point(touch.position) or hitbox.contains_point(touch.prev_position)
+        is_captured = self.captured_touch_id != 0 and touch.id == self.captured_touch_id
         return (
             touch.start_time >= self.captured_touch_time
             and touch.speed >= Layout.flick_speed_threshold
-            and (hitbox.contains_point(touch.position) or hitbox.contains_point(touch.prev_position))
+            and (in_hitbox or is_captured)
         )
 
     def check_touch_is_eligible_for_trace(self, hitbox: Rect, touch: Touch) -> bool:
         # Note that this does not check the time, since time may not be updated if the touch is stationary.
-        return hitbox.contains_point(touch.position)
+        in_hitbox = hitbox.contains_point(touch.position)
+        is_captured = self.best_touch_id != -1 and touch.id == self.best_touch_id
+        return in_hitbox or is_captured
 
     def check_touch_is_eligible_for_trace_flick(self, hitbox: Rect, touch: Touch) -> bool:
+        in_hitbox = hitbox.contains_point(touch.position) or hitbox.contains_point(touch.prev_position)
+        is_captured = self.best_touch_id != -1 and touch.id == self.best_touch_id
         return (
             touch.time >= self.unadjusted_input_interval.start
             and touch.speed >= Layout.flick_speed_threshold
-            and (hitbox.contains_point(touch.position) or hitbox.contains_point(touch.prev_position))
+            and (in_hitbox or is_captured)
         )
 
     def check_direction_matches(self, angle: float) -> bool:
