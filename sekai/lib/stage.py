@@ -403,7 +403,7 @@ def draw_stage_and_accessories(
     note_score,
     note_time,
     percentage,
-    life=1000,
+    life=1000.0,
     last_time=1e8,
 ):
     if not LevelConfig.skip_default_stage:

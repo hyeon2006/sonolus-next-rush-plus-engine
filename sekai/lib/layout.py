@@ -602,7 +602,7 @@ class ScoreGaugeType(IntEnum):
     MASK = 1
 
 
-def layout_score_gauge(gauge=0, score_type: ScoreGaugeType = ScoreGaugeType.NORMAL) -> Quad:
+def layout_score_gauge(gauge=0.0, score_type: ScoreGaugeType = ScoreGaugeType.NORMAL) -> Quad:
     ui = runtime_ui()
 
     scale_ratio = min(1, aspect_ratio() / (16 / 9))
