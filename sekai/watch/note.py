@@ -393,6 +393,7 @@ class WatchBaseNote(WatchArchetype):
     @property
     def progress(self) -> float:
         if self.is_attached:
+            current_time = time()
             attach_head = self.attach_head_ref.get()
             attach_tail = self.attach_tail_ref.get()
             head_progress = (
@@ -401,7 +402,7 @@ class WatchBaseNote(WatchArchetype):
                     group_scaled_time(attach_head.timescale_group),
                     group_force_note_speed(attach_head.timescale_group),
                 )
-                if time() < attach_head.target_time
+                if current_time < attach_head.target_time
                 else 1.0
             )
             tail_progress = progress_to(
@@ -411,8 +412,8 @@ class WatchBaseNote(WatchArchetype):
             )
             head_frac = (
                 0.0
-                if time() < attach_head.target_time
-                else unlerp_clamped(attach_head.target_time, attach_tail.target_time, time())
+                if current_time < attach_head.target_time
+                else unlerp_clamped(attach_head.target_time, attach_tail.target_time, current_time)
             )
             tail_frac = 1.0
             frac = self.attach_frac
