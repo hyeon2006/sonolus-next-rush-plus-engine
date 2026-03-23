@@ -647,14 +647,14 @@ class BaseNote(PlayArchetype):
             return
 
         hitbox = self.get_full_hitbox()
-        for empty_touch in touches():
-            if hitbox.contains_point(empty_touch.position) and empty_touch.started:
-                input_manager.disallow_empty(empty_touch)
-
-        if self.captured_touch_id == 0:
-            return
-        touch = next(tap for tap in touches() if tap.id == self.captured_touch_id)
-        self.judge(touch.start_time)
+        captured_touch_start = -1.0
+        for touch in touches():
+            if hitbox.contains_point(touch.position) and touch.started:
+                input_manager.disallow_empty(touch)
+            if self.captured_touch_id != 0 and touch.id == self.captured_touch_id:
+                captured_touch_start = touch.start_time
+        if captured_touch_start != -1.0:
+            self.judge(captured_touch_start)
 
     def handle_release_input(self):
         if time() > self.input_interval.end:
@@ -673,19 +673,21 @@ class BaseNote(PlayArchetype):
         # Another touch is allowed to flick the note as long as it started after the start of the input interval,
         # so we don't care which touch matched the tap id, just that the tap id is set.
 
+        wrong_way_touch_time = -1.0
+
         for touch in touches():
             if self.check_touch_is_eligible_for_trace(touch) and touch.started:
                 input_manager.disallow_empty(touch)
             if not self.check_touch_is_eligible_for_flick(touch):
                 continue
             if not self.check_direction_matches(touch.angle):
+                if wrong_way_touch_time < 0:
+                    wrong_way_touch_time = touch.time
                 continue
             self.judge(touch.time)
             return
-        for touch in touches():
-            if not self.check_touch_is_eligible_for_flick(touch):
-                continue
-            self.judge_wrong_way(touch.time)
+        if wrong_way_touch_time >= 0:
+            self.judge_wrong_way(wrong_way_touch_time)
             return
 
     def handle_trace_input(self):
@@ -854,23 +856,22 @@ class BaseNote(PlayArchetype):
             case _:
                 assert_never(kind)
 
-    def check_touch_is_eligible_for_flick(self, touch: Touch) -> bool:
-        return (
-            touch.start_time >= self.captured_touch_time
-            and touch.speed >= Layout.flick_speed_threshold
-            and (touch.position.x in self.hitbox.bounds or touch.prev_position.x in self.hitbox.bounds)
-        )
+    def check_touch_touch_is_eligible_for_flick(self, touch: Touch) -> bool:
+        if touch.start_time < self.captured_touch_time or touch.speed < Layout.flick_speed_threshold:
+            return False
+        is_captured = self.captured_touch_id != 0 and touch.id == self.captured_touch_id
+        return is_captured or touch.position.x in self.hitbox.bounds or touch.prev_position.x in self.hitbox.bounds
 
     def check_touch_is_eligible_for_trace(self, touch: Touch) -> bool:
         # Note that this does not check the time, since time may not be updated if the touch is stationary.
-        return touch.position.x in self.hitbox.bounds
+        is_captured = self.best_touch_id != -1 and touch.id == self.best_touch_id
+        return is_captured or touch.position.x in self.hitbox.bounds
 
     def check_touch_is_eligible_for_trace_flick(self, touch: Touch) -> bool:
-        return (
-            touch.time >= self.unadjusted_input_interval.start
-            and touch.speed >= Layout.flick_speed_threshold
-            and (touch.position.x in self.hitbox.bounds or touch.prev_position.x in self.hitbox.bounds)
-        )
+        if touch.time < self.unadjusted_input_interval.start or touch.speed < Layout.flick_speed_threshold:
+            return False
+        is_captured = self.best_touch_id != -1 and touch.id == self.best_touch_id
+        return is_captured or touch.position.x in self.hitbox.bounds or touch.prev_position.x in self.hitbox.bounds
 
     def check_direction_matches(self, angle: float) -> bool:
         if not self.direction_check_needed:
