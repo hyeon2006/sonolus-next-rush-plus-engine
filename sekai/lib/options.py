@@ -201,6 +201,12 @@ class Options:
         scope="Rush",
         default=True,
     )
+    sekai_perspective: bool = toggle_option(
+        name="Sekai Perspective",
+        description="Uses the SEKAI style for note perspective.",
+        scope="Rush",
+        default=True,
+    )
     sfx_enabled: bool = toggle_option(
         name=StandardText.EFFECT,
         scope="Sekai",

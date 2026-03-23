@@ -762,7 +762,7 @@ def layout_fallback_judge_line() -> Quad:
 
 
 def layout_note_body_by_edges(l: float, r: float, h: float, travel: float, not_sekai_p: bool = False):
-    p = 0.5 if not not_sekai_p else 1
+    p = 0.5 if not not_sekai_p or not Options.sekai_perspective else 1
     return transform_quad(
         Quad(
             bl=Vec2(l * (1 + h * p) * travel, (1 + h) * travel),
