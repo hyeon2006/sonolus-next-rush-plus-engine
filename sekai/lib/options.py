@@ -201,6 +201,11 @@ class Options:
         scope="Rush",
         default=True,
     )
+    ui_intro: bool = toggle_option(
+        name="UI Intro Effect",
+        scope="Rush",
+        default=True,
+    )
     sekai_perspective: bool = toggle_option(
         name="Sekai Perspective",
         description="Uses the SEKAI style for note perspective.",
