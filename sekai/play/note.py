@@ -646,10 +646,9 @@ class BaseNote(PlayArchetype):
         if time() > self.input_interval.end:
             return
 
-        hitbox = self.get_full_hitbox()
         captured_touch_start = -1.0
         for touch in touches():
-            if hitbox.contains_point(touch.position) and touch.started:
+            if self.check_touch_is_eligible_for_trace_flick(touch) and touch.started:
                 input_manager.disallow_empty(touch)
             if self.captured_touch_id != 0 and touch.id == self.captured_touch_id:
                 captured_touch_start = touch.start_time
@@ -697,6 +696,12 @@ class BaseNote(PlayArchetype):
             return
         has_touch = False
         for touch in touches():
+            if (
+                self.kind in (NoteKind.NORM_TAIL_FLICK, NoteKind.CRIT_TAIL_FLICK)
+                and touch.started
+                and touch.id != self.captured_touch_id
+            ):
+                continue
             if not self.check_touch_is_eligible_for_trace(touch):
                 continue
             input_manager.disallow_empty(touch)
@@ -856,7 +861,7 @@ class BaseNote(PlayArchetype):
             case _:
                 assert_never(kind)
 
-    def check_touch_touch_is_eligible_for_flick(self, touch: Touch) -> bool:
+    def check_touch_is_eligible_for_flick(self, touch: Touch) -> bool:
         if touch.start_time < self.captured_touch_time or touch.speed < Layout.flick_speed_threshold:
             return False
         is_captured = self.captured_touch_id != 0 and touch.id == self.captured_touch_id
