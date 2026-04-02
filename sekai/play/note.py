@@ -219,10 +219,6 @@ class BaseNote(PlayArchetype):
             stage.start_time = min(stage.start_time, self.start_time - 1.0)
             stage.end_time = max(stage.end_time, self.target_time + 1.0)
 
-        # caching
-        leniency = get_leniency(self.kind)
-        self.hitbox = layout_hitbox(self.lane - self.size - leniency, self.lane + self.size + leniency)
-
         match self.direction:
             case FlickDirection.UP_OMNI | FlickDirection.DOWN_OMNI:
                 self.direction_check_needed = False
@@ -644,10 +640,9 @@ class BaseNote(PlayArchetype):
         if time() > self.input_interval.end:
             return
 
-        hitbox = self.get_full_hitbox()
         captured_touch_start = -1.0
         for touch in touches():
-            if hitbox.contains_point(touch.position) and touch.started:
+            if self.check_touch_is_eligible_for_trace_flick(touch) and touch.started:
                 input_manager.disallow_empty(touch)
             if self.captured_touch_id != 0 and touch.id == self.captured_touch_id:
                 captured_touch_start = touch.start_time
@@ -695,6 +690,12 @@ class BaseNote(PlayArchetype):
             return
         has_touch = False
         for touch in touches():
+            if (
+                self.kind in (NoteKind.NORM_TAIL_FLICK, NoteKind.CRIT_TAIL_FLICK)
+                and touch.started
+                and touch.id != self.captured_touch_id
+            ):
+                continue
             if not self.check_touch_is_eligible_for_trace(touch):
                 continue
             input_manager.disallow_empty(touch)
@@ -854,7 +855,7 @@ class BaseNote(PlayArchetype):
             case _:
                 assert_never(kind)
 
-    def check_touch_touch_is_eligible_for_flick(self, touch: Touch) -> bool:
+    def check_touch_is_eligible_for_flick(self, touch: Touch) -> bool:
         if touch.start_time < self.captured_touch_time or touch.speed < Layout.flick_speed_threshold:
             return False
         is_captured = self.captured_touch_id != 0 and touch.id == self.captured_touch_id
