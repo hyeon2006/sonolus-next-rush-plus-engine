@@ -693,6 +693,12 @@ class BaseNote(PlayArchetype):
         hitbox = self.hitbox
         has_touch = False
         for touch in touches():
+            if (
+                self.kind in (NoteKind.NORM_TAIL_FLICK, NoteKind.CRIT_TAIL_FLICK)
+                and touch.started
+                and touch.id != self.captured_touch_id
+            ):
+                continue
             if not self.check_touch_is_eligible_for_trace(hitbox, touch):
                 continue
             input_manager.disallow_empty(touch)
