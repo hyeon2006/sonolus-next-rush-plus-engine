@@ -32,8 +32,8 @@ class PreviewInitialization(PreviewArchetype):
     @callback(order=1)
     def preprocess(self):
         init_level_config(self.revision)
-        init_ui()
         init_skin()
+        init_ui()
         init_particles()
         init_preview_layout()
         init_event_list(self.first_camera_ref)
