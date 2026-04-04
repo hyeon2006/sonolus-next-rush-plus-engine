@@ -745,32 +745,36 @@ class BaseNote(PlayArchetype):
         return angle_diff <= leniency
 
     def judge(self, actual_time: float):
-        judgment = self.judgment_window.judge(actual_time, self.target_time)
-        error = self.judgment_window.bad.clamp(actual_time - self.target_time)
-        self.result.judgment = judgment if not SkillActive.judgment or judgment == Judgment.MISS else Judgment.PERFECT
-        self.result.accuracy = error
-        if self.result.bucket.id != -1:
-            self.result.bucket_value = error * WINDOW_SCALE
-        self.despawn = True
-        self.should_play_hit_effects = True
-        self.post_judge()
+    judgment = self.judgment_window.judge(actual_time, self.target_time)
+    error = self.judgment_window.bad.clamp(actual_time - self.target_time)
 
+    # force perfects
+    if SkillActive.judgment and judgment != Judgment.MISS:
+        judgment = Judgment.PERFECT
+        error = 0  # accuracy also perfect
+    self.result.judgment = judgment
+    self.result.accuracy = error
+    if self.result.bucket.id != -1:
+        self.result.bucket_value = error * WINDOW_SCALE
+    self.despawn = True
+    self.should_play_hit_effects = True
+    self.post_judge()
+    
     def judge_wrong_way(self, actual_time: float):
-        judgment = self.judgment_window.judge(actual_time, self.target_time)
-        if judgment == Judgment.PERFECT:
-            judgment = Judgment.GREAT
-        error = self.judgment_window.bad.clamp(actual_time - self.target_time)
-        self.result.judgment = judgment if not SkillActive.judgment or judgment == Judgment.MISS else Judgment.PERFECT
-        if error in self.judgment_window.perfect:
-            self.result.accuracy = self.judgment_window.perfect.end
-        else:
-            self.result.accuracy = error
-        if self.result.bucket.id != -1:
-            self.result.bucket_value = error * WINDOW_SCALE
-        self.despawn = True
-        self.should_play_hit_effects = True
-        self.wrong_way = not SkillActive.judgment and judgment != Judgment.MISS
-        self.post_judge()
+    judgment = self.judgment_window.judge(actual_time, self.target_time)
+    if judgment == Judgment.PERFECT:
+        judgment = Judgment.GREAT
+        
+    # force perfects
+    if SkillActive.judgment and judgment != Judgment.MISS:
+        judgment = Judgment.PERFECT
+        error = 0
+    self.result.judgment = judgment
+    self.result.accuracy = error
+    self.despawn = True
+    self.should_play_hit_effects = True
+    self.wrong_way = not SkillActive.judgment and judgment != Judgment.MISS
+    self.post_judge()
 
     def complete(self):
         self.result.judgment = Judgment.PERFECT
