@@ -170,9 +170,14 @@ class Connector(PlayArchetype):
         if time() in self.input_active_interval:
             hitbox = self.active_connector_info.get_hitbox(CONNECTOR_LENIENCY)
             for touch in touches():
-                if hitbox.contains_point(touch.position) and not touch.ended and input_manager.is_allowed_empty(touch):
-                    input_manager.disallow_empty(touch)
-
+if (
+    hitbox.contains_point(touch.position)
+    and not touch.ended
+    and input_manager.is_allowed_empty(touch)
+    and not self.active_connector_info.is_active
+):
+    input_manager.disallow_empty(touch)
+    
     def update_parallel(self):
         current_time = time()
         adj_time = offset_adjusted_time()
