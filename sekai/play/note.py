@@ -601,7 +601,7 @@ class BaseNote(PlayArchetype):
                 pivot_lane=self.visual_pivot_lane,
                 half_offset=self.visual_half_offset,
             )
-            if Options.lane_effect_enabled:
+            if self.is_scored and Options.lane_effect_enabled:
                 particles = get_note_particles(self.kind, self.direction)
                 if particles.lane.id == BaseParticles.critical_flick_note_lane_linear.id:
                     ParticleManager.spawn(
