@@ -155,7 +155,7 @@ class BaseNote(PlayArchetype):
             self.direction = mirror_flick_direction(self.direction)
 
         self.target_time = beat_to_time(self.beat)
-        self.judgment_window = get_note_window(self.kind, self.active_head_ref.index > 0)
+        self.judgment_window = get_note_window(self.kind, self.active_head_ref.index > 0 or self.is_attached)
         self.input_interval = self.judgment_window.bad + self.target_time + input_offset()
         self.unadjusted_input_interval = self.judgment_window.bad + self.target_time
 
@@ -454,12 +454,11 @@ class BaseNote(PlayArchetype):
             return
         if time() < self.visual_start_time:
             return
-        if time() > self.input_interval.end:
-            if self.tick_trigger():
-                self.complete_parallel()
-            else:
-                self.handle_late_miss()
+        if self.tick_trigger():
+            self.complete_parallel()
             return
+        if time() > self.input_interval.end:
+            self.handle_late_miss()
         if is_head(self.kind) and time() > self.target_time:
             return
         if group_hide_notes(self.timescale_group):
@@ -492,7 +491,9 @@ class BaseNote(PlayArchetype):
                 attach_head = self.attach_head_ref.get()
                 head @= attach_head.tick_head_ref
                 tail @= attach_head.tick_tail_ref
-            return tail.index > 0 and (tail.get().is_despawned or tail.get().pending_despawn)
+            return (
+                head.index > 0 and time() >= self.input_interval.start and head.get().active_connector_info.is_active
+            ) or (tail.index > 0 and (tail.get().is_despawned or tail.get().pending_despawn))
         return False
 
     @property
