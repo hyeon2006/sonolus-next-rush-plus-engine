@@ -475,7 +475,7 @@ class BaseNote(PlayArchetype):
         )
 
     def tick_trigger(self):
-        if self.kind in (NoteKind.NORM_TICK, NoteKind.CRIT_TICK):
+        if self.kind in (NoteKind.NORM_TICK, NoteKind.CRIT_TICK, NoteKind.HIDE_TICK):
             head = +EntityRef[BaseNote]
             tail = +EntityRef[BaseNote]
             if not self.is_attached:
@@ -486,14 +486,6 @@ class BaseNote(PlayArchetype):
                 head @= attach_head.tick_head_ref
                 tail @= attach_head.tick_tail_ref
             return tail.index > 0 and (tail.get().is_despawned or tail.get().pending_despawn)
-
-        elif self.kind == NoteKind.HIDE_TICK and self.attach_head_ref.index > 0:
-            attach_head = self.attach_head_ref.get()
-            tail = attach_head.tick_tail_ref
-            head = attach_head.tick_head_ref
-            if tail.index > 0:
-                tail_note = tail.get()
-                return tail_note.is_despawned or tail_note.pending_despawn
         return False
 
     @property
