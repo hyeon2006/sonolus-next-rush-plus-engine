@@ -127,6 +127,7 @@ class BaseNote(PlayArchetype):
     hitbox_r: float = entity_memory()
 
     pending_post_judge: bool = entity_memory()
+    pending_despawn: bool = shared_memory()
 
     # Check wrong way
     wrong_way: bool = entity_memory()
@@ -154,7 +155,7 @@ class BaseNote(PlayArchetype):
             self.direction = mirror_flick_direction(self.direction)
 
         self.target_time = beat_to_time(self.beat)
-        self.judgment_window = get_note_window(self.kind)
+        self.judgment_window = get_note_window(self.kind, self.active_head_ref.index > 0)
         self.input_interval = self.judgment_window.bad + self.target_time + input_offset()
         self.unadjusted_input_interval = self.judgment_window.bad + self.target_time
 
@@ -333,6 +334,8 @@ class BaseNote(PlayArchetype):
     def update_sequential(self):
         if self.despawn:
             return
+        if self.pending_despawn:
+            return
 
         update_timescale_group(self.timescale_group)
 
@@ -356,9 +359,6 @@ class BaseNote(PlayArchetype):
             else:
                 self.judge_wrong_way(self.best_touch_time)
             return
-        if self.tick_trigger():
-            self.complete()
-            return
         if self.is_scored and time() in self.input_interval and self.captured_touch_id == 0:
             if has_tap_input(self.kind):
                 NoteMemory.active_tap_input_notes.append(self.ref())
@@ -374,6 +374,8 @@ class BaseNote(PlayArchetype):
         if not self.is_scored:
             return
         if self.despawn:
+            return
+        if self.pending_despawn:
             return
         if time() < self.input_interval.start:
             return
@@ -434,13 +436,19 @@ class BaseNote(PlayArchetype):
     def update_parallel(self):
         if self.despawn:
             return
+        if self.pending_despawn:
+            self.despawn = True
+            return
         if not self.is_scored and time() >= self.target_time:
             self.despawn = True
             return
         if time() < self.visual_start_time:
             return
         if time() > self.input_interval.end:
-            self.handle_late_miss()
+            if self.tick_trigger():
+                self.complete_parallel()
+            else:
+                self.handle_late_miss()
             return
         if is_head(self.kind) and time() > self.target_time:
             return
@@ -467,26 +475,17 @@ class BaseNote(PlayArchetype):
         )
 
     def tick_trigger(self):
-        current_time = time()
-
         if self.kind in (NoteKind.NORM_TICK, NoteKind.CRIT_TICK):
+            head = +EntityRef[BaseNote]
+            tail = +EntityRef[BaseNote]
             if not self.is_attached:
-                head = self.tick_head_ref
-                tail = self.tick_tail_ref
-                return (
-                    head.index > 0
-                    and current_time >= self.input_interval.start
-                    and head.get().active_connector_info.is_active
-                ) or (tail.index > 0 and tail.get().is_despawned)
+                head @= self.tick_head_ref
+                tail @= self.tick_tail_ref
             else:
                 attach_head = self.attach_head_ref.get()
-                head = attach_head.tick_head_ref
-                tail = attach_head.tick_tail_ref
-                return (
-                    head.index > 0
-                    and current_time >= self.input_interval.start
-                    and head.get().active_connector_info.is_active
-                ) or (tail.index > 0 and tail.get().is_despawned)
+                head @= attach_head.tick_head_ref
+                tail @= attach_head.tick_tail_ref
+            return tail.index > 0 and (tail.get().is_despawned or tail.get().pending_despawn)
 
         elif self.kind == NoteKind.HIDE_TICK and self.attach_head_ref.index > 0:
             attach_head = self.attach_head_ref.get()
@@ -494,12 +493,23 @@ class BaseNote(PlayArchetype):
             head = attach_head.tick_head_ref
             if tail.index > 0:
                 tail_note = tail.get()
-                return (
-                    tail_note.is_despawned
-                    or (tail_note.kind == NoteKind.ANCHOR and current_time >= tail_note.target_time)
-                    or (head.get().active_connector_info.is_active and current_time >= self.input_interval.start)
-                )
+                return tail_note.is_despawned or tail_note.pending_despawn
         return False
+
+    @property
+    def is_tail(self) -> bool:
+        return self.kind in (
+            NoteKind.NORM_TAIL_TAP,
+            NoteKind.CRIT_TAIL_TAP,
+            NoteKind.NORM_TAIL_FLICK,
+            NoteKind.CRIT_TAIL_FLICK,
+            NoteKind.NORM_TAIL_TRACE,
+            NoteKind.CRIT_TAIL_TRACE,
+            NoteKind.NORM_TAIL_TRACE_FLICK,
+            NoteKind.CRIT_TAIL_TRACE_FLICK,
+            NoteKind.NORM_TAIL_RELEASE,
+            NoteKind.CRIT_TAIL_RELEASE,
+        )
 
     @property
     def is_trace(self) -> bool:
@@ -760,6 +770,41 @@ class BaseNote(PlayArchetype):
             self.best_touch_id = current_touch_id
 
     def handle_tick_input(self):
+        if self.tick_head_ref.index > 0 or (self.is_attached and self.attach_head_ref.index > 0):
+            head = +EntityRef[BaseNote]
+            if self.tick_head_ref.index > 0:
+                head @= self.tick_head_ref
+            elif self.is_attached and self.attach_head_ref.index > 0:
+                head @= self.attach_head_ref.get().tick_head_ref
+            else:
+                head @= self.attach_head_ref
+            active = head.get().active_connector_info.is_active
+            leniency = get_leniency(self.kind)
+            hitbox = +Rect
+            if active:
+                hitbox @= head.get().active_connector_info.get_hitbox(leniency)
+                for touch in touches():
+                    if (
+                        not hitbox.contains_point(touch.position)
+                        and not touch.ended
+                        and input_manager.is_allowed_empty(touch)
+                    ):
+                        continue
+                    input_manager.disallow_empty(touch)
+                self.complete()
+                return
+            else:
+                hitbox @= layout_hitbox(self.lane - self.size - leniency, self.lane + self.size + leniency)
+            for touch in touches():
+                if (
+                    not hitbox.contains_point(touch.position)
+                    and not touch.ended
+                    and input_manager.is_allowed_empty(touch)
+                ):
+                    continue
+                input_manager.disallow_empty(touch)
+                self.complete()
+                return
         hitbox = self.hitbox
         has_touch = False
         for touch in touches():
@@ -888,7 +933,10 @@ class BaseNote(PlayArchetype):
         self.result.accuracy = error
         if self.result.bucket.id != -1:
             self.result.bucket_value = error * WINDOW_SCALE
-        self.despawn = True
+        if self.is_tail:
+            self.pending_despawn = True
+        else:
+            self.despawn = True
         self.should_play_hit_effects = True
         self.post_judge()
 
@@ -904,7 +952,10 @@ class BaseNote(PlayArchetype):
             self.result.accuracy = error
         if self.result.bucket.id != -1:
             self.result.bucket_value = error * WINDOW_SCALE
-        self.despawn = True
+        if self.is_tail:
+            self.pending_despawn = True
+        else:
+            self.despawn = True
         self.should_play_hit_effects = True
         self.wrong_way = not SkillActive.judgment and judgment != Judgment.MISS
         self.post_judge()
@@ -914,9 +965,20 @@ class BaseNote(PlayArchetype):
         self.result.accuracy = 0
         if self.result.bucket.id != -1:
             self.result.bucket_value = 0
-        self.despawn = True
+        if self.is_tail:
+            self.pending_despawn = True
+        else:
+            self.despawn = True
         self.should_play_hit_effects = True
         self.post_judge()
+
+    def complete_parallel(self):
+        self.result.judgment = Judgment.PERFECT
+        self.result.accuracy = 0
+        if self.result.bucket.id != -1:
+            self.result.bucket_value = 0
+        self.despawn = True
+        self.should_play_hit_effects = True
 
     def complete_damage(self):
         self.result.judgment = Judgment.PERFECT
