@@ -1047,7 +1047,7 @@ def draw_tutorial_note_slot_effects(
         )
 
 
-def get_note_window(kind: NoteKind, head) -> SekaiWindow:
+def get_note_window(kind: NoteKind, is_connector_tick) -> SekaiWindow:
     result = +SekaiWindow
     match kind:
         case NoteKind.NORM_TAP | NoteKind.NORM_HEAD_TAP | NoteKind.NORM_TAIL_TAP:
@@ -1083,10 +1083,10 @@ def get_note_window(kind: NoteKind, head) -> SekaiWindow:
         case NoteKind.CRIT_TAIL_TRACE_FLICK:
             result @= TRACE_FLICK_CRITICAL_WINDOW
         case NoteKind.NORM_TICK | NoteKind.CRIT_TICK | NoteKind.HIDE_TICK:
-            if (NoteKind.NORM_TICK or NoteKind.CRIT_TICK) and not head:
-                result @= SLIDE_TICK_JUDGMENT_WINDOW
-            else:
+            if is_connector_tick:
                 result @= EMPTY_JUDGMENT_WINDOW
+            else:
+                result @= SLIDE_TICK_JUDGMENT_WINDOW
         case NoteKind.ANCHOR | NoteKind.DAMAGE:
             result @= EMPTY_JUDGMENT_WINDOW
         case _:
