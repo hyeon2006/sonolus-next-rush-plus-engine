@@ -127,11 +127,7 @@ class WatchBaseNote(WatchArchetype):
             self.direction = mirror_flick_direction(self.direction)
 
         self.target_time = beat_to_time(self.beat)
-        self.judgment_window = get_note_window(self.kind)
-        self.judgment_window = get_note_window(self.kind)
-        self.judgment_window_bad = get_judgment_interval(
-            bad_window=get_note_window_bad(self.kind), good_window=self.judgment_window.good
-        )
+        self.judgment_window = get_note_window(self.kind, self.active_head_ref.index > 0)
 
         if not self.is_attached:
             self.target_scaled_time = group_time_to_scaled_time(self.timescale_group, self.target_time)
