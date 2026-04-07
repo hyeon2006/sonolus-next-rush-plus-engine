@@ -168,6 +168,8 @@ class Connector(PlayArchetype):
                     if not touch.ended and touch.position.x in bounds:
                         if not self.active_connector_info.is_active:
                             self.active_connector_info.active_start_time = current_time
+                            if input_manager.is_allowed_empty(touch):
+                                input_manager.disallow_empty(touch)
                         self.active_connector_info.is_active = True
                         self.delay = False
                         break
@@ -192,20 +194,6 @@ class Connector(PlayArchetype):
                 self.active_connector_info.connector_kind = self.kind
             if group_hide_notes(self.segment_head.timescale_group) and self.active_head_ref.index > 0:
                 self.active_connector_info.connector_kind = ConnectorKind.NONE
-
-    def touch(self):
-        if self.segment_head.segment_kind not in (
-            ConnectorKind.ACTIVE_NORMAL,
-            ConnectorKind.ACTIVE_CRITICAL,
-            ConnectorKind.ACTIVE_FAKE_NORMAL,
-            ConnectorKind.ACTIVE_FAKE_CRITICAL,
-        ):
-            return
-        bounds = self.active_connector_info.hitbox.bounds
-        if time() in self.input_active_interval:
-            for touch in touches():
-                if touch.position.x in bounds and not touch.ended and input_manager.is_allowed_empty(touch):
-                    input_manager.disallow_empty(touch)
 
     def update_parallel(self):
         current_time = time()
