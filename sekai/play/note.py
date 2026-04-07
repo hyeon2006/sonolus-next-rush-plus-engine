@@ -127,6 +127,7 @@ class BaseNote(PlayArchetype):
     hitbox: Hitbox = shared_memory()
 
     pending_post_judge: bool = entity_memory()
+    managing_despawn: bool = entity_memory()
     pending_despawn: bool = shared_memory()
 
     # Check wrong way
@@ -446,8 +447,11 @@ class BaseNote(PlayArchetype):
     def update_parallel(self):
         if self.despawn:
             return
-        if self.pending_despawn:
+        if self.managing_despawn:
             self.despawn = True
+            return
+        if self.pending_despawn:
+            self.managing_despawn = True
             return
         if not self.is_scored and time() >= self.target_time:
             self.despawn = True
