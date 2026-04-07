@@ -565,7 +565,7 @@ class BaseNote(PlayArchetype):
             else:
                 return False
 
-        # The following is the code for next sekai. (Not used in this engine)
+        # The following is the code for next sekai.
 
         # Give until the end of the perfect window to give a right-way touch if we've only had wrong-way touches.
         # After that, wrong-way has no impact anyway.
