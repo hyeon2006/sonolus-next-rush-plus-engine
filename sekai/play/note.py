@@ -18,7 +18,7 @@ from sonolus.script.array import Array, Dim
 from sonolus.script.bucket import Bucket, Judgment
 from sonolus.script.containers import VarArray
 from sonolus.script.globals import level_memory
-from sonolus.script.interval import Interval, lerp, remap_clamped, unlerp_clamped
+from sonolus.script.interval import Interval, remap_clamped, unlerp_clamped
 from sonolus.script.runtime import Touch, delta_time, input_offset, offset_adjusted_time, time, touches
 from sonolus.script.timing import beat_to_time
 
@@ -26,8 +26,8 @@ from sekai.debug import DISABLE_NOTES
 from sekai.lib import archetype_names
 from sekai.lib.buckets import WINDOW_SCALE, SekaiWindow
 from sekai.lib.connector import ActiveConnectorInfo, ConnectorKind, ConnectorLayer
-from sekai.lib.ease import EaseType, ease
-from sekai.lib.layout import FlickDirection, Hitbox, Layout, compute_hitbox, layout_lane, progress_to
+from sekai.lib.ease import EaseType
+from sekai.lib.layout import FlickDirection, Hitbox, Layout, compute_hitbox, progress_to
 from sekai.lib.note import (
     NoteEffectKind,
     NoteKind,
@@ -256,7 +256,7 @@ class BaseNote(PlayArchetype):
             leniency = get_leniency(self.kind)
             hitbox_l = self.lane - self.size
             hitbox_r = self.lane + self.size
-            if self.kind in {NoteKind.NORM_TICK, NoteKind.CRIT_TICK, NoteKind.HIDE_TICK}:
+            """if self.kind in {NoteKind.NORM_TICK, NoteKind.CRIT_TICK, NoteKind.HIDE_TICK}:
                 window_start = self.target_time + self.judgment_window.good.start
                 window_end = self.target_time + self.judgment_window.good.end
 
@@ -327,7 +327,7 @@ class BaseNote(PlayArchetype):
                         last_size = size
                         last_time = current.target_time
                         last_ease = current.connector_ease
-                    current_ref @= current.next_ref
+                    current_ref @= current.next_ref"""
             hitbox_l -= leniency
             hitbox_r += leniency
             self.hitbox_l = hitbox_l
