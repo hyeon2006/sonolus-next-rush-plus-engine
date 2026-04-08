@@ -767,28 +767,15 @@ class BaseNote(PlayArchetype):
             self.best_touch_id = current_touch_id
 
     def handle_tick_input(self):
+        hitbox = self.hitbox
         if self.tick_head_ref.index > 0 or (self.is_attached and self.attach_head_ref.index > 0):
-            head = +EntityRef[BaseNote]
-            if self.tick_head_ref.index > 0:
-                head @= self.tick_head_ref
-            elif self.is_attached and self.attach_head_ref.index > 0:
-                head @= self.attach_head_ref.get().tick_head_ref
-            else:
-                head @= self.attach_head_ref
-            leniency = get_leniency(self.kind)
-            hitbox = layout_hitbox(self.lane - self.size - leniency, self.lane + self.size + leniency)
             for touch in touches():
-                if (
-                    not hitbox.contains_point(touch.position)
-                    and not touch.ended
-                    and input_manager.is_allowed_empty(touch)
-                ):
+                if not hitbox.contains_point(touch.position):
                     continue
                 input_manager.disallow_empty(touch)
                 self.complete()
                 return
         else:
-            hitbox = self.hitbox
             has_touch = False
             for touch in touches():
                 if not hitbox.contains_point(touch.position):
