@@ -775,22 +775,8 @@ class BaseNote(PlayArchetype):
                 head @= self.attach_head_ref.get().tick_head_ref
             else:
                 head @= self.attach_head_ref
-            active = head.get().active_connector_info.is_active
             leniency = get_leniency(self.kind)
-            hitbox = +Rect
-            if active:
-                hitbox @= head.get().active_connector_info.get_hitbox(leniency)
-                for touch in touches():
-                    if (
-                        not hitbox.contains_point(touch.position)
-                        and not touch.ended
-                        and input_manager.is_allowed_empty(touch)
-                    ):
-                        continue
-                    input_manager.disallow_empty(touch)
-                return
-            else:
-                hitbox @= layout_hitbox(self.lane - self.size - leniency, self.lane + self.size + leniency)
+            hitbox = layout_hitbox(self.lane - self.size - leniency, self.lane + self.size + leniency)
             for touch in touches():
                 if (
                     not hitbox.contains_point(touch.position)
@@ -801,20 +787,21 @@ class BaseNote(PlayArchetype):
                 input_manager.disallow_empty(touch)
                 self.complete()
                 return
-        hitbox = self.hitbox
-        has_touch = False
-        for touch in touches():
-            if not hitbox.contains_point(touch.position):
-                continue
-            input_manager.disallow_empty(touch)
-            has_touch = True
-        if has_touch:
-            if offset_adjusted_time() >= self.target_time:
-                self.complete()
-            else:
-                # Always judge as perfect accuracy for ticks if touched.
-                self.best_touch_time = self.target_time
-                self.best_touch_matches_direction = True
+        else:
+            hitbox = self.hitbox
+            has_touch = False
+            for touch in touches():
+                if not hitbox.contains_point(touch.position):
+                    continue
+                input_manager.disallow_empty(touch)
+                has_touch = True
+            if has_touch:
+                if offset_adjusted_time() >= self.target_time:
+                    self.complete()
+                else:
+                    # Always judge as perfect accuracy for ticks if touched.
+                    self.best_touch_time = self.target_time
+                    self.best_touch_matches_direction = True
 
     def handle_damage_input(self):
         hitbox = self.hitbox
