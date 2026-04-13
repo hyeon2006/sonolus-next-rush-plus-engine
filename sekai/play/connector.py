@@ -59,6 +59,7 @@ class Connector(PlayArchetype):
 
     last_visual_state: ConnectorVisualState = entity_memory()
     delay: bool = entity_memory()
+    can_consume_empty: bool = entity_memory()
 
     @callback(order=1)  # After note preprocessing is done
     def preprocess(self):
@@ -81,6 +82,7 @@ class Connector(PlayArchetype):
         if self.segment_head.segment_through_judge_line:
             self.end_time += CONNECTOR_THROUGH_JUDGE_LINE_DESPAWN_DELAY
         self.last_visual_state = ConnectorVisualState.WAITING
+        self.can_consume_empty = True
         if self.active_head_ref.index > 0:
             head.tick_head_ref = self.active_head_ref
         if self.active_tail_ref.index > 0:
@@ -153,14 +155,13 @@ class Connector(PlayArchetype):
                     if not touch.ended and hitbox.contains_point(touch.position):
                         if not self.active_connector_info.is_active:
                             self.active_connector_info.active_start_time = current_time
-                            if input_manager.is_allowed_empty(touch):
-                                input_manager.disallow_empty(touch)
                         self.active_connector_info.is_active = True
                         self.delay = False
                         break
                 else:
                     if self.delay:
                         self.active_connector_info.is_active = False
+                        self.can_consume_empty = True
                     else:
                         self.delay = True
             if current_time in self.visual_active_interval:
@@ -180,6 +181,23 @@ class Connector(PlayArchetype):
             if group_hide_notes(self.segment_head.timescale_group):
                 self.active_connector_info.connector_kind = ConnectorKind.NONE
 
+    @callback(order=1)
+    def touch(self):
+        if self.despawn:
+            return
+        current_time = time()
+        if self.active_head_ref.index > 0 and current_time in self.input_active_interval:
+            hitbox = self.active_connector_info.get_hitbox(CONNECTOR_LENIENCY)
+            for touch in touches():
+                if (
+                    not touch.ended
+                    and hitbox.contains_point(touch.position)
+                    and input_manager.is_allowed_empty(touch)
+                    and (self.can_consume_empty or input_manager.is_last_started_touch_disallowed())
+                ):
+                    input_manager.disallow_empty(touch)
+                    self.can_consume_empty = False
+
     def update_parallel(self):
         current_time = time()
         adj_time = offset_adjusted_time()
@@ -198,6 +216,7 @@ class Connector(PlayArchetype):
                     or self.active_connector_info.is_active
                 ):
                     visual_state = ConnectorVisualState.ACTIVE
+                    self.can_consume_empty = False
                 else:
                     visual_state = ConnectorVisualState.INACTIVE
             else:
