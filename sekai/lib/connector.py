@@ -712,7 +712,8 @@ def draw_connector_slot_glow_effect(
     layout = layout_slot_glow_effect(lane, size + ex, height, y_offset=y_offset)
     z = get_z(LAYER_SLOT_GLOW_EFFECT, start_time, lane, invert_time=True)
     a = remap_clamped(start_time, start_time + 0.25, 0.0, 0.25, time())
-    sprite.draw(layout, z=z, a=a)
+    lightweight = 0.25 if ActiveParticles.lightweight.is_available else 1
+    sprite.draw(layout, z=z, a=a * lightweight)
 
 
 def update_connector_sfx(
