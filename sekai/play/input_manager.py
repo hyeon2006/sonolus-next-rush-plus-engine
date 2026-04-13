@@ -21,10 +21,14 @@ SIMULTANEOUS_THRESHOLD = 0.002
 class InputState:
     disallowed_empty_touches: ArraySet[int, Dim[32]]
     disallowed_release_touches: ArrayMap[int, float, Dim[32]]
+    last_started_touch_id: int
+    last_started_touch_disallowed: bool
 
 
 def disallow_empty(touch: Touch):
     InputState.disallowed_empty_touches.add(touch.id)
+    if touch.id == InputState.last_started_touch_id:
+        InputState.last_started_touch_disallowed = True
 
 
 def disallow_release(touch: Touch, until_time: float):
@@ -66,11 +70,19 @@ def update_input_state():
     InputState.disallowed_release_touches.clear()
 
     for touch in touches():
+        if touch.started:
+            InputState.last_started_touch_id = touch.id
+            InputState.last_started_touch_disallowed = False
+
         if touch.id in old_disallowed_empty_touches:
             disallow_empty(touch)
 
         if touch.id in old_disallowed_release_touches:
             InputState.disallowed_release_touches[touch.id] = old_disallowed_release_touches[touch.id]
+
+
+def is_last_started_touch_disallowed() -> bool:
+    return InputState.last_started_touch_disallowed
 
 
 def preassign_taps():
