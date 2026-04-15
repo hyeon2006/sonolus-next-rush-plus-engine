@@ -1126,14 +1126,15 @@ def layout_skill_bar(
     return layout
 
 
-def layout_skill_judgment_line() -> Quad:
+def layout_skill_judgment_line(l: float = -6, r: float = 6, y_offset: float = 0.0) -> Quad:
     b = 1 + NOTE_H
     t = 1 - NOTE_H
-    return perspective_rect(l=-6, r=6, t=t, b=b)
+    travel = approach(1 - y_offset)
+    return perspective_rect(l=l, r=r, t=t, b=b, travel=travel)
 
 
-def layout_fever_cover_left() -> Quad:
-    p = perspective_rect(l=-6.5, r=0, t=0, b=get_perspective_y(-1))
+def layout_fever_cover(l, r) -> Quad:
+    p = perspective_rect(l=l, r=r, t=0, b=get_perspective_y(-1))
     safe_bl_x = min(screen().bl.x, p.bl.x)
 
     return Quad(
@@ -1141,18 +1142,6 @@ def layout_fever_cover_left() -> Quad:
         br=p.bl,
         tl=Vec2(screen().tl.x, p.tr.y),
         tr=p.tl,
-    )
-
-
-def layout_fever_cover_right() -> Quad:
-    p = perspective_rect(l=0, r=6.5, t=0, b=get_perspective_y(-1))
-    safe_br_x = max(screen().br.x, p.br.x)
-
-    return Quad(
-        bl=p.br,
-        br=Vec2(safe_br_x, screen().br.y),
-        tl=p.tr,
-        tr=Vec2(screen().tr.x, p.tl.y),
     )
 
 
@@ -1172,6 +1161,14 @@ def layout_fever_gauge_left(t) -> Quad:
 
 def layout_fever_gauge_right(t) -> Quad:
     return perspective_rect(l=6, r=6.5, t=t, b=get_perspective_y(-1))
+
+
+def layout_dynamic_fever_side(l: float, r: float, percentage: float, travel: float = 1.0) -> Quad:
+    t_val = lerp(LANE_B, LANE_T, percentage)
+
+    b_val = get_perspective_y(-1)
+
+    return perspective_rect(l=l, r=r, t=t_val, b=b_val, travel=travel)
 
 
 def layout_fever_text() -> Quad:
