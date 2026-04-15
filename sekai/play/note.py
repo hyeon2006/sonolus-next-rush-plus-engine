@@ -675,7 +675,7 @@ class BaseNote(PlayArchetype):
         for touch in touches():
             if hitbox.contains_point(touch.position) and touch.started:
                 input_manager.disallow_empty(touch)
-            if not self.check_touch_touch_is_eligible_for_flick(hitbox, touch):
+            if not self.check_touch_is_eligible_for_flick(hitbox, touch):
                 continue
             if not self.check_direction_matches(touch.angle):
                 if wrong_way_touch_time < 0:
@@ -871,7 +871,7 @@ class BaseNote(PlayArchetype):
             case _:
                 assert_never(kind)
 
-    def check_touch_touch_is_eligible_for_flick(self, hitbox: Quad, touch: Touch) -> bool:
+    def check_touch_is_eligible_for_flick(self, hitbox: Quad, touch: Touch) -> bool:
         if touch.start_time < self.captured_touch_time or touch.speed < Layout.flick_speed_threshold:
             return False
         is_captured = self.captured_touch_id != 0 and touch.id == self.captured_touch_id
