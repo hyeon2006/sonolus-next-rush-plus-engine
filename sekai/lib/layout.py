@@ -459,19 +459,21 @@ def layout_custom_tag() -> Quad:
 
 
 def init_ui_margin():
+    has_side_notch = (screen().l != safe_area().l) or (screen().r != safe_area().r)
+
     match LevelConfig.ui_version:
         case SekaiVersion.v3:
-            UIMargin.life_bar_x = 0.28 if screen() != safe_area() else 0.05
-            UIMargin.score_bar_x = 0.3 if screen() != safe_area() else 0.1
+            UIMargin.life_bar_x = 0.28 if has_side_notch else 0.05
+            UIMargin.score_bar_x = 0.3 if has_side_notch else 0.1
             UIMargin.life_bar_y = 0.887
             UIMargin.score_bar_y = 0.865
-            UIMargin.ui_x = 0.23 if screen() != safe_area() else 0.0
+            UIMargin.ui_x = 0.23 if has_side_notch else 0.0
         case SekaiVersion.v1:
-            UIMargin.life_bar_x = 0.28 if screen() != safe_area() else 0.0
-            UIMargin.score_bar_x = 0.3 if screen() != safe_area() else 0.05
+            UIMargin.life_bar_x = 0.28 if has_side_notch else 0.0
+            UIMargin.score_bar_x = 0.3 if has_side_notch else 0.05
             UIMargin.life_bar_y = 0.84
             UIMargin.score_bar_y = 0.83
-            UIMargin.ui_x = 0.28 if screen() != safe_area() else 0.0
+            UIMargin.ui_x = 0.28 if has_side_notch else 0.0
 
 
 def layout_life_bar() -> Quad:
