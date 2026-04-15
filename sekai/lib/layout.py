@@ -138,9 +138,6 @@ class DynamicLayout:
     lane_t: float
     lane_b: float
 
-    fixed_w_scale: float
-    fixed_h_scale: float
-
 
 class CameraInfo(Record):
     lane: float
