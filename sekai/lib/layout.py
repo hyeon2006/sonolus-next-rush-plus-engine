@@ -103,9 +103,6 @@ class DynamicLayout:
     note_h: float
     scaled_note_h: float
 
-    fixed_w_scale: float
-    fixed_h_scale: float
-
 
 class CameraInfo(Record):
     lane: float
@@ -272,18 +269,6 @@ def refresh_layout():
         apply_camera_zoom(camera.zoom, camera.zoom_target_lane, camera.zoom_target_y)
 
     DynamicLayout.scaled_note_h = DynamicLayout.note_h * DynamicLayout.h_scale
-
-    if aspect_ratio() > TARGET_ASPECT_RATIO:
-        field_w = screen().h * TARGET_ASPECT_RATIO
-        field_h = screen().h
-    else:
-        field_w = screen().w
-        field_h = screen().w / TARGET_ASPECT_RATIO
-    ref_t = field_h * (0.5 + 1.15875 * (47 / 1176))
-    ref_b = field_h * (0.5 - 1.15875 * (803 / 1176))
-    ref_w = field_w * ((1.15875 * (1420 / 1176)) / TARGET_ASPECT_RATIO / 12) * size_zoom
-    DynamicLayout.fixed_w_scale = ref_w
-    DynamicLayout.fixed_h_scale = ref_b - ref_t
 
 
 def apply_camera_zoom(zoom: float, target_lane: float, target_y: float):
