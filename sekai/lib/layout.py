@@ -92,6 +92,11 @@ class Layout:
     progress_start: float
     progress_cutoff: float
     flick_speed_threshold: float
+    t: float
+    w_scale: float
+    h_scale: float
+    fixed_w_scale: float
+    fixed_h_scale: float
 
 
 @level_memory
@@ -102,9 +107,6 @@ class DynamicLayout:
     x_translate: float
     note_h: float
     scaled_note_h: float
-
-    fixed_w_scale: float
-    fixed_h_scale: float
 
 
 class CameraInfo(Record):
@@ -126,6 +128,26 @@ def init_layout():
 
     Layout.field_w = field_w
     Layout.field_h = field_h
+
+    t = Layout.field_h * (0.5 + 1.15875 * (47 / 1176))
+    b = Layout.field_h * (0.5 - 1.15875 * (803 / 1176))
+    w = Layout.field_w * ((1.15875 * (1420 / 1176)) / TARGET_ASPECT_RATIO / 12)
+
+    Layout.t = t
+    Layout.w_scale = w
+    Layout.h_scale = b - t
+
+    if aspect_ratio() > TARGET_ASPECT_RATIO:
+        field_w = screen().h * TARGET_ASPECT_RATIO
+        field_h = screen().h
+    else:
+        field_w = screen().w
+        field_h = screen().w / TARGET_ASPECT_RATIO
+    ref_t = field_h * (0.5 + 1.15875 * (47 / 1176))
+    ref_b = field_h * (0.5 - 1.15875 * (803 / 1176))
+    ref_w = field_w * ((1.15875 * (1420 / 1176)) / TARGET_ASPECT_RATIO / 12)
+    Layout.fixed_w_scale = ref_w
+    Layout.fixed_h_scale = ref_b - ref_t
 
     Layout.approach_start = 0.0
 
@@ -228,18 +250,6 @@ def refresh_layout():
     DynamicLayout.note_h = NOTE_H * (0.6 * zoom + 0.4)
     DynamicLayout.scaled_note_h = DynamicLayout.note_h * DynamicLayout.h_scale
 
-    if aspect_ratio() > TARGET_ASPECT_RATIO:
-        field_w = screen().h * TARGET_ASPECT_RATIO
-        field_h = screen().h
-    else:
-        field_w = screen().w
-        field_h = screen().w / TARGET_ASPECT_RATIO
-    ref_t = field_h * (0.5 + 1.15875 * (47 / 1176))
-    ref_b = field_h * (0.5 - 1.15875 * (803 / 1176))
-    ref_w = field_w * ((1.15875 * (1420 / 1176)) / TARGET_ASPECT_RATIO / 12) * zoom
-    DynamicLayout.fixed_w_scale = ref_w
-    DynamicLayout.fixed_h_scale = ref_b - ref_t
-
 
 def approach(progress: float) -> float:
     progress = lerp(Layout.approach_start, 1.0, progress)
@@ -302,10 +312,17 @@ def transform_vec(v: Vec2) -> Vec2:
     )
 
 
+def transform_static_vec(v: Vec2) -> Vec2:
+    return Vec2(
+        v.x * Layout.w_scale,
+        v.y * Layout.h_scale + Layout.t,
+    )
+
+
 def transform_fixed_vec(v: Vec2) -> Vec2:
     return Vec2(
-        v.x * DynamicLayout.fixed_w_scale,
-        v.y * DynamicLayout.fixed_h_scale + DynamicLayout.t,
+        v.x * Layout.fixed_w_scale,
+        v.y * Layout.fixed_h_scale + Layout.t,
     )
 
 
@@ -315,6 +332,15 @@ def transform_quad(q: QuadLike) -> Quad:
         br=transform_vec(q.br),
         tl=transform_vec(q.tl),
         tr=transform_vec(q.tr),
+    )
+
+
+def transform_static_quad(q: QuadLike) -> Quad:
+    return Quad(
+        bl=transform_static_vec(q.bl),
+        br=transform_static_vec(q.br),
+        tl=transform_static_vec(q.tl),
+        tr=transform_static_vec(q.tr),
     )
 
 
@@ -1088,7 +1114,7 @@ def layout_combo_label(
     w: float,
     h: float,
 ) -> Quad:
-    return transform_quad(
+    return transform_static_quad(
         Quad(
             bl=Vec2(center.x - w, center.y + h),
             br=Vec2(center.x + w, center.y + h),
@@ -1182,11 +1208,11 @@ def layout_fever_border() -> Rect:
 
 
 def transform_fixed_size(h, w):
-    target_width = w * DynamicLayout.fixed_w_scale
-    target_height = h * DynamicLayout.fixed_h_scale
+    target_width = w * Layout.fixed_w_scale
+    target_height = h * Layout.fixed_h_scale
 
-    width = target_width / DynamicLayout.w_scale
-    height = target_height / DynamicLayout.h_scale
+    width = target_width / Layout.w_scale
+    height = target_height / Layout.h_scale
 
     return height, width
 
