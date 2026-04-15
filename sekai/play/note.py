@@ -774,19 +774,28 @@ class BaseNote(PlayArchetype):
             self.best_touch_id = current_touch_id
 
     def handle_tick_input(self):
-        has_touch = False
-        for touch in touches():
-            if touch.position.x not in self.hitbox.bounds:
-                continue
-            input_manager.disallow_empty(touch)
-            has_touch = True
-        if has_touch:
-            if offset_adjusted_time() >= self.target_time:
+        hitbox = self.hitbox
+        if self.tick_head_ref.index > 0 or (self.is_attached and self.attach_head_ref.index > 0):
+            for touch in touches():
+                if touch.position.x not in self.hitbox.bounds:
+                    continue
+                input_manager.disallow_empty(touch)
                 self.complete()
-            else:
-                # Always judge as perfect accuracy for ticks if touched.
-                self.best_touch_time = self.target_time
-                self.best_touch_matches_direction = True
+                return
+        else:
+            has_touch = False
+            for touch in touches():
+                if touch.position.x not in self.hitbox.bounds:
+                    continue
+                input_manager.disallow_empty(touch)
+                has_touch = True
+            if has_touch:
+                if offset_adjusted_time() >= self.target_time:
+                    self.complete()
+                else:
+                    # Always judge as perfect accuracy for ticks if touched.
+                    self.best_touch_time = self.target_time
+                    self.best_touch_matches_direction = True
 
     def handle_damage_input(self):
         has_touch = False
