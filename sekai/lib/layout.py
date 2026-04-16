@@ -440,7 +440,7 @@ def layout_stage_cover_and_line(l: float = -6, r: float = 6) -> tuple[Quad, Quad
     return perspective_rect(
         l=l,
         r=r,
-        t=LANE_T,
+        t=max(LANE_T, get_perspective_y(1)),
         b=cover_b,
     ), perspective_rect(
         l=l,
