@@ -1,7 +1,10 @@
 from sekai.level_utils import (
     LevelBpmChange,
     LevelCameraChange,
+    LevelFeverChance,
+    LevelFeverStart,
     LevelNote,
+    LevelSkill,
     LevelSlide,
     LevelStage,
     LevelStageMaskChange,
@@ -223,6 +226,10 @@ guide_slide.notes = [
     for i, beat in enumerate(regular_beats)
 ]
 
+fever_chance = LevelFeverChance(beat=1.0, force=True)
+fever_start = LevelFeverStart(beat=100)
+test_skill = LevelSkill(beat=1.0, effect=2)
+
 
 entities = [
     LevelBpmChange(beat=0.0, bpm=60.0),
@@ -232,6 +239,9 @@ entities = [
     *camera_changes,
     slide,
     guide_slide,
+    fever_chance,
+    fever_start,
+    test_skill,
     *attached_notes,
 ]
 
