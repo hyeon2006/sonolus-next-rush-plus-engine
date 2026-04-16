@@ -380,6 +380,17 @@ def perspective_rect(l: float, r: float, t: float, b: float, travel: float = 1.0
     )
 
 
+def perspective_static_rect(l: float, r: float, t: float, b: float, travel: float = 1.0) -> Quad:
+    return transform_static_quad(
+        Quad(
+            bl=Vec2(l * b * travel, b * travel),
+            br=Vec2(r * b * travel, b * travel),
+            tl=Vec2(l * t * travel, t * travel),
+            tr=Vec2(r * t * travel, t * travel),
+        )
+    )
+
+
 def get_perspective_y(target_y: float, travel: float = 1.0) -> float:
     if DynamicLayout.h_scale == 0 or travel == 0:
         return 0.0
@@ -1161,14 +1172,24 @@ def layout_skill_judgment_line(l: float = -6, r: float = 6, y_offset: float = 0.
 
 def layout_fever_cover(l, r) -> Quad:
     p = perspective_rect(l=l, r=r, t=0, b=get_perspective_y(-1))
-    safe_bl_x = min(screen().bl.x, p.bl.x)
-
-    return Quad(
-        bl=Vec2(safe_bl_x, screen().bl.y),
-        br=p.bl,
-        tl=Vec2(screen().tl.x, p.tr.y),
-        tr=p.tl,
-    )
+    quad = +Quad
+    if r == 0:
+        safe_bl_x = min(screen().bl.x, p.bl.x)
+        quad @= Quad(
+            bl=Vec2(safe_bl_x, screen().bl.y),
+            br=p.bl,
+            tl=Vec2(screen().tl.x, p.tr.y),
+            tr=p.tl,
+        )
+    else:
+        safe_br_x = max(screen().br.x, p.br.x)
+        quad @= Quad(
+            bl=p.br,
+            br=Vec2(safe_br_x, screen().br.y),
+            tl=p.tr,
+            tr=Vec2(screen().tr.x, p.tl.y),
+        )
+    return quad
 
 
 def layout_fever_cover_sky() -> Quad:
@@ -1200,7 +1221,7 @@ def layout_dynamic_fever_side(l: float, r: float, percentage: float, travel: flo
 def layout_fever_text() -> Quad:
     center = 0.65
     rect = Rect(t=center - 0.2, b=center + 0.2, l=-1.5, r=1.5)
-    return transform_quad(rect)
+    return transform_static_quad(rect)
 
 
 def layout_fever_border() -> Rect:
