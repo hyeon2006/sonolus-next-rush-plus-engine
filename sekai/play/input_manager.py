@@ -76,8 +76,6 @@ def update_input_state():
             InputState.last_started_touch_id = touch.id
             InputState.last_started_touch_disallowed = False
 
-            InputState.last_started_touch_id = touch.id
-
         if touch.id in old_disallowed_empty_touches:
             disallow_empty(touch)
 
@@ -118,7 +116,7 @@ def preassign_taps():
                 target_note = active[note_i].get()
                 if target_note.captured_touch_id != 0:
                     continue
-                if not target_note.hitbox.bounds.contains_point(touch.position):
+                if target_note.hitbox.bounds.contains_point(touch.position):
                     continue
                 if touch.time not in target_note.unadjusted_input_interval:
                     continue
