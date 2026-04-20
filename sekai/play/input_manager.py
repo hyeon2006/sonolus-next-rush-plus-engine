@@ -27,7 +27,7 @@ class InputState:
 
 def disallow_empty(touch: Touch):
     InputState.disallowed_empty_touches.add(touch.id)
-    if touch.id == InputState.last_started_touch_id:
+    if touch.id == InputState.last_started_touch_id or touch.started:
         InputState.last_started_touch_disallowed = True
 
 
