@@ -208,7 +208,11 @@ class Connector(PlayArchetype):
                     not touch.ended
                     and hitbox.contains_point(touch.position)
                     and input_manager.is_allowed_empty(touch)
-                    and (self.can_consume_empty or input_manager.is_last_started_touch_disallowed())
+                    and (
+                        self.can_consume_empty
+                        or input_manager.is_last_started_touch_disallowed()
+                        or (touch.started and input_manager.is_previous_touch_disallowed())
+                    )
                 ):
                     input_manager.disallow_empty(touch)
                     self.can_consume_empty = False
