@@ -800,8 +800,8 @@ def layout_fallback_judge_line() -> Quad:
     return perspective_rect(l=-6, r=6, t=1 - DynamicLayout.note_h, b=1 + DynamicLayout.note_h)
 
 
-def layout_note_body_by_edges(l: float, r: float, h: float, travel: float, not_sekai_p: bool = False):
-    p = 0.5 if not not_sekai_p and Options.sekai_perspective else 1
+def layout_note_body_by_edges(l: float, r: float, h: float, travel: float):
+    p = 0.5 if Options.sekai_perspective else 1
     return transform_quad(
         Quad(
             bl=Vec2(l * (1 + h * p) * travel, (1 + h) * travel),
@@ -814,7 +814,7 @@ def layout_note_body_by_edges(l: float, r: float, h: float, travel: float, not_s
 
 
 def layout_note_body_slices_by_edges(
-    l: float, r: float, h: float, edge_w: float, travel: float, not_sekai_p: bool = False
+    l: float, r: float, h: float, edge_w: float, travel: float
 ) -> tuple[Quad, Quad, Quad]:
     m = (l + r) / 2
     if r < l:
@@ -823,55 +823,47 @@ def layout_note_body_slices_by_edges(
     ml = min(l + edge_w, m)
     mr = max(r - edge_w, m)
     return (
-        layout_note_body_by_edges(l=l, r=ml, h=h, travel=travel, not_sekai_p=not_sekai_p),
-        layout_note_body_by_edges(l=ml, r=mr, h=h, travel=travel, not_sekai_p=not_sekai_p),
-        layout_note_body_by_edges(l=mr, r=r, h=h, travel=travel, not_sekai_p=not_sekai_p),
+        layout_note_body_by_edges(l=l, r=ml, h=h, travel=travel),
+        layout_note_body_by_edges(l=ml, r=mr, h=h, travel=travel),
+        layout_note_body_by_edges(l=mr, r=r, h=h, travel=travel),
     )
 
 
-def layout_regular_note_body(
-    lane: float, size: float, travel: float, not_sekai_p: bool = False
-) -> tuple[Quad, Quad, Quad]:
+def layout_regular_note_body(lane: float, size: float, travel: float) -> tuple[Quad, Quad, Quad]:
     return layout_note_body_slices_by_edges(
         l=lane - size + Options.note_margin,
         r=lane + size - Options.note_margin,
         h=DynamicLayout.note_h,
         edge_w=NOTE_EDGE_W,
         travel=travel,
-        not_sekai_p=not_sekai_p,
     )
 
 
-def layout_regular_note_body_fallback(lane: float, size: float, travel: float, not_sekai_p: bool = False) -> Quad:
+def layout_regular_note_body_fallback(lane: float, size: float, travel: float) -> Quad:
     return layout_note_body_by_edges(
         l=lane - size + Options.note_margin,
         r=lane + size - Options.note_margin,
         h=DynamicLayout.note_h,
         travel=travel,
-        not_sekai_p=not_sekai_p,
     )
 
 
-def layout_slim_note_body(
-    lane: float, size: float, travel: float, not_sekai_p: bool = False
-) -> tuple[Quad, Quad, Quad]:
+def layout_slim_note_body(lane: float, size: float, travel: float) -> tuple[Quad, Quad, Quad]:
     return layout_note_body_slices_by_edges(
         l=lane - size + Options.note_margin,
         r=lane + size - Options.note_margin,
         h=DynamicLayout.note_h,  # Height is handled by the sprite rather than being changed here
         edge_w=NOTE_SLIM_EDGE_W,
         travel=travel,
-        not_sekai_p=not_sekai_p,
     )
 
 
-def layout_slim_note_body_fallback(lane: float, size: float, travel: float, not_sekai_p: bool = False) -> Quad:
+def layout_slim_note_body_fallback(lane: float, size: float, travel: float) -> Quad:
     return layout_note_body_by_edges(
         l=lane - size + Options.note_margin,
         r=lane + size - Options.note_margin,
         h=DynamicLayout.note_h / 2,  # For fallback, we need to halve the height manually engine-side
         travel=travel,
-        not_sekai_p=not_sekai_p,
     )
 
 
