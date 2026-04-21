@@ -23,6 +23,7 @@ class InputState:
     disallowed_release_touches: ArrayMap[int, float, Dim[32]]
     last_started_touch_id: int
     last_started_touch_disallowed: bool
+    previous_touch_disallowed: bool
 
 
 def disallow_empty(touch: Touch):
@@ -71,8 +72,10 @@ def update_input_state():
 
     for touch in touches():
         if touch.started:
-            if InputState.last_started_touch_id not in old_disallowed_empty_touches:
-                InputState.last_started_touch_disallowed = False
+            InputState.previous_touch_disallowed = InputState.last_started_touch_disallowed
+
+            InputState.last_started_touch_id = touch.id
+            InputState.last_started_touch_disallowed = False
 
             InputState.last_started_touch_id = touch.id
 
@@ -85,6 +88,9 @@ def update_input_state():
 
 def is_last_started_touch_disallowed() -> bool:
     return InputState.last_started_touch_disallowed
+
+def is_previous_touch_disallowed() -> bool:
+    return InputState.previous_touch_disallowed
 
 
 def preassign_taps():
