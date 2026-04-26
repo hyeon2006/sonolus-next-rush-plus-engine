@@ -1156,8 +1156,8 @@ def layout_skill_bar(
 
 
 def layout_skill_judgment_line(l: float = -6, r: float = 6, y_offset: float = 0.0) -> Quad:
-    b = 1 + NOTE_H
-    t = 1 - NOTE_H
+    b = 1 + DynamicLayout.note_h
+    t = 1 - DynamicLayout.note_h
     travel = approach(1 - y_offset)
     return perspective_rect(l=l, r=r, t=t, b=b, travel=travel)
 
