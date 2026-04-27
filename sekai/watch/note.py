@@ -11,14 +11,14 @@ from sonolus.script.archetype import (
     shared_memory,
 )
 from sonolus.script.bucket import Judgment
-from sonolus.script.interval import lerp, remap_clamped, unlerp_clamped
+from sonolus.script.interval import remap_clamped, unlerp_clamped
 from sonolus.script.runtime import is_replay, is_skip, time
 from sonolus.script.timing import beat_to_time
 
 from sekai.debug import DISABLE_NOTES
 from sekai.lib.buckets import SekaiWindow
 from sekai.lib.connector import ActiveConnectorInfo, ConnectorKind, ConnectorLayer
-from sekai.lib.ease import EaseType, ease
+from sekai.lib.ease import EaseType
 from sekai.lib.layout import FlickDirection, compute_hitbox, progress_to
 from sekai.lib.note import (
     NoteEffectKind,
@@ -96,7 +96,6 @@ class WatchBaseNote(WatchArchetype):
     next_ref_accuracy: EntityRef[WatchBaseNote] = shared_memory()
     next_ref_damage_flash: EntityRef[WatchBaseNote] = shared_memory()
     judgment_window: SekaiWindow = shared_memory()
-    judgment_window_bad: Interval = shared_memory()
     combo: int = shared_memory()
     count: int = shared_memory()
     ap: bool = shared_memory()
@@ -365,7 +364,7 @@ class WatchBaseNote(WatchArchetype):
             self.target_time,
         )
         if Options.show_hitboxes and self.is_scored:
-            input_interval = get_note_window(self.kind).bad + self.target_time
+            input_interval = get_note_window(self.kind, self.active_head_ref.index > 0).bad + self.target_time
             draw_start = min(input_interval.start, self.target_time - HITBOX_DRAW_MIN_EARLY_WINDOW)
             if draw_start <= time() <= input_interval.end:
                 hitbox = compute_hitbox(
