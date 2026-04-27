@@ -11,13 +11,13 @@ from sonolus.script.archetype import (
     imported,
     shared_memory,
 )
-from sonolus.script.bucket import Judgment, JudgmentWindow
-from sonolus.script.interval import Interval, lerp, remap_clamped, unlerp_clamped
+from sonolus.script.bucket import Judgment
+from sonolus.script.interval import lerp, remap_clamped, unlerp_clamped
 from sonolus.script.runtime import is_replay, is_skip, time
 from sonolus.script.timing import beat_to_time
 
 from sekai.debug import DISABLE_NOTES, SHOW_TICK_HITBOX_SIZE
-from sekai.lib.buckets import SekaiWindow, get_judgment_interval
+from sekai.lib.buckets import SekaiWindow
 from sekai.lib.connector import ActiveConnectorInfo, ConnectorKind, ConnectorLayer
 from sekai.lib.ease import EaseType, ease
 from sekai.lib.layout import FlickDirection, progress_to
@@ -31,7 +31,6 @@ from sekai.lib.note import (
     get_note_effect_kind,
     get_note_particles,
     get_note_window,
-    get_note_window_bad,
     get_visual_spawn_time,
     is_head,
     map_note_kind,
@@ -261,7 +260,7 @@ class WatchBaseNote(WatchArchetype):
             leniency = get_leniency(self.kind)
             hitbox_l = self.lane - self.size
             hitbox_r = self.lane + self.size
-            window_start = self.target_time + self.judgment_window.good.start
+            """window_start = self.target_time + self.judgment_window.good.start
             window_end = self.target_time + self.judgment_window.good.end
 
             # Scan backward to cover connector positions from window start to this tick
@@ -331,7 +330,7 @@ class WatchBaseNote(WatchArchetype):
                     last_size = size
                     last_time = current.target_time
                     last_ease = current.connector_ease
-                current_ref @= current.next_ref
+                current_ref @= current.next_ref"""
             hitbox_l -= leniency
             hitbox_r += leniency
             self.hitbox_l = hitbox_l
