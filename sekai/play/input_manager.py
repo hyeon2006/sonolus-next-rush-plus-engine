@@ -89,6 +89,7 @@ def update_input_state():
 def is_last_started_touch_disallowed() -> bool:
     return InputState.last_started_touch_disallowed
 
+
 def is_previous_touch_disallowed() -> bool:
     return InputState.previous_touch_disallowed
 
