@@ -48,7 +48,7 @@ class SkillMode(IntEnum):
         return option_map.get(option_val, legacy_map.get(legacy_val, cls.SCORE))
 
 
-class SekaiVersion(IntEnum):
+class Version(IntEnum):
     v3 = 0
     v1 = 1
 
@@ -206,11 +206,14 @@ class Options:
         scope="Rush",
         default=True,
     )
-    sekai_perspective: bool = toggle_option(
-        name="Sekai Perspective",
-        description="Uses the SEKAI style for note perspective.",
+    note_perspective: float = slider_option(
+        name="Note Perspective",
+        description="Sets the perspective of the notes. As it approaches 0, the notes are drawn vertically.",
         scope="Rush",
-        default=True,
+        default=1,
+        min=0,
+        max=1,
+        step=0.1,
     )
     sfx_enabled: bool = toggle_option(
         name=StandardText.EFFECT,
@@ -430,8 +433,8 @@ class Options:
         scope="Sekai",
         values=[
             "Weighted Flat",
-            "Weighted Combo (Sekai Standard)",
-            "Unweighted Flat (Sekai Ranked Match)",
+            "Weighted Combo",
+            "Unweighted Flat",
             "Unweighted Combo",
         ],
         standard=True,

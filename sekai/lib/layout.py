@@ -19,7 +19,7 @@ from sekai.lib import archetype_names
 from sekai.lib.baseevent import get_event_as, query_event_list
 from sekai.lib.ease import EaseType, ease
 from sekai.lib.level_config import LevelConfig
-from sekai.lib.options import HitboxMode, Options, SekaiVersion, StageCoverNoteSpeedCompensation
+from sekai.lib.options import HitboxMode, Options, StageCoverNoteSpeedCompensation, Version
 from sekai.lib.timescale import CompositeTime
 
 LANE_T = 47 / 850
@@ -499,13 +499,13 @@ def init_ui_margin():
     has_side_notch = (screen().l != safe_area().l) or (screen().r != safe_area().r)
 
     match LevelConfig.ui_version:
-        case SekaiVersion.v3:
+        case Version.v3:
             UIMargin.life_bar_x = 0.28 if has_side_notch else 0.05
             UIMargin.score_bar_x = 0.3 if has_side_notch else 0.1
             UIMargin.life_bar_y = 0.887
             UIMargin.score_bar_y = 0.865
             UIMargin.ui_x = 0.23 if has_side_notch else 0.0
-        case SekaiVersion.v1:
+        case Version.v1:
             UIMargin.life_bar_x = 0.28 if has_side_notch else 0.0
             UIMargin.score_bar_x = 0.3 if has_side_notch else 0.05
             UIMargin.life_bar_y = 0.84
@@ -522,11 +522,11 @@ def layout_life_bar() -> Quad:
     w = 0
     base_h_unscaled = 0
     match LevelConfig.ui_version:
-        case SekaiVersion.v3:
+        case Version.v3:
             base_h_unscaled = 0.196 * ui.secondary_metric_config.scale
             h = base_h_unscaled * scale_ratio
             w = h * 4.22
-        case SekaiVersion.v1:
+        case Version.v1:
             base_h_unscaled = 0.23 * ui.secondary_metric_config.scale
             h = base_h_unscaled * scale_ratio
             w = h * 4.22
@@ -549,7 +549,7 @@ def layout_life_gauge(life, edge=False) -> Quad:
 
     bar_h_unscaled = (
         0.196 * ui.secondary_metric_config.scale
-        if LevelConfig.ui_version == SekaiVersion.v3
+        if LevelConfig.ui_version == Version.v3
         else 0.23 * ui.secondary_metric_config.scale
     )
     bar_h_current = bar_h_unscaled * scale_ratio
@@ -560,12 +560,12 @@ def layout_life_gauge(life, edge=False) -> Quad:
     h = 0
     w = 0
     match LevelConfig.ui_version:
-        case SekaiVersion.v3:
+        case Version.v3:
             margin_offset = 0.118
             y_offset = -0.007
             h = 0.033 * ui.secondary_metric_config.scale * scale_ratio
             w = h * 15.3
-        case SekaiVersion.v1:
+        case Version.v1:
             margin_offset = 0.02
             y_offset = 0.01
             h = 0.023 * ui.secondary_metric_config.scale * scale_ratio
@@ -591,7 +591,7 @@ def layout_life_gauge(life, edge=False) -> Quad:
             tr=Vec2(screen_center.x + w * life, screen_center.y + h / 2),
         )
     else:
-        active_ratio = 0.9625 if LevelConfig.ui_version == SekaiVersion.v3 else 0.915
+        active_ratio = 0.9625 if LevelConfig.ui_version == Version.v3 else 0.915
 
         travel_distance = w * active_ratio
 
@@ -616,11 +616,11 @@ def layout_score_bar() -> Quad:
     h = 0
     w = 0
     match LevelConfig.ui_version:
-        case SekaiVersion.v3:
+        case Version.v3:
             base_h_unscaled = 0.27 * ui.primary_metric_config.scale
             h = base_h_unscaled * scale_ratio
             w = h * 4.6
-        case SekaiVersion.v1:
+        case Version.v1:
             base_h_unscaled = 0.32 * ui.primary_metric_config.scale
             h = base_h_unscaled * scale_ratio
             w = h * 4.6
@@ -648,7 +648,7 @@ def layout_score_gauge(gauge=0.0, score_type: ScoreGaugeType = ScoreGaugeType.NO
 
     bar_h_unscaled = (
         0.27 * ui.primary_metric_config.scale
-        if LevelConfig.ui_version == SekaiVersion.v3
+        if LevelConfig.ui_version == Version.v3
         else 0.32 * ui.primary_metric_config.scale
     )
     bar_h_current = bar_h_unscaled * scale_ratio
@@ -661,7 +661,7 @@ def layout_score_gauge(gauge=0.0, score_type: ScoreGaugeType = ScoreGaugeType.NO
     h = 0
     w = 0
     match LevelConfig.ui_version:
-        case SekaiVersion.v3:
+        case Version.v3:
             margin_offset = 0.04
             y_offset = 0.008
             h = max(
@@ -672,7 +672,7 @@ def layout_score_gauge(gauge=0.0, score_type: ScoreGaugeType = ScoreGaugeType.NO
                 (h * 20 * ((1 - gauge) if score_type == ScoreGaugeType.MASK else 1)),
                 1e-3,
             )
-        case SekaiVersion.v1:
+        case Version.v1:
             margin_offset = -0.155
             y_offset = 0.021
             h = max(
@@ -709,7 +709,7 @@ def layout_score_rank() -> Quad:
 
     bar_h_unscaled = (
         0.27 * ui.primary_metric_config.scale
-        if LevelConfig.ui_version == SekaiVersion.v3
+        if LevelConfig.ui_version == Version.v3
         else 0.32 * ui.primary_metric_config.scale
     )
     bar_h_current = bar_h_unscaled * scale_ratio
@@ -720,12 +720,12 @@ def layout_score_rank() -> Quad:
     h = 0
     w = 0
     match LevelConfig.ui_version:
-        case SekaiVersion.v3:
+        case Version.v3:
             margin_offset = 1.138
             y_offset = 0.015
             h = 0.29 * ui.primary_metric_config.scale * scale_ratio
             w = h * 0.772
-        case SekaiVersion.v1:
+        case Version.v1:
             margin_offset = 1.102
             y_offset = 0.002
             h = 0.17 * ui.primary_metric_config.scale * scale_ratio
@@ -757,7 +757,7 @@ def layout_score_rank_text() -> Quad:
 
     bar_h_unscaled = (
         0.27 * ui.primary_metric_config.scale
-        if LevelConfig.ui_version == SekaiVersion.v3
+        if LevelConfig.ui_version == Version.v3
         else 0.32 * ui.primary_metric_config.scale
     )
     bar_h_current = bar_h_unscaled * scale_ratio
@@ -801,7 +801,7 @@ def layout_fallback_judge_line() -> Quad:
 
 
 def layout_note_body_by_edges(l: float, r: float, h: float, travel: float):
-    p = 0.5 if Options.sekai_perspective else 1
+    p = Options.note_perspective
     return transform_quad(
         Quad(
             bl=Vec2(l * (1 + h * p) * travel, (1 + h) * travel),
@@ -1133,7 +1133,7 @@ def layout_skill_bar(
     h: float,
 ) -> Quad:
     layout = +Quad
-    if LevelConfig.ui_version == SekaiVersion.v1:
+    if LevelConfig.ui_version == Version.v1:
         h, w = transform_fixed_size(h, w)
         layout @= transform_quad(
             Quad(
