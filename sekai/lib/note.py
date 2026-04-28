@@ -65,7 +65,7 @@ from sekai.lib.layout import (
     progress_to,
 )
 from sekai.lib.level_config import LevelConfig
-from sekai.lib.options import Options, ScoreMode, SekaiVersion, VibrateMode
+from sekai.lib.options import Options, ScoreMode, Version, VibrateMode
 from sekai.lib.particle import (
     EMPTY_NOTE_PARTICLE_SET,
     ActiveParticles,
@@ -860,7 +860,7 @@ def play_note_hit_effects(
                     NoteKind.CRIT_TAIL_FLICK,
                     NoteKind.CRIT_TAIL_TRACE_FLICK,
                 )
-                and LevelConfig.particle_version == SekaiVersion.v1
+                and LevelConfig.particle_version == Version.v1
                 else 22.5
             )
             match direction:
