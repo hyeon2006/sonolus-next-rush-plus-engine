@@ -18,7 +18,7 @@ from sonolus.script.array import Array, Dim
 from sonolus.script.bucket import Bucket, Judgment
 from sonolus.script.containers import VarArray
 from sonolus.script.globals import level_memory
-from sonolus.script.interval import Interval, remap_clamped, unlerp_clamped
+from sonolus.script.interval import Interval, lerp, remap_clamped, unlerp_clamped
 from sonolus.script.quad import Quad
 from sonolus.script.runtime import Touch, delta_time, input_offset, offset_adjusted_time, time, touches
 from sonolus.script.timing import beat_to_time
@@ -27,8 +27,8 @@ from sekai.debug import DISABLE_NOTES, SHOW_TICK_HITBOX_SIZE
 from sekai.lib import archetype_names
 from sekai.lib.buckets import WINDOW_SCALE, SekaiWindow
 from sekai.lib.connector import ActiveConnectorInfo, ConnectorKind, ConnectorLayer
-from sekai.lib.ease import EaseType
-from sekai.lib.layout import FlickDirection, Layout, layout_hitbox, progress_to
+from sekai.lib.ease import EaseType, ease
+from sekai.lib.layout import FlickDirection, Layout, layout_hitbox, layout_lane, progress_to
 from sekai.lib.note import (
     NoteEffectKind,
     NoteKind,
@@ -249,6 +249,10 @@ class BaseNote(PlayArchetype):
         if DISABLE_NOTES or self.kind == NoteKind.ANCHOR:
             return False
         return time() >= self.start_time
+
+    @property
+    def calc_time(self) -> float:
+        return self.target_time
 
     def initialize(self):
         if self.is_scored:
@@ -603,28 +607,20 @@ class BaseNote(PlayArchetype):
                 pivot_lane=self.visual_pivot_lane,
                 half_offset=self.visual_half_offset,
             )
-            if self.is_scored and Options.lane_effect_enabled:
-                particles = get_note_particles(self.kind, self.direction)
-                if particles.lane.id == BaseParticles.critical_flick_note_lane_linear.id:
-                    ParticleManager.spawn(
-                        particles=particles,
-                        lane=self.lane,
-                        size=self.size,
-                        spawn_time=time(),
-                    )
-            if Options.lane_effect_enabled:
-                particles = get_note_particles(self.kind, self.direction)
-                if particles.lane.id == BaseParticles.critical_flick_note_lane_linear.id:
-                    layout = layout_lane(self.lane, self.size)
-                    ParticleManager.spawn(
-                        particle=particles.lane.spawn(layout, duration=1 / Options.effect_animation_speed),
-                        lane=self.lane,
-                        spawn_time=time(),
-                    )
         if self.is_scored:
             self.result.haptic = get_note_haptic_feedback(self.kind, self.result.judgment)
         self.end_time = offset_adjusted_time()
         self.played_hit_effects = self.should_play_hit_effects
+
+        if self.is_scored and Options.lane_effect_enabled:
+            particles = get_note_particles(self.kind, self.direction)
+            if particles.lane.id == BaseParticles.critical_flick_note_lane_linear.id:
+                ParticleManager.spawn(
+                    particles=particles,
+                    lane=self.lane,
+                    size=self.size,
+                    spawn_time=time(),
+                )
         if self.is_scored:
             self.wrong_way_check = self.wrong_way
             spawn_custom(
