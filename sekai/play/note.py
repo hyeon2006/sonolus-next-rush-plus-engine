@@ -28,7 +28,7 @@ from sekai.lib import archetype_names
 from sekai.lib.buckets import WINDOW_SCALE, SekaiWindow
 from sekai.lib.connector import ActiveConnectorInfo, ConnectorKind, ConnectorLayer
 from sekai.lib.ease import EaseType, ease
-from sekai.lib.layout import FlickDirection, Layout, layout_hitbox, layout_lane, progress_to
+from sekai.lib.layout import FlickDirection, Layout, layout_hitbox, progress_to
 from sekai.lib.note import (
     NoteEffectKind,
     NoteKind,
