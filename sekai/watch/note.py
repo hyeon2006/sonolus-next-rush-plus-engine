@@ -260,12 +260,12 @@ class WatchBaseNote(WatchArchetype):
         else:
             return self.target_time
 
-    def initialize(self):
+    """def initialize(self):
         if SHOW_TICK_HITBOX_SIZE and self.kind in {NoteKind.NORM_TICK, NoteKind.CRIT_TICK, NoteKind.HIDE_TICK}:
             leniency = get_leniency(self.kind)
             hitbox_l = self.lane - self.size
             hitbox_r = self.lane + self.size
-            """window_start = self.target_time + self.judgment_window.good.start
+            window_start = self.target_time + self.judgment_window.good.start
             window_end = self.target_time + self.judgment_window.good.end
 
             # Scan backward to cover connector positions from window start to this tick
@@ -335,11 +335,11 @@ class WatchBaseNote(WatchArchetype):
                     last_size = size
                     last_time = current.target_time
                     last_ease = current.connector_ease
-                current_ref @= current.next_ref"""
+                current_ref @= current.next_ref
             hitbox_l -= leniency
             hitbox_r += leniency
             self.hitbox_l = hitbox_l
-            self.hitbox_r = hitbox_r
+            self.hitbox_r = hitbox_r"""
 
     def update_sequential(self):
         update_timescale_group(self.timescale_group)
