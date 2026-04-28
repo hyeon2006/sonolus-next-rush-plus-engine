@@ -12,14 +12,14 @@ from sonolus.script.archetype import (
     shared_memory,
 )
 from sonolus.script.bucket import Judgment
-from sonolus.script.interval import remap_clamped, unlerp_clamped
+from sonolus.script.interval import lerp, remap_clamped, unlerp_clamped
 from sonolus.script.runtime import is_replay, is_skip, time
 from sonolus.script.timing import beat_to_time
 
 from sekai.debug import DISABLE_NOTES, SHOW_TICK_HITBOX_SIZE
 from sekai.lib.buckets import SekaiWindow
 from sekai.lib.connector import ActiveConnectorInfo, ConnectorKind, ConnectorLayer
-from sekai.lib.ease import EaseType
+from sekai.lib.ease import EaseType, ease
 from sekai.lib.layout import FlickDirection, progress_to
 from sekai.lib.note import (
     NoteEffectKind,
