@@ -160,7 +160,6 @@ def get_connector_z(kind: ConnectorKind, target_time: float, lane: float, active
                         lane=lane,
                         etc=get_active_connector_z_offset(kind, active),
                         invert_time=True,
-                        symmetrical_lane=True,
                     )
                 case ConnectorLayer.UNDER:
                     return get_z(
@@ -169,7 +168,6 @@ def get_connector_z(kind: ConnectorKind, target_time: float, lane: float, active
                         lane=lane,
                         etc=get_active_connector_z_offset(kind, active),
                         invert_time=True,
-                        symmetrical_lane=True,
                     )
                 case ConnectorLayer.OVER:
                     return get_z(
@@ -199,7 +197,6 @@ def get_connector_z(kind: ConnectorKind, target_time: float, lane: float, active
                         lane=lane,
                         etc=kind - ConnectorKind.GUIDE_NEUTRAL,
                         invert_time=True,
-                        symmetrical_lane=True,
                     )
                 case ConnectorLayer.BOTTOM:
                     return get_z(
@@ -208,7 +205,6 @@ def get_connector_z(kind: ConnectorKind, target_time: float, lane: float, active
                         lane=lane,
                         etc=kind - ConnectorKind.GUIDE_NEUTRAL,
                         invert_time=True,
-                        symmetrical_lane=True,
                     )
                 case ConnectorLayer.UNDER:
                     return get_z(
@@ -431,7 +427,7 @@ def draw_connector(
                 )
                 * DynamicLayout.w_scale
                 / perspective_factor
-            ) * abs(end_progress - start_progress)
+            ) * abs(end_visual_progress - start_visual_progress)
             curve_change_scale = x_diff**0.8
         case _:
             pos_offset = 0
@@ -463,7 +459,7 @@ def draw_connector(
                 screen_offset = abs(pos.x - ref_pos.x)
                 compensation_factor = max(0.1, travel) ** 0.8
                 pos_offset_this_side += screen_offset / compensation_factor
-            pos_offset = max(pos_offset, pos_offset_this_side) * abs(end_progress - start_progress) ** 0.7
+            pos_offset = max(pos_offset, pos_offset_this_side) * abs(end_visual_progress - start_visual_progress) ** 0.7
             curve_change_scale = pos_offset**0.4 * 2
     alpha_change_scale = max(
         (abs(start_alpha - end_alpha) * get_connector_alpha_option(kind)) ** 0.8 * 3,
@@ -494,7 +490,7 @@ def draw_connector(
 
     diff_frac = end_frac - start_frac
     diff_ease_frac = end_ease_frac - start_ease_frac
-    diff_progress = end_progress - start_progress
+    diff_visual_progress = end_visual_progress - start_visual_progress
     diff_lane = tail_lane - head_lane
     diff_size = tail_size - head_size
     diff_alpha = tail_alpha - head_alpha
