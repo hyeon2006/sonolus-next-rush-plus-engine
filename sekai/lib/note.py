@@ -362,7 +362,7 @@ def draw_slide_note_head(
     travel = approach(visual_progress)
     sprite_set = get_note_sprite_set(kind, FlickDirection.UP_OMNI)
     etc = get_active_connector_z_offset(connector_kind, False)
-    draw_note_body(sprite_set.body, kind, lane, size, travel, target_time, etc, not_sekai_p)
+    draw_note_body(sprite_set.body, kind, lane, size, travel, target_time, etc)
     draw_note_tick(sprite_set.tick, lane, travel, target_time, etc)
 
 
