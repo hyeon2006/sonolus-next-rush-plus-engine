@@ -137,11 +137,6 @@ class BaseNote(PlayArchetype):
     end_time: float = exported()
     played_hit_effects: bool = exported()
 
-    # cache
-    target_angle: float = entity_memory()
-    direction_check_needed: bool = entity_memory()
-    attach_frac: float = shared_memory()
-
     def init_data(self):
         if self.data_init_done:
             return
@@ -203,7 +198,6 @@ class BaseNote(PlayArchetype):
             self.size = size
             self.visual_start_time = min(attach_head.visual_start_time, attach_tail.visual_start_time)
             self.start_time = min(self.visual_start_time, self.input_interval.start)
-            self.attach_frac = unlerp_clamped(attach_head.target_time, attach_tail.target_time, self.target_time)
 
         if is_head(self.kind):
             self.active_connector_info.input_lane = self.lane
@@ -220,26 +214,6 @@ class BaseNote(PlayArchetype):
             stage.start_time = min(stage.start_time, self.start_time - 1.0)
             stage.end_time = max(stage.end_time, self.target_time + 1.0)
 
-        match self.direction:
-            case FlickDirection.UP_OMNI | FlickDirection.DOWN_OMNI:
-                self.direction_check_needed = False
-                self.target_angle = 0
-            case FlickDirection.UP_LEFT:
-                self.direction_check_needed = True
-                self.target_angle = pi / 2 + 1
-            case FlickDirection.UP_RIGHT:
-                self.direction_check_needed = True
-                self.target_angle = pi / 2 - 1
-            case FlickDirection.DOWN_LEFT:
-                self.direction_check_needed = True
-                self.target_angle = -pi / 2 - 1
-            case FlickDirection.DOWN_RIGHT:
-                self.direction_check_needed = True
-                self.target_angle = -pi / 2 + 1
-            case _:
-                self.direction_check_needed = False
-                self.target_angle = 0
-
     def spawn_order(self) -> float:
         if DISABLE_NOTES or self.kind == NoteKind.ANCHOR:
             return 1e8
@@ -253,88 +227,6 @@ class BaseNote(PlayArchetype):
     @property
     def calc_time(self) -> float:
         return self.target_time
-
-    def initialize(self):
-        if self.is_scored:
-            leniency = get_leniency(self.kind)
-            hitbox_l = self.lane - self.size
-            hitbox_r = self.lane + self.size
-            """if self.kind in {NoteKind.NORM_TICK, NoteKind.CRIT_TICK, NoteKind.HIDE_TICK}:
-                window_start = self.target_time + self.judgment_window.good.start
-                window_end = self.target_time + self.judgment_window.good.end
-
-                # Scan backward to cover connector positions from window start to this tick
-                current_ref = +EntityRef[BaseNote]
-                if self.is_attached:
-                    current_ref @= self.attach_head_ref
-                    attach_tail = self.attach_tail_ref.get()
-                    last_lane = attach_tail.lane
-                    last_size = attach_tail.size
-                    last_time = attach_tail.target_time
-                else:
-                    current_ref @= self.prev_ref
-                    last_lane = self.lane
-                    last_size = self.size
-                    last_time = self.target_time
-                while current_ref.index > 0:
-                    current = current_ref.get()
-                    if not current.is_attached:
-                        if current.target_time <= window_start:
-                            ease_progress = ease(
-                                current.connector_ease,
-                                unlerp_epsilon(current.target_time, last_time, window_start),
-                            )
-                            lane = lerp(current.lane, last_lane, ease_progress)
-                            size = lerp(current.size, last_size, ease_progress)
-                            hitbox_l = min(hitbox_l, lane - size)
-                            hitbox_r = max(hitbox_r, lane + size)
-                            break
-                        lane = current.lane
-                        size = current.size
-                        hitbox_l = min(hitbox_l, lane - size)
-                        hitbox_r = max(hitbox_r, lane + size)
-                        last_lane = lane
-                        last_size = size
-                        last_time = current.target_time
-                    current_ref @= current.prev_ref
-
-                # Scan forward to cover connector positions from this tick to window end
-                if self.is_attached:
-                    current_ref @= self.attach_tail_ref
-                    attach_head = self.attach_head_ref.get()
-                    last_lane = attach_head.lane
-                    last_size = attach_head.size
-                    last_time = attach_head.target_time
-                    last_ease = attach_head.connector_ease
-                else:
-                    current_ref @= self.next_ref
-                    last_lane = self.lane
-                    last_size = self.size
-                    last_time = self.target_time
-                    last_ease = self.connector_ease
-                while current_ref.index > 0:
-                    current = current_ref.get()
-                    if not current.is_attached:
-                        if current.target_time >= window_end:
-                            ease_progress = ease(last_ease, unlerp_epsilon(last_time, current.target_time, window_end))
-                            lane = lerp(last_lane, current.lane, ease_progress)
-                            size = lerp(last_size, current.size, ease_progress)
-                            hitbox_l = min(hitbox_l, lane - size)
-                            hitbox_r = max(hitbox_r, lane + size)
-                            break
-                        lane = current.lane
-                        size = current.size
-                        hitbox_l = min(hitbox_l, lane - size)
-                        hitbox_r = max(hitbox_r, lane + size)
-                        last_lane = lane
-                        last_size = size
-                        last_time = current.target_time
-                        last_ease = current.connector_ease
-                    current_ref @= current.next_ref"""
-            hitbox_l -= leniency
-            hitbox_r += leniency
-            self.hitbox_l = hitbox_l
-            self.hitbox_r = hitbox_r
 
     def update_sequential(self):
         if self.despawn:
@@ -885,11 +777,21 @@ class BaseNote(PlayArchetype):
         return is_captured or hitbox.contains_point(touch.position) or hitbox.contains_point(touch.prev_position)
 
     def check_direction_matches(self, angle: float) -> bool:
-        if not self.direction_check_needed:
-            return True
-
         leniency = pi / 2
-        angle_diff = abs((angle - self.target_angle + pi) % (2 * pi) - pi)
+        match self.direction:
+            case FlickDirection.UP_OMNI | FlickDirection.DOWN_OMNI:
+                return True
+            case FlickDirection.UP_LEFT:
+                target_angle = pi / 2 + 1
+            case FlickDirection.UP_RIGHT:
+                target_angle = pi / 2 - 1
+            case FlickDirection.DOWN_LEFT:
+                target_angle = -pi / 2 - 1
+            case FlickDirection.DOWN_RIGHT:
+                target_angle = -pi / 2 + 1
+            case _:
+                assert_never(self.direction)
+        angle_diff = abs((angle - target_angle + pi) % (2 * pi) - pi)
         return angle_diff <= leniency
 
     def judge(self, actual_time: float):
@@ -1004,7 +906,7 @@ class BaseNote(PlayArchetype):
                 else unlerp_clamped(attach_head.target_time, attach_tail.target_time, current_time)
             )
             tail_frac = 1.0
-            frac = self.attach_frac
+            frac = unlerp_clamped(attach_head.target_time, attach_tail.target_time, self.target_time)
             return remap_clamped(head_frac, tail_frac, head_progress, tail_progress, frac)
         else:
             return progress_to(
@@ -1085,14 +987,18 @@ class BaseNote(PlayArchetype):
     @property
     def head_ease_frac(self) -> float:
         if self.is_attached:
-            return self.attach_frac
+            return unlerp_clamped(
+                self.attach_head_ref.get().target_time, self.attach_tail_ref.get().target_time, self.target_time
+            )
         else:
             return 0.0
 
     @property
     def tail_ease_frac(self) -> float:
         if self.is_attached:
-            return self.attach_frac
+            return unlerp_clamped(
+                self.attach_head_ref.get().target_time, self.attach_tail_ref.get().target_time, self.target_time
+            )
         else:
             return 1.0
 
