@@ -1165,21 +1165,25 @@ def layout_skill_judgment_line(l: float = -6, r: float = 6, y_offset: float = 0.
 def layout_fever_cover(l, r) -> Quad:
     p = perspective_rect(l=l, r=r, t=0, b=get_perspective_y(-1))
     quad = +Quad
+
+    safe_l = screen().bl.x - screen().w
+    safe_r = screen().br.x + screen().w
+    safe_t = screen().tl.y + screen().h
+    safe_b = screen().bl.y - screen().h
+
     if r == 0:
-        safe_bl_x = min(screen().bl.x, p.bl.x)
         quad @= Quad(
-            bl=Vec2(safe_bl_x, screen().bl.y),
+            bl=Vec2(safe_l, safe_b),
             br=p.bl,
-            tl=Vec2(screen().tl.x, p.tr.y),
+            tl=Vec2(safe_l, safe_t),
             tr=p.tl,
         )
     else:
-        safe_br_x = max(screen().br.x, p.br.x)
         quad @= Quad(
             bl=p.br,
-            br=Vec2(safe_br_x, screen().br.y),
+            br=Vec2(safe_r, safe_b),
             tl=p.tr,
-            tr=Vec2(screen().tr.x, p.tl.y),
+            tr=Vec2(safe_r, safe_t),
         )
     return quad
 
