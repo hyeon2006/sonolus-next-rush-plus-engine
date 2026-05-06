@@ -18,9 +18,11 @@ from sekai.lib.ease import EaseType, ease
 from sekai.lib.effect import Effects
 from sekai.lib.layer import (
     LAYER_ACTIVE_SLIDE_CONNECTOR_BOTTOM,
+    LAYER_ACTIVE_SLIDE_CONNECTOR_OVER,
     LAYER_ACTIVE_SLIDE_CONNECTOR_TOP,
     LAYER_ACTIVE_SLIDE_CONNECTOR_UNDER,
     LAYER_GUIDE_CONNECTOR_BOTTOM,
+    LAYER_GUIDE_CONNECTOR_OVER,
     LAYER_GUIDE_CONNECTOR_TOP,
     LAYER_GUIDE_CONNECTOR_UNDER,
     LAYER_SLOT_GLOW_EFFECT,
@@ -71,6 +73,7 @@ class ConnectorLayer(IntEnum):
     TOP = 0
     BOTTOM = 1
     UNDER = 2
+    OVER = 3
 
 
 ActiveConnectorKind = Literal[
@@ -167,6 +170,14 @@ def get_connector_z(kind: ConnectorKind, target_time: float, lane: float, active
                         etc=get_active_connector_z_offset(kind, active),
                         invert_time=True,
                     )
+                case ConnectorLayer.OVER:
+                    return get_z(
+                        LAYER_ACTIVE_SLIDE_CONNECTOR_OVER,
+                        time=target_time,
+                        lane=lane,
+                        etc=get_active_connector_z_offset(kind, active),
+                        invert_time=True,
+                    )
                 case _:
                     assert_never(layer)
         case (
@@ -199,6 +210,14 @@ def get_connector_z(kind: ConnectorKind, target_time: float, lane: float, active
                 case ConnectorLayer.UNDER:
                     return get_z(
                         LAYER_GUIDE_CONNECTOR_UNDER,
+                        time=target_time,
+                        lane=lane,
+                        etc=kind - ConnectorKind.GUIDE_NEUTRAL,
+                        invert_time=True,
+                    )
+                case ConnectorLayer.OVER:
+                    return get_z(
+                        LAYER_GUIDE_CONNECTOR_OVER,
                         time=target_time,
                         lane=lane,
                         etc=kind - ConnectorKind.GUIDE_NEUTRAL,

@@ -181,6 +181,7 @@ Comprised of many archetypes according to the following naming scheme:
   * TOP = 0
   * BOTTOM = 1
   * UNDER = 2
+  * OVER = 3
 * **segmentThroughJudgeLine**: Whether connectors in this segment should draw themselves passing through the judge line rather than cutting off there. Defaults to false.
 * **attachHead (ref?[Note])**: The optional head the note attaches to for its **lane**, **size**, and **effective timescale**.
 * **attachTail (ref?[Note])**: The optional tail the note attaches to for its **lane**, **size**, and **effective timescale**.

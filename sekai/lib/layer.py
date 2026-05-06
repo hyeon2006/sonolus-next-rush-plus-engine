@@ -26,11 +26,14 @@ LAYER_NOTE_TICK = 23
 LAYER_NOTE_ARROW = 24
 LAYER_SLOT_GLOW_EFFECT = 25
 
+LAYER_ACTIVE_SLIDE_CONNECTOR_OVER = 26
+LAYER_GUIDE_CONNECTOR_OVER = 27
+
 
 def get_z(layer: int, time: float = 0.0, lane: float = 0.0, etc: int = 0, *, invert_time: bool = False) -> float:
     quantized_time = (runtime.time() * 256) // 256
     return make_comparable_float(
-        quantize_to_step(layer, start=-1, stop=26, step=1),
+        quantize_to_step(layer, start=-1, stop=28, step=1),
         quantize_to_step(
             time - quantized_time if invert_time else quantized_time - time, start=-30, stop=30, step=1 / 256
         ),
@@ -41,6 +44,6 @@ def get_z(layer: int, time: float = 0.0, lane: float = 0.0, etc: int = 0, *, inv
 
 def get_z_alt(layer: int, sublayer: int) -> float:
     return make_comparable_float(
-        quantize_to_step(layer, start=-1, stop=26, step=1),
+        quantize_to_step(layer, start=-1, stop=28, step=1),
         quantize_to_step(sublayer, start=0, stop=73728000, step=1),
     )
