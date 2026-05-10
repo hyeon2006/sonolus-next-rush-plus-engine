@@ -517,7 +517,7 @@ class BaseNote(PlayArchetype):
         self.end_time = offset_adjusted_time()
         self.played_hit_effects = self.should_play_hit_effects
 
-        if self.is_scored and Options.lane_effect_enabled:
+        if self.is_scored and Options.lane_effect_enabled and self.should_play_hit_effects:
             particles = get_note_particles(self.kind, self.direction)
             if particles.lane.id == BaseParticles.critical_flick_note_lane_linear.id:
                 ParticleManager.spawn(
