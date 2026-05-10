@@ -153,19 +153,9 @@ class PreviewBaseNote(PreviewArchetype):
             head = self.attach_head_ref.get()
             tail = self.attach_tail_ref.get()
             note_ease_frac = unlerp_clamped(head.target_time, tail.target_time, self.target_time)
-            current_tail_lane = tail._basic_visual_lane_at(t)
-            if t >= head.target_time:
-                now_ease_frac = unlerp_clamped(head.target_time, tail.target_time, t)
-                eased_now_ease_frac = ease(self.connector_ease, now_ease_frac)
-                eased_note_ease_frac = ease(self.connector_ease, note_ease_frac)
-                current_head_lane = lerp(
-                    head._basic_visual_lane_at(t), tail._basic_visual_lane_at(t), eased_now_ease_frac
-                )
-                note_interp_frac = unlerp_clamped(eased_now_ease_frac, 1.0, eased_note_ease_frac)
-                return lerp(current_head_lane, current_tail_lane, note_interp_frac)
-            else:
-                current_head_lane = head._basic_visual_lane_at(t)
-                return lerp(current_head_lane, current_tail_lane, ease(self.connector_ease, note_ease_frac))
+            head_lane = head._basic_visual_lane_at(t)
+            tail_lane = tail._basic_visual_lane_at(t)
+            return lerp(head_lane, tail_lane, ease(self.connector_ease, note_ease_frac))
         return self._basic_visual_lane_at(t)
 
 

@@ -6,17 +6,21 @@ from sonolus.script.timing import beat_to_time
 from sekai.lib import archetype_names
 from sekai.lib.baseevent import init_event_list
 from sekai.lib.layer import LAYER_BEAT_LINE, get_z
+from sekai.lib.layout import get_camera_info
 from sekai.lib.level_config import EngineRevision, LevelConfig, init_level_config
 from sekai.lib.particle import init_particles
 from sekai.lib.skin import ActiveSkin, init_skin
 from sekai.lib.ui import init_ui
 from sekai.preview.dynamic_stage import PreviewCameraChange
 from sekai.preview.layout import (
+    PREVIEW_CAMERA_INTERVAL,
+    PREVIEW_CAMERA_MARKER_ALPHA,
     PREVIEW_COLUMN_SECS,
     PreviewData,
     PreviewLayout,
     init_preview_layout,
     layout_preview_bar_line,
+    layout_preview_camera_marker,
     layout_preview_column_divider,
     print_at_col_top,
 )
@@ -49,6 +53,7 @@ class PreviewInitialization(PreviewArchetype):
         draw_beat_lines()
         if LevelConfig.dynamic_stages:
             draw_column_dividers()
+            draw_camera_markers()
 
 
 def print_preview_col_head_text():
@@ -84,3 +89,14 @@ def draw_beat_lines():
 def draw_column_dividers():
     for col in range(1, PreviewLayout.column_count):
         ActiveSkin.preview_divider.draw(layout_preview_column_divider(col), z=get_z(LAYER_BEAT_LINE), a=0.5)
+
+
+def draw_camera_markers():
+    count = int(PreviewData.max_time / PREVIEW_CAMERA_INTERVAL)
+    for i in range(1, count + 1):
+        t = i * PREVIEW_CAMERA_INTERVAL
+        camera = get_camera_info(t)
+        left_layout = layout_preview_camera_marker(camera.lane - camera.size, t)
+        right_layout = layout_preview_camera_marker(camera.lane + camera.size, t)
+        ActiveSkin.special_line.draw(left_layout, z=get_z(LAYER_BEAT_LINE), a=PREVIEW_CAMERA_MARKER_ALPHA)
+        ActiveSkin.special_line.draw(right_layout, z=get_z(LAYER_BEAT_LINE), a=PREVIEW_CAMERA_MARKER_ALPHA)

@@ -29,6 +29,10 @@ PREVIEW_NOTE_H = PREVIEW_LANE_W / 3
 PREVIEW_BAR_LINE_H = PREVIEW_LANE_W / 20
 PREVIEW_BAR_LINE_ALPHA = 0.8
 
+PREVIEW_CAMERA_MARKER_SIZE = PREVIEW_LANE_W * 0.15
+PREVIEW_CAMERA_INTERVAL = 0.02
+PREVIEW_CAMERA_MARKER_ALPHA = 0.5
+
 PREVIEW_COVER_ALPHA = 1.0
 
 PREVIEW_Y_MIN = -1 + PREVIEW_MARGIN_Y
@@ -184,6 +188,13 @@ def layout_preview_slim_note_body_fallback(lane: float, size: float, col: int, y
 def layout_preview_tick(lane: float, col: int, y: float) -> Rect:
     center = Vec2(lane_to_preview_x(lane, col), y)
     return Rect.from_center(center, Vec2(PREVIEW_NOTE_H, PREVIEW_NOTE_H) * 2)
+
+
+def layout_preview_camera_marker(lane: float, time: float) -> Rect:
+    col = time_to_preview_col(time)
+    y = time_to_preview_y(time, col)
+    center = Vec2(lane_to_preview_x(lane, col), y)
+    return Rect.from_center(center, Vec2(PREVIEW_CAMERA_MARKER_SIZE, PREVIEW_CAMERA_MARKER_SIZE))
 
 
 def layout_preview_flick_arrow(lane: float, size: float, direction: FlickDirection, col: int, y: float) -> Rect:

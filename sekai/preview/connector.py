@@ -17,6 +17,7 @@ from sekai.lib.connector import (
 )
 from sekai.lib.ease import EaseType, ease
 from sekai.lib.layout import get_alpha
+from sekai.lib.level_config import LevelConfig
 from sekai.preview import note
 from sekai.preview.layout import (
     PREVIEW_COLUMN_SECS,
@@ -50,11 +51,11 @@ class PreviewConnector(PreviewArchetype):
         draw_connector(
             kind=self.kind,
             ease_type=self.ease_type,
-            head_lane=head.lane,
+            head_ref=self.head_ref,
             head_size=head.size,
             head_target_time=head.target_time,
             head_ease_frac=head.head_ease_frac,
-            tail_lane=tail.lane,
+            tail_ref=self.tail_ref,
             tail_size=tail.size,
             tail_target_time=tail.target_time,
             tail_ease_frac=tail.tail_ease_frac,
@@ -86,11 +87,11 @@ class PreviewConnector(PreviewArchetype):
 def draw_connector(
     kind: ConnectorKind,
     ease_type: EaseType,
-    head_lane: float,
+    head_ref: EntityRef[note.PreviewBaseNote],
     head_size: float,
     head_target_time: float,
     head_ease_frac: float,
-    tail_lane: float,
+    tail_ref: EntityRef[note.PreviewBaseNote],
     tail_size: float,
     tail_target_time: float,
     tail_ease_frac: float,
@@ -105,7 +106,6 @@ def draw_connector(
         return
 
     if ease_type == EaseType.NONE:
-        tail_lane = head_lane
         tail_size = head_size
 
     normal_sprite = Sprite(-1)
@@ -163,7 +163,7 @@ def draw_connector(
     )
 
     match ease_type:
-        case EaseType.NONE | EaseType.LINEAR if head_alpha == tail_alpha:
+        case EaseType.NONE | EaseType.LINEAR if head_alpha == tail_alpha and not LevelConfig.dynamic_stages:
             quality_dist_scale = 0
         case _:
             quality_dist_scale = 100 / PREVIEW_COLUMN_SECS * (tail_target_time - head_target_time)
@@ -172,7 +172,11 @@ def draw_connector(
 
     eased_head_ease_frac = ease(ease_type, head_ease_frac)
     eased_tail_ease_frac = ease(ease_type, tail_ease_frac)
-    last_lane = head_lane
+
+    head = head_ref.get()
+    tail = tail_ref.get()
+
+    last_lane = head.visual_lane_at(head_target_time)
     last_size = head_size
     last_alpha = head_alpha
     last_target_time = head_target_time
@@ -182,10 +186,15 @@ def draw_connector(
         next_frac = i / segment_count
         next_ease_frac = lerp(head_ease_frac, tail_ease_frac, next_frac)
         next_interp_frac = unlerp_clamped(eased_head_ease_frac, eased_tail_ease_frac, ease(ease_type, next_ease_frac))
-        next_lane = lerp(head_lane, tail_lane, next_interp_frac)
+        next_target_time = lerp(head_target_time, tail_target_time, next_frac)
+        head_lane_at_t = head.visual_lane_at(next_target_time)
+        if ease_type == EaseType.NONE:
+            tail_lane_at_t = head_lane_at_t
+        else:
+            tail_lane_at_t = tail.visual_lane_at(next_target_time)
+        next_lane = lerp(head_lane_at_t, tail_lane_at_t, next_interp_frac)
         next_size = max(1e-3, lerp(head_size, tail_size, next_interp_frac))
         next_alpha = lerp(head_alpha, tail_alpha, next_frac)
-        next_target_time = lerp(head_target_time, tail_target_time, next_frac)
         next_col = time_to_preview_col(next_target_time)
 
         a = clamp(
