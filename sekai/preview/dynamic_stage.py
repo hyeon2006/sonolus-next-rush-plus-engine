@@ -67,6 +67,8 @@ class PreviewDynamicStage(PreviewArchetype):
         self.draw_end_time = get_draw_end_time(self)
 
     def render(self):
+        if not LevelConfig.dynamic_stages:
+            return
         draw_preview_dynamic_stage(self, self.draw_start_time, self.draw_end_time)
 
 

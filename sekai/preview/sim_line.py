@@ -14,6 +14,8 @@ class PreviewSimLine(PreviewArchetype):
     right_ref: EntityRef[PreviewBaseNote] = imported(name="right")
 
     def render(self):
+        if not self.left.is_scored or not self.right.is_scored:
+            return
         target_time = self.left.target_time
         col = time_to_preview_col(target_time)
         y = time_to_preview_y(target_time, col)

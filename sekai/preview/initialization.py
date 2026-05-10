@@ -37,13 +37,14 @@ class PreviewInitialization(PreviewArchetype):
 
     @callback(order=1)
     def preprocess(self):
-        if not ActiveSkin.lane_background_preview.is_available:
-            LevelConfig.dynamic_stages = False
-
         init_level_config(self.revision)
         init_ui()
         init_skin()
         init_particles()
+
+        if not ActiveSkin.lane_background_preview.is_available:
+            LevelConfig.dynamic_stages = False
+
         init_preview_layout()
         init_event_list(self.first_camera_ref)
 
