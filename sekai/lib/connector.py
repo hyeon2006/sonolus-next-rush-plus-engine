@@ -49,7 +49,6 @@ CONNECTOR_SLOT_SPAWN_PERIOD = 0.2
 CONNECTOR_THROUGH_JUDGE_LINE_DESPAWN_DELAY = 5.0
 CONNECTOR_MIN_DRAW_ALPHA = 0.005
 CONNECTOR_CURVE_ERROR_TOLERANCE = 0.003
-CONNECTOR_ALPHA_STEP_TOLERANCE = 0.12
 CONNECTOR_EASE_CURVE_SEGMENT_SCALE = 1.25
 CONNECTOR_FAR_CURVE_ERROR_TOLERANCE_MIN_SCALE = 0.45
 
@@ -451,7 +450,16 @@ def draw_connector(
     )
     curve_segment_scale = CONNECTOR_EASE_CURVE_SEGMENT_SCALE if ease_type not in (EaseType.NONE, EaseType.LINEAR) else 1
     curve_segment_count = ceil((curve_error / curve_error_tolerance) ** 0.5 * quality * curve_segment_scale)
-    alpha_segment_count = ceil(abs(start_alpha - end_alpha) * alpha_option / CONNECTOR_ALPHA_STEP_TOLERANCE * quality)
+    alpha_change = abs(start_alpha - end_alpha) * alpha_option
+    alpha_distance = max(
+        abs(start_left.y - end_left.y),
+        abs(start_right.y - end_right.y),
+    )
+    alpha_change_scale = max(
+        alpha_change**0.8 * 3,
+        alpha_change**0.5 * alpha_distance * 3,
+    )
+    alpha_segment_count = ceil(alpha_change_scale * quality * 10)
     segment_count = max(1, curve_segment_count, alpha_segment_count)
 
     z_normal = get_connector_z(kind, segment_head_target_time, segment_head_lane, active=False, layer=layer)
