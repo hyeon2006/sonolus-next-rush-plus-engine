@@ -26,6 +26,9 @@ class BaseSkin:
     lane_background: Sprite = sprite("Sekai Lane Background")
     lane_divider: Sprite = sprite("Sekai Lane Divider")
     stage_border: Sprite = sprite("Sekai Stage Border")
+    lane_background_preview: Sprite = sprite("Sekai Lane Background Preview")
+    lane_divider_preview: Sprite = sprite("Sekai Lane Divider Preview")
+    stage_border_preview: Sprite = sprite("Sekai Stage Border Preview")
     judgment_background: Sprite = sprite("Sekai Judgment Background")
 
     judgment_background_neutral: Sprite = sprite("Sekai Judgment Background Neutral")
@@ -311,6 +314,7 @@ class BaseSkin:
     guide_black_fallback: StandardSprite.NOTE_CONNECTION_NEUTRAL_SEAMLESS
 
     beat_line: StandardSprite.GRID_NEUTRAL
+    preview_divider: StandardSprite.GRID_NEUTRAL
     bpm_change_line: StandardSprite.GRID_PURPLE
     timescale_change_line: StandardSprite.GRID_YELLOW
     special_line: StandardSprite.GRID_RED
@@ -774,6 +778,9 @@ class ActiveSkin:
     lane_background: Sprite
     lane_divider: Sprite
     stage_border: Sprite
+    lane_background_preview: Sprite
+    lane_divider_preview: Sprite
+    stage_border_preview: Sprite
 
     judgment_neutral: JudgmentSpriteSet
     judgment_red: JudgmentSpriteSet
@@ -819,6 +826,7 @@ class ActiveSkin:
     guide_black: Sprite
 
     beat_line: Sprite
+    preview_divider: Sprite
     bpm_change_line: Sprite
     timescale_change_line: Sprite
     special_line: Sprite
@@ -835,6 +843,9 @@ def init_skin():
     ActiveSkin.lane_background = BaseSkin.lane_background
     ActiveSkin.lane_divider = BaseSkin.lane_divider
     ActiveSkin.stage_border = BaseSkin.stage_border
+    ActiveSkin.lane_background_preview = BaseSkin.lane_background_preview
+    ActiveSkin.lane_divider_preview = BaseSkin.lane_divider_preview
+    ActiveSkin.stage_border_preview = BaseSkin.stage_border_preview
 
     ActiveSkin.judgment_neutral = JudgmentSpriteSet(
         judgment_background=first_available_sprite(
@@ -1323,6 +1334,7 @@ def init_skin():
     )
 
     ActiveSkin.beat_line = BaseSkin.beat_line
+    ActiveSkin.preview_divider = BaseSkin.preview_divider
     ActiveSkin.bpm_change_line = BaseSkin.bpm_change_line
     ActiveSkin.timescale_change_line = BaseSkin.timescale_change_line
     ActiveSkin.special_line = BaseSkin.special_line

@@ -1,11 +1,12 @@
 from sonolus.script.archetype import EntityRef, PreviewArchetype, callback, imported
 from sonolus.script.printing import PrintColor, PrintFormat
+from sonolus.script.quad import Quad
 from sonolus.script.timing import beat_to_time
 
 from sekai.lib import archetype_names
 from sekai.lib.baseevent import init_event_list
 from sekai.lib.layer import LAYER_BEAT_LINE, get_z
-from sekai.lib.level_config import EngineRevision, init_level_config
+from sekai.lib.level_config import EngineRevision, LevelConfig, init_level_config
 from sekai.lib.particle import init_particles
 from sekai.lib.skin import ActiveSkin, init_skin
 from sekai.lib.ui import init_ui
@@ -16,6 +17,7 @@ from sekai.preview.layout import (
     PreviewLayout,
     init_preview_layout,
     layout_preview_bar_line,
+    layout_preview_column_divider,
     print_at_col_top,
 )
 from sekai.preview.stage import draw_preview_cover, draw_preview_stage
@@ -29,6 +31,9 @@ class PreviewInitialization(PreviewArchetype):
 
     @callback(order=1)
     def preprocess(self):
+        if not ActiveSkin.lane_background_preview.is_available:
+            LevelConfig.dynamic_stages = False
+
         init_level_config(self.revision)
         init_ui()
         init_skin()
@@ -37,10 +42,13 @@ class PreviewInitialization(PreviewArchetype):
         init_event_list(self.first_camera_ref)
 
     def render(self):
-        draw_preview_stage()
+        if not LevelConfig.dynamic_stages:
+            draw_preview_stage()
         draw_preview_cover()
         print_preview_col_head_text()
         draw_beat_lines()
+        if LevelConfig.dynamic_stages:
+            draw_column_dividers()
 
 
 def print_preview_col_head_text():
@@ -49,7 +57,7 @@ def print_preview_col_head_text():
         if col < len(PreviewData.note_counts_by_col):
             combo += PreviewData.note_counts_by_col[col]
             print_at_col_top(combo, col, fmt=PrintFormat.ENTITY_COUNT, color=PrintColor.RED, side="right")
-        print_at_col_top(col * PREVIEW_COLUMN_SECS, col, fmt=PrintFormat.TIME, color=PrintColor.CYAN, side="left")
+        print_at_col_top((col + 1) * PREVIEW_COLUMN_SECS, col, fmt=PrintFormat.TIME, color=PrintColor.CYAN, side="left")
 
 
 def draw_beat_lines():
@@ -60,11 +68,19 @@ def draw_beat_lines():
             (0.5, 0.2),
             (0.75, 0.1),
         ):
-            layout = layout_preview_bar_line(
-                beat_to_time(beat + beat_offset), extend="left_only", extend_scale=extend_scale
-            )
-            ActiveSkin.beat_line.draw(layout, z=get_z(LAYER_BEAT_LINE), a=0.5)
-            layout = layout_preview_bar_line(
-                beat_to_time(beat + beat_offset), extend="right_only", extend_scale=extend_scale
-            )
-            ActiveSkin.beat_line.draw(layout, z=get_z(LAYER_BEAT_LINE), a=0.5)
+            t = beat_to_time(beat + beat_offset)
+            left_layout = +Quad
+            right_layout = +Quad
+            if LevelConfig.dynamic_stages:
+                left_layout @= layout_preview_bar_line(t, extend="left_in", extend_scale=extend_scale)
+                right_layout @= layout_preview_bar_line(t, extend="right_in", extend_scale=extend_scale)
+            else:
+                left_layout @= layout_preview_bar_line(t, extend="left_only", extend_scale=extend_scale)
+                right_layout @= layout_preview_bar_line(t, extend="right_only", extend_scale=extend_scale)
+            ActiveSkin.beat_line.draw(left_layout, z=get_z(LAYER_BEAT_LINE), a=0.5)
+            ActiveSkin.beat_line.draw(right_layout, z=get_z(LAYER_BEAT_LINE), a=0.5)
+
+
+def draw_column_dividers():
+    for col in range(1, PreviewLayout.column_count):
+        ActiveSkin.preview_divider.draw(layout_preview_column_divider(col), z=get_z(LAYER_BEAT_LINE), a=0.5)

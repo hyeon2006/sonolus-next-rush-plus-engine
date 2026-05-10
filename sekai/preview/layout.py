@@ -12,6 +12,7 @@ from sonolus.script.runtime import HorizontalAlign, ScrollDirection, canvas, scr
 from sonolus.script.vec import Vec2
 
 from sekai.lib.layout import NOTE_EDGE_W, NOTE_SLIM_EDGE_W, FlickDirection
+from sekai.lib.level_config import LevelConfig
 from sekai.lib.options import Options
 
 PREVIEW_COLUMN_SECS = 2
@@ -55,7 +56,7 @@ class PreviewLayout:
 
 def init_preview_layout():
     PreviewLayout.column_count = time_to_preview_col(PreviewData.max_time) + 1
-    PreviewLayout.column_width = 2 * PREVIEW_MARGIN_X + PREVIEW_LANE_W * 12
+    PreviewLayout.column_width = 2 * PREVIEW_MARGIN_X + PREVIEW_LANE_W * (18 if LevelConfig.dynamic_stages else 12)
 
     canvas().update(
         scroll_direction=ScrollDirection.LEFT_TO_RIGHT,
@@ -310,7 +311,7 @@ def layout_preview_sim_line(
 
 def layout_preview_bar_line(
     time: float,
-    extend: Literal["left", "right", "both", "none", "left_only", "right_only"],
+    extend: Literal["left", "right", "both", "none", "left_only", "right_only", "left_in", "right_in"],
     extend_scale: float = 1.0,
 ) -> Quad:
     col = time_to_preview_col(time)
@@ -318,6 +319,9 @@ def layout_preview_bar_line(
     right_lane = 6
     left_x = lane_to_preview_x(left_lane, col)
     right_x = lane_to_preview_x(right_lane, col)
+    column_center_x = lane_to_preview_x(0, col)
+    column_left_x = column_center_x - PreviewLayout.column_width / 2
+    column_right_x = column_center_x + PreviewLayout.column_width / 2
     match extend:
         case "left":
             left_x -= PREVIEW_BAR_EXTEND_W * extend_scale
@@ -332,6 +336,12 @@ def layout_preview_bar_line(
         case "right_only":
             left_x = right_x + PREVIEW_LANE_W * 0.5
             right_x = left_x + PREVIEW_BAR_EXTEND_W * extend_scale
+        case "left_in":
+            left_x = column_left_x + PREVIEW_LANE_W * 0.5
+            right_x = left_x + PREVIEW_BAR_EXTEND_W * extend_scale
+        case "right_in":
+            right_x = column_right_x - PREVIEW_LANE_W * 0.5
+            left_x = right_x - PREVIEW_BAR_EXTEND_W * extend_scale
         case _:
             pass
     y = time_to_preview_y(time, col)
@@ -340,6 +350,16 @@ def layout_preview_bar_line(
         br=Vec2(right_x, y - PREVIEW_BAR_LINE_H),
         tr=Vec2(right_x, y + PREVIEW_BAR_LINE_H),
         tl=Vec2(left_x, y + PREVIEW_BAR_LINE_H),
+    )
+
+
+def layout_preview_column_divider(col: int) -> Rect:
+    x = lane_to_preview_x(0, col) - PreviewLayout.column_width / 2
+    return Rect(
+        l=x - PREVIEW_BAR_LINE_H,
+        r=x + PREVIEW_BAR_LINE_H,
+        b=PREVIEW_Y_MIN,
+        t=PREVIEW_Y_MAX,
     )
 
 
