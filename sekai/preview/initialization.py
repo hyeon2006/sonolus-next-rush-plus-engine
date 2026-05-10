@@ -1,3 +1,5 @@
+from math import ceil
+
 from sonolus.script.archetype import EntityRef, PreviewArchetype, callback, imported
 from sonolus.script.printing import PrintColor, PrintFormat
 from sonolus.script.quad import Quad
@@ -92,9 +94,9 @@ def draw_column_dividers():
 
 
 def draw_camera_markers():
-    count = int(PreviewData.max_time / PREVIEW_CAMERA_INTERVAL)
-    for i in range(1, count + 1):
-        t = i * PREVIEW_CAMERA_INTERVAL
+    count = int(ceil(PreviewData.max_time / PREVIEW_COLUMN_SECS) * PREVIEW_COLUMN_SECS / PREVIEW_CAMERA_INTERVAL)
+    for i in range(count + 1):
+        t = (i + 0.5) * PREVIEW_CAMERA_INTERVAL
         camera = get_camera_info(t)
         left_layout = layout_preview_camera_marker(camera.lane - camera.size, t)
         right_layout = layout_preview_camera_marker(camera.lane + camera.size, t)

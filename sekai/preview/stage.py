@@ -1,11 +1,33 @@
-from sekai.lib.layer import LAYER_PREVIEW_COVER, LAYER_STAGE, get_z
+from math import ceil, floor
+from typing import assert_never
+
+from sekai.lib.layer import LAYER_PREVIEW_COVER, LAYER_STAGE, get_z, get_z_alt
 from sekai.lib.skin import ActiveSkin
+from sekai.lib.stage import (
+    DivisionParity,
+    DivisionProps,
+    DynamicStageLike,
+    StageBorderStyle,
+    StageProps,
+    get_stage_props,
+)
 from sekai.preview.layout import (
+    PREVIEW_COLUMN_SECS,
+    PREVIEW_DYNAMIC_STAGE_BORDER_DEFAULT_HW,
+    PREVIEW_DYNAMIC_STAGE_BORDER_LIGHT_HW,
+    PREVIEW_DYNAMIC_STAGE_BORDER_MEDIUM_HW,
+    PREVIEW_DYNAMIC_STAGE_BSEARCH_ITERS,
+    PREVIEW_DYNAMIC_STAGE_DIVIDER_HW,
+    PREVIEW_DYNAMIC_STAGE_EPS,
+    PREVIEW_DYNAMIC_STAGE_LANE_BOUND,
+    PREVIEW_DYNAMIC_STAGE_TIME_INCREMENT,
     PreviewLayout,
     layout_preview_bottom_cover,
     layout_preview_lane,
     layout_preview_lane_by_edges,
+    layout_preview_lane_strip,
     layout_preview_top_cover,
+    time_to_preview_col,
 )
 
 
@@ -32,3 +54,317 @@ def draw_preview_cover():
         top_layout,
         z=z,
     )
+
+
+def draw_preview_dynamic_stage(stage: DynamicStageLike, start_time: float, end_time: float):
+    """Draw a dynamic stage in preview by walking time in fixed increments.
+
+    Each column shows a slice of the song along the y-axis. Within each column we
+    step from `col_lo` to `col_hi` in increments of PREVIEW_DYNAMIC_STAGE_TIME_INCREMENT,
+    and for every (t_a, t_b) sub-slice we sample stage props at both ends and draw a
+    slanted quad whose left/right edges follow the mask between t_a and t_b. Style and
+    division transitions are cross-faded by drawing both sides at progress-weighted
+    alpha. See draw_dynamic_stage_division_set for the per-divider logic.
+    """
+    if end_time <= start_time:
+        return
+
+    z_sub_base = stage.index * 7
+    z_bg = get_z_alt(LAYER_STAGE, z_sub_base + 0)
+    z_left_a = get_z_alt(LAYER_STAGE, z_sub_base + 1)
+    z_left_b = get_z_alt(LAYER_STAGE, z_sub_base + 2)
+    z_right_a = get_z_alt(LAYER_STAGE, z_sub_base + 3)
+    z_right_b = get_z_alt(LAYER_STAGE, z_sub_base + 4)
+    z_div_a = get_z_alt(LAYER_STAGE, z_sub_base + 5)
+    z_div_b = get_z_alt(LAYER_STAGE, z_sub_base + 6)
+
+    start_col = max(0, time_to_preview_col(start_time))
+    end_col = min(PreviewLayout.column_count - 1, time_to_preview_col(end_time))
+
+    for col in range(start_col, end_col + 1):
+        col_t_lo = max(start_time, col * PREVIEW_COLUMN_SECS)
+        col_t_hi = min(end_time, (col + 1) * PREVIEW_COLUMN_SECS)
+        if col_t_hi <= col_t_lo:
+            continue
+
+        t_a = col_t_lo
+        props_a = +StageProps
+        props_a @= get_stage_props(stage, t_a)
+        while t_a < col_t_hi:
+            t_b = min(t_a + PREVIEW_DYNAMIC_STAGE_TIME_INCREMENT, col_t_hi)
+            props_b = get_stage_props(stage, t_b)
+
+            draw_dynamic_stage_lane_bg_slice(props_a, props_b, col, t_a, t_b, z_bg)
+            draw_dynamic_stage_border_slice(True, props_a, props_b, col, t_a, t_b, z_left_a, z_left_b)
+            draw_dynamic_stage_border_slice(False, props_a, props_b, col, t_a, t_b, z_right_a, z_right_b)
+            draw_dynamic_stage_dividers_slice(stage, props_a, props_b, col, t_a, t_b, z_div_a, z_div_b)
+
+            t_a = t_b
+            props_a @= props_b
+
+
+def slice_lane_alpha(props_a: StageProps, props_b: StageProps) -> float:
+    """Mask alpha (a * lane_alpha) averaged across the slice endpoints."""
+    return (props_a.a * props_a.lane_alpha + props_b.a * props_b.lane_alpha) / 2
+
+
+def draw_dynamic_stage_lane_bg_slice(
+    props_a: StageProps, props_b: StageProps, col: int, t_a: float, t_b: float, z: float
+):
+    alpha = slice_lane_alpha(props_a, props_b)
+    if alpha <= 0:
+        return
+
+    bound = PREVIEW_DYNAMIC_STAGE_LANE_BOUND
+    mask_l_a = max(props_a.lane - props_a.width, -bound)
+    mask_r_a = min(props_a.lane + props_a.width, bound)
+    mask_l_b = max(props_b.lane - props_b.width, -bound)
+    mask_r_b = min(props_b.lane + props_b.width, bound)
+    if mask_l_a >= mask_r_a and mask_l_b >= mask_r_b:
+        return
+
+    layout = layout_preview_lane_strip(mask_l_a, mask_r_a, t_a, mask_l_b, mask_r_b, t_b, col)
+    ActiveSkin.lane_background_preview.draw(layout, z=z, a=alpha)
+
+
+def draw_dynamic_stage_border_slice(
+    is_left: bool,
+    props_a: StageProps,
+    props_b: StageProps,
+    col: int,
+    t_a: float,
+    t_b: float,
+    z_a: float,
+    z_b: float,
+):
+    alpha = slice_lane_alpha(props_a, props_b)
+    if alpha <= 0:
+        return
+
+    if is_left:
+        edge_a = props_a.lane - props_a.width
+        edge_b = props_b.lane - props_b.width
+        style = props_b.left_border_style
+    else:
+        edge_a = props_a.lane + props_a.width
+        edge_b = props_b.lane + props_b.width
+        style = props_b.right_border_style
+
+    # Hide the border when clipping.
+    bound = PREVIEW_DYNAMIC_STAGE_LANE_BOUND
+    if abs(edge_a) > bound or abs(edge_b) > bound:
+        return
+
+    if style.start == style.end:
+        draw_border_strip_for_style(is_left, style.start, edge_a, edge_b, col, t_a, t_b, alpha, z_a)
+    else:
+        progress = style.progress
+        if 1 - progress > 0:
+            draw_border_strip_for_style(
+                is_left, style.start, edge_a, edge_b, col, t_a, t_b, alpha * (1 - progress), z_a
+            )
+        if progress > 0:
+            draw_border_strip_for_style(is_left, style.end, edge_a, edge_b, col, t_a, t_b, alpha * progress, z_b)
+
+
+def draw_border_strip_for_style(
+    is_left: bool,
+    style: StageBorderStyle,
+    edge_a: float,
+    edge_b: float,
+    col: int,
+    t_a: float,
+    t_b: float,
+    alpha: float,
+    z: float,
+):
+    if alpha <= 0:
+        return
+    match style:
+        case StageBorderStyle.DEFAULT:
+            draw_solid_border_strip(
+                is_left, PREVIEW_DYNAMIC_STAGE_BORDER_DEFAULT_HW, edge_a, edge_b, col, t_a, t_b, alpha, z
+            )
+        case StageBorderStyle.MEDIUM:
+            draw_solid_border_strip(
+                is_left, PREVIEW_DYNAMIC_STAGE_BORDER_MEDIUM_HW, edge_a, edge_b, col, t_a, t_b, alpha, z
+            )
+        case StageBorderStyle.LIGHT:
+            draw_light_border_strip(PREVIEW_DYNAMIC_STAGE_BORDER_LIGHT_HW, edge_a, edge_b, col, t_a, t_b, alpha, z)
+        case StageBorderStyle.DISABLED:
+            return
+        case _:
+            assert_never(style)
+
+
+def draw_solid_border_strip(
+    is_left: bool,
+    half_width: float,
+    edge_a: float,
+    edge_b: float,
+    col: int,
+    t_a: float,
+    t_b: float,
+    alpha: float,
+    z: float,
+):
+    if is_left:
+        outer_a = edge_a - half_width
+        outer_b = edge_b - half_width
+        layout = layout_preview_lane_strip(outer_a, edge_a, t_a, outer_b, edge_b, t_b, col)
+    else:
+        outer_a = edge_a + half_width
+        outer_b = edge_b + half_width
+        layout = layout_preview_lane_strip(outer_a, edge_a, t_a, outer_b, edge_b, t_b, col)
+    ActiveSkin.stage_border_preview.draw(layout, z=z, a=alpha)
+
+
+def draw_light_border_strip(
+    half_width: float, edge_a: float, edge_b: float, col: int, t_a: float, t_b: float, alpha: float, z: float
+):
+    layout = layout_preview_lane_strip(
+        edge_a - half_width, edge_a + half_width, t_a, edge_b - half_width, edge_b + half_width, t_b, col
+    )
+    ActiveSkin.lane_divider_preview.draw(layout, z=z, a=alpha)
+
+
+def draw_dynamic_stage_dividers_slice(
+    stage: DynamicStageLike,
+    props_a: StageProps,
+    props_b: StageProps,
+    col: int,
+    t_a: float,
+    t_b: float,
+    z_a: float,
+    z_b: float,
+):
+    alpha = slice_lane_alpha(props_a, props_b)
+    if alpha <= 0:
+        return
+
+    # During a division/parity transition, division.start and division.end describe two
+    # different divider sets that need to cross-fade by `progress`. Outside a transition,
+    # start == end and we draw one set at full alpha.
+    division = props_b.division
+    if division.start == division.end:
+        draw_dynamic_stage_division_set(stage, props_a, props_b, col, t_a, t_b, division.start, alpha, z_a)
+    else:
+        progress = division.progress
+        if 1 - progress > 0:
+            draw_dynamic_stage_division_set(
+                stage, props_a, props_b, col, t_a, t_b, division.start, alpha * (1 - progress), z_a
+            )
+        if progress > 0:
+            draw_dynamic_stage_division_set(stage, props_a, props_b, col, t_a, t_b, division.end, alpha * progress, z_b)
+
+
+def draw_dynamic_stage_division_set(
+    stage: DynamicStageLike,
+    props_a: StageProps,
+    props_b: StageProps,
+    col: int,
+    t_a: float,
+    t_b: float,
+    div_props: DivisionProps,
+    alpha: float,
+    z: float,
+):
+    """Draw the dividers for one division set across a slice.
+
+    Each divider sits at `pivot(t) + parity_offset + k*size` for an integer index `k`.
+    Pivot moves continuously between events, so the divider's x-position varies over
+    the slice. We sample at t_a and t_b and emit one slanted strip per `k`:
+
+      * both endpoints inside the (clipped) mask -> draw the full strip.
+      * only t_b inside -> divider entered the mask mid-slice; bsearch backwards to
+        find the entry time and clip the strip to it.
+      * only t_a inside -> divider is leaving; bsearch forwards for the exit time.
+      * neither inside -> skip.
+
+    The mask used for in/out tests is `[max(l, -bound), min(r, bound)]`, so dividers
+    are clipped to the column boundary the same way they are clipped to the mask
+    edges.
+    """
+    if alpha <= 0:
+        return
+    size = div_props.size
+    if size <= 0:
+        return
+    parity = div_props.parity
+    parity_offset = size / 2 if parity == DivisionParity.ODD else 0
+
+    eps = PREVIEW_DYNAMIC_STAGE_EPS
+    divider_hw = PREVIEW_DYNAMIC_STAGE_DIVIDER_HW
+    bound = PREVIEW_DYNAMIC_STAGE_LANE_BOUND
+
+    mask_l_a = max(props_a.lane - props_a.width, -bound)
+    mask_r_a = min(props_a.lane + props_a.width, bound)
+    mask_l_b = max(props_b.lane - props_b.width, -bound)
+    mask_r_b = min(props_b.lane + props_b.width, bound)
+
+    shifted_pivot_a = props_a.pivot_lane + parity_offset
+    shifted_pivot_b = props_b.pivot_lane + parity_offset
+
+    # k range: union of indices that could be visible at either endpoint.
+    k_lo = min(floor((mask_l_a - shifted_pivot_a + eps) / size), floor((mask_l_b - shifted_pivot_b + eps) / size)) + 1
+    k_hi = max(ceil((mask_r_a - shifted_pivot_a - eps) / size), ceil((mask_r_b - shifted_pivot_b - eps) / size)) - 1
+
+    for k in range(k_lo, k_hi + 1):
+        pos_a = shifted_pivot_a + k * size
+        pos_b = shifted_pivot_b + k * size
+        in_mask_a = mask_l_a + eps < pos_a < mask_r_a - eps
+        in_mask_b = mask_l_b + eps < pos_b < mask_r_b - eps
+
+        if in_mask_a and in_mask_b:
+            draw_divider_strip(pos_a, pos_b, t_a, t_b, divider_hw, col, alpha, z)
+        elif in_mask_b:
+            t_entry = bsearch_divider_mask_edge(stage, k, size, parity_offset, t_a, t_b, target_in_mask=True)
+            pos_entry = get_stage_props(stage, t_entry).pivot_lane + parity_offset + k * size
+            draw_divider_strip(pos_entry, pos_b, t_entry, t_b, divider_hw, col, alpha, z)
+        elif in_mask_a:
+            t_exit = bsearch_divider_mask_edge(stage, k, size, parity_offset, t_a, t_b, target_in_mask=False)
+            pos_exit = get_stage_props(stage, t_exit).pivot_lane + parity_offset + k * size
+            draw_divider_strip(pos_a, pos_exit, t_a, t_exit, divider_hw, col, alpha, z)
+
+
+def draw_divider_strip(
+    pos_a: float, pos_b: float, t_a: float, t_b: float, half_width: float, col: int, alpha: float, z: float
+):
+    layout = layout_preview_lane_strip(
+        pos_a - half_width, pos_a + half_width, t_a, pos_b - half_width, pos_b + half_width, t_b, col
+    )
+    ActiveSkin.lane_divider_preview.draw(layout, z=z, a=alpha)
+
+
+def bsearch_divider_mask_edge(
+    stage: DynamicStageLike,
+    k: int,
+    size: float,
+    parity_offset: float,
+    t_lo: float,
+    t_hi: float,
+    target_in_mask: bool,
+) -> float:
+    """Bisect [t_lo, t_hi] for the time at which divider `k` crosses the mask edge.
+
+    Caller knows divider `k` is in-mask at one endpoint and out-of-mask at the other.
+    `target_in_mask` says which endpoint is in-mask: True -> t_hi is in (we're looking
+    for the entry time on its side), False -> t_lo is in (we're looking for the exit
+    time). On exit we return the time on the in-mask side of the converged interval.
+    """
+    eps = PREVIEW_DYNAMIC_STAGE_EPS
+    bound = PREVIEW_DYNAMIC_STAGE_LANE_BOUND
+    bisect_lo = t_lo
+    bisect_hi = t_hi
+    for _ in range(PREVIEW_DYNAMIC_STAGE_BSEARCH_ITERS):
+        t_mid = (bisect_lo + bisect_hi) / 2
+        props = get_stage_props(stage, t_mid)
+        divider_pos = props.pivot_lane + parity_offset + k * size
+        mask_l = max(props.lane - props.width, -bound)
+        mask_r = min(props.lane + props.width, bound)
+        in_mask = mask_l + eps < divider_pos < mask_r - eps
+        if in_mask == target_in_mask:
+            bisect_hi = t_mid
+        else:
+            bisect_lo = t_mid
+    return bisect_hi if target_in_mask else bisect_lo

@@ -13,9 +13,12 @@ from sekai.lib.stage import (
     DivisionParity,
     JudgeLineColor,
     StageBorderStyle,
+    get_draw_end_time,
+    get_draw_start_time,
     get_end_time,
     get_start_time,
 )
+from sekai.preview.stage import draw_preview_dynamic_stage
 
 
 class PreviewCameraChange(PreviewArchetype, BaseEvent):
@@ -29,7 +32,7 @@ class PreviewCameraChange(PreviewArchetype, BaseEvent):
 
     time: float = entity_data()
 
-    @callback(order=-1)
+    @callback(order=-2)
     def preprocess(self):
         LevelConfig.dynamic_stages = True
         self.time = beat_to_time(self.beat)
@@ -48,6 +51,8 @@ class PreviewDynamicStage(PreviewArchetype):
 
     start_time: float = entity_data()
     end_time: float = entity_data()
+    draw_start_time: float = entity_data()
+    draw_end_time: float = entity_data()
 
     @callback(order=-1)
     def preprocess(self):
@@ -58,6 +63,11 @@ class PreviewDynamicStage(PreviewArchetype):
         init_event_list(self.first_style_change_ref)
         self.start_time = get_start_time(self)
         self.end_time = get_end_time(self)
+        self.draw_start_time = get_draw_start_time(self)
+        self.draw_end_time = get_draw_end_time(self)
+
+    def render(self):
+        draw_preview_dynamic_stage(self, self.draw_start_time, self.draw_end_time)
 
 
 class PreviewStageMaskChange(PreviewArchetype, BaseEvent):
@@ -72,7 +82,7 @@ class PreviewStageMaskChange(PreviewArchetype, BaseEvent):
 
     time: float = entity_data()
 
-    @callback(order=-1)
+    @callback(order=-2)
     def preprocess(self):
         self.time = beat_to_time(self.beat)
         if Options.mirror:
@@ -95,7 +105,7 @@ class PreviewStagePivotChange(PreviewArchetype, BaseEvent):
     y_offset: float = entity_data()
     time: float = entity_data()
 
-    @callback(order=-1)
+    @callback(order=-2)
     def preprocess(self):
         self.time = beat_to_time(self.beat)
         self.y_offset = self.abs_y_offset + self.y_beat_offset * 60 / beat_to_bpm(self.beat) / preempt_time()
@@ -119,7 +129,7 @@ class PreviewStageStyleChange(PreviewArchetype, BaseEvent):
 
     time: float = entity_data()
 
-    @callback(order=-1)
+    @callback(order=-2)
     def preprocess(self):
         self.time = beat_to_time(self.beat)
         if Options.mirror:

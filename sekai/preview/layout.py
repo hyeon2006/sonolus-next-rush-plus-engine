@@ -43,6 +43,15 @@ PREVIEW_BAR_EXTEND_W = 4.5 * PREVIEW_LANE_W
 PREVIEW_TEXT_H = 0.11
 PREVIEW_TEXT_W = 3.5 * PREVIEW_LANE_W - 2 * PREVIEW_TEXT_MARGIN_X
 
+PREVIEW_DYNAMIC_STAGE_TIME_INCREMENT = 1 / 30
+PREVIEW_DYNAMIC_STAGE_BSEARCH_ITERS = 6
+PREVIEW_DYNAMIC_STAGE_BORDER_DEFAULT_HW = 0.1
+PREVIEW_DYNAMIC_STAGE_BORDER_MEDIUM_HW = 0.05
+PREVIEW_DYNAMIC_STAGE_BORDER_LIGHT_HW = 0.03
+PREVIEW_DYNAMIC_STAGE_DIVIDER_HW = 0.03
+PREVIEW_DYNAMIC_STAGE_EPS = 0.001
+PREVIEW_DYNAMIC_STAGE_LANE_BOUND = 9.0 + (PREVIEW_MARGIN_X - PREVIEW_EXTEND_MARGIN_X) / PREVIEW_LANE_W
+
 
 @level_data
 class PreviewData:
@@ -98,6 +107,17 @@ def layout_preview_lane_by_edges(l: float, r: float, col: int) -> Rect:
 
 def layout_preview_lane(lane: float, size: float, col: int) -> Rect:
     return layout_preview_lane_by_edges(lane - size, lane + size, col)
+
+
+def layout_preview_lane_strip(l_a: float, r_a: float, t_a: float, l_b: float, r_b: float, t_b: float, col: int) -> Quad:
+    y_a = time_to_preview_y(t_a, col)
+    y_b = time_to_preview_y(t_b, col)
+    return Quad(
+        bl=Vec2(lane_to_preview_x(l_a, col), y_a),
+        br=Vec2(lane_to_preview_x(r_a, col), y_a),
+        tr=Vec2(lane_to_preview_x(r_b, col), y_b),
+        tl=Vec2(lane_to_preview_x(l_b, col), y_b),
+    )
 
 
 def layout_preview_bottom_cover() -> Rect:
