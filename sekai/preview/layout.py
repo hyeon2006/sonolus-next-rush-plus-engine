@@ -39,6 +39,7 @@ PREVIEW_Y_MIN = -1 + PREVIEW_MARGIN_Y
 PREVIEW_Y_MAX = 1 - PREVIEW_MARGIN_Y
 
 PREVIEW_BAR_EXTEND_W = 4.5 * PREVIEW_LANE_W
+PREVIEW_DYNAMIC_BAR_EXTEND_W = 4 * PREVIEW_LANE_W
 
 PREVIEW_TEXT_H = 0.11
 PREVIEW_TEXT_W = 3.5 * PREVIEW_LANE_W - 2 * PREVIEW_TEXT_MARGIN_X
@@ -356,7 +357,18 @@ def layout_preview_sim_line(
 
 def layout_preview_bar_line(
     time: float,
-    extend: Literal["left", "right", "both", "none", "left_only", "right_only", "left_in", "right_in"],
+    extend: Literal[
+        "left",
+        "right",
+        "both",
+        "none",
+        "left_only",
+        "right_only",
+        "left_in",
+        "right_in",
+        "left_dynamic",
+        "right_dynamic",
+    ],
     extend_scale: float = 1.0,
 ) -> Quad:
     col = time_to_preview_col(time)
@@ -387,6 +399,12 @@ def layout_preview_bar_line(
         case "right_in":
             right_x = column_right_x - PREVIEW_LANE_W * 0.5
             left_x = right_x - PREVIEW_BAR_EXTEND_W * extend_scale
+        case "left_dynamic":
+            left_x = column_left_x + PREVIEW_LANE_W * 0.5
+            right_x = left_x + PREVIEW_DYNAMIC_BAR_EXTEND_W
+        case "right_dynamic":
+            right_x = column_right_x - PREVIEW_LANE_W * 0.5
+            left_x = right_x - PREVIEW_DYNAMIC_BAR_EXTEND_W
         case _:
             pass
     y = time_to_preview_y(time, col)
@@ -416,29 +434,41 @@ def print_at_time(
     decimal_places: int = -1,
     color: PrintColor,
     side: Literal["left", "right"],
+    dynamic: bool = False,
 ):
     col = time_to_preview_col(time)
     y = time_to_preview_y(time, col)
+    if dynamic:
+        # Anchored at the inner end of the line that hugs the column edge,
+        # with text aligned toward the column edge so it grows away from the stage.
+        column_center_x = lane_to_preview_x(0, col)
+        column_left_x = column_center_x - PreviewLayout.column_width / 2
+        column_right_x = column_center_x + PreviewLayout.column_width / 2
+        if side == "left":
+            anchor_x = column_left_x + PREVIEW_LANE_W * 0.5 + PREVIEW_DYNAMIC_BAR_EXTEND_W - PREVIEW_TEXT_MARGIN_X
+            pivot_x = 1.0
+            align = HorizontalAlign.RIGHT
+        else:
+            anchor_x = column_right_x - PREVIEW_LANE_W * 0.5 - PREVIEW_DYNAMIC_BAR_EXTEND_W + PREVIEW_TEXT_MARGIN_X
+            pivot_x = 0.0
+            align = HorizontalAlign.LEFT
+    else:
+        anchor_x = lane_to_preview_x(-6 if side == "left" else 6, col) + (
+            PREVIEW_TEXT_MARGIN_X - PREVIEW_BAR_EXTEND_W
+            if side == "left"
+            else PREVIEW_BAR_EXTEND_W - PREVIEW_TEXT_MARGIN_X
+        )
+        pivot_x = 0.0 if side == "left" else 1.0
+        align = HorizontalAlign.LEFT if side == "left" else HorizontalAlign.RIGHT
     print_number(
         value=value,
         fmt=fmt,
         decimal_places=decimal_places,
-        anchor=Vec2(
-            lane_to_preview_x(
-                -6 if side == "left" else 6,
-                col,
-            )
-            + (
-                PREVIEW_TEXT_MARGIN_X - PREVIEW_BAR_EXTEND_W
-                if side == "left"
-                else PREVIEW_BAR_EXTEND_W - PREVIEW_TEXT_MARGIN_X
-            ),
-            y + PREVIEW_TEXT_MARGIN_Y,
-        ),
-        pivot=Vec2(0 if side == "left" else 1, 0),
+        anchor=Vec2(anchor_x, y + PREVIEW_TEXT_MARGIN_Y),
+        pivot=Vec2(pivot_x, 0),
         dimensions=Vec2(PREVIEW_TEXT_W, PREVIEW_TEXT_H),
         color=color,
-        horizontal_align=HorizontalAlign.LEFT if side == "left" else HorizontalAlign.RIGHT,
+        horizontal_align=align,
         background=False,
     )
 

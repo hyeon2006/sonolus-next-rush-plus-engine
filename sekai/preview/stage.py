@@ -1,6 +1,7 @@
 from math import ceil, floor
 from typing import assert_never
 
+from sonolus.script.interval import lerp
 from sonolus.script.values import swap
 
 from sekai.lib.layer import LAYER_PREVIEW_COVER, LAYER_STAGE, get_z, get_z_alt
@@ -161,13 +162,31 @@ def draw_dynamic_stage_border_slice(
         style_a = props_a.right_border_style
         style_b = props_b.right_border_style
 
-    # Hide the border when clipping.
     bound = PREVIEW_DYNAMIC_STAGE_LANE_BOUND
-    if abs(edge_a) > bound or abs(edge_b) > bound:
-        return
+    de = edge_b - edge_a
+    if de == 0:
+        if abs(edge_a) > bound:
+            return
+        clip_t_a = t_a
+        clip_t_b = t_b
+        clip_edge_a = edge_a
+        clip_edge_b = edge_b
+    else:
+        frac_pos = (bound - edge_a) / de
+        frac_neg = (-bound - edge_a) / de
+        frac_lo = max(0.0, min(frac_pos, frac_neg))
+        frac_hi = min(1.0, max(frac_pos, frac_neg))
+        if frac_lo >= frac_hi:
+            return
+        clip_t_a = lerp(t_a, t_b, frac_lo)
+        clip_t_b = lerp(t_a, t_b, frac_hi)
+        clip_edge_a = lerp(edge_a, edge_b, frac_lo)
+        clip_edge_b = lerp(edge_a, edge_b, frac_hi)
 
     if style_b.start == style_b.end:
-        draw_border_strip_for_style(is_left, style_b.start, edge_a, edge_b, col, t_a, t_b, alpha, z_a)
+        draw_border_strip_for_style(
+            is_left, style_b.start, clip_edge_a, clip_edge_b, col, clip_t_a, clip_t_b, alpha, z_a
+        )
     else:
         if style_a.start == style_b.start and style_a.end == style_b.end:
             progress = (style_a.progress + style_b.progress) / 2
@@ -176,10 +195,12 @@ def draw_dynamic_stage_border_slice(
             progress = style_b.progress
         if 1 - progress > 0:
             draw_border_strip_for_style(
-                is_left, style_b.start, edge_a, edge_b, col, t_a, t_b, alpha * (1 - progress), z_a
+                is_left, style_b.start, clip_edge_a, clip_edge_b, col, clip_t_a, clip_t_b, alpha * (1 - progress), z_a
             )
         if progress > 0:
-            draw_border_strip_for_style(is_left, style_b.end, edge_a, edge_b, col, t_a, t_b, alpha * progress, z_b)
+            draw_border_strip_for_style(
+                is_left, style_b.end, clip_edge_a, clip_edge_b, col, clip_t_a, clip_t_b, alpha * progress, z_b
+            )
 
 
 def draw_border_strip_for_style(
