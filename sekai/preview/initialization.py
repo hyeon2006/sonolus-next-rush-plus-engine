@@ -101,5 +101,5 @@ def draw_camera_markers():
         camera = get_camera_info(t)
         left_layout = layout_preview_camera_marker(camera.lane - camera.size, t)
         right_layout = layout_preview_camera_marker(camera.lane + camera.size, t)
-        ActiveSkin.special_line.draw(left_layout, z=get_z(LAYER_BEAT_LINE), a=PREVIEW_CAMERA_MARKER_ALPHA)
-        ActiveSkin.special_line.draw(right_layout, z=get_z(LAYER_BEAT_LINE), a=PREVIEW_CAMERA_MARKER_ALPHA)
+        ActiveSkin.special_line.draw(left_layout, z=get_z(LAYER_BEAT_LINE, etc=1), a=PREVIEW_CAMERA_MARKER_ALPHA)
+        ActiveSkin.special_line.draw(right_layout, z=get_z(LAYER_BEAT_LINE, etc=1), a=PREVIEW_CAMERA_MARKER_ALPHA)

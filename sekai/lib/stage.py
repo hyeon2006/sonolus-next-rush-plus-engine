@@ -217,7 +217,24 @@ def get_draw_end_time(stage: DynamicStageLike) -> float:
     return -1e8
 
 
-def get_stage_props(stage: DynamicStageLike, target_time: float | None = None) -> StageProps:
+def get_next_event_time(stage: DynamicStageLike, t: float) -> float:
+    result = 1e8
+    if stage.first_mask_change_ref.index > 0:
+        _, b_ref = query_event_list(stage.first_mask_change_ref, t, lambda e: e.time)
+        if b_ref.index > 0:
+            result = min(result, get_event_as(b_ref, _stage_mask_change_archetype()).time)
+    if stage.first_pivot_change_ref.index > 0:
+        _, b_ref = query_event_list(stage.first_pivot_change_ref, t, lambda e: e.time)
+        if b_ref.index > 0:
+            result = min(result, get_event_as(b_ref, _stage_pivot_change_archetype()).time)
+    if stage.first_style_change_ref.index > 0:
+        _, b_ref = query_event_list(stage.first_style_change_ref, t, lambda e: e.time)
+        if b_ref.index > 0:
+            result = min(result, get_event_as(b_ref, _stage_style_change_archetype()).time)
+    return result
+
+
+def get_stage_props(stage: DynamicStageLike, target_time: float | None = None, left_limit: bool = False) -> StageProps:
     t = target_time if target_time is not None else runtime.time()
     result = +StageProps
     result.order = stage.index
@@ -228,6 +245,18 @@ def get_stage_props(stage: DynamicStageLike, target_time: float | None = None) -
 
     # Query mask changes
     mask_a_ref, mask_b_ref = query_event_list(first_mask_change_ref, t, lambda e: e.time)
+    if left_limit and mask_a_ref.index > 0:
+        mask_curr = get_event_as(mask_a_ref, _stage_mask_change_archetype())
+        if mask_curr.time == t:
+            # Walk back through any same-time chain so b_ref ends up at the earliest at-t event.
+            mask_probe_ref = +mask_curr.prev_ref
+            while mask_probe_ref.index > 0:
+                if get_event_as(mask_probe_ref, _stage_mask_change_archetype()).time != t:
+                    break
+                mask_a_ref.index = mask_probe_ref.index
+                mask_probe_ref.index = get_event_as(mask_probe_ref, _stage_mask_change_archetype()).prev_ref.index
+            mask_b_ref.index = mask_a_ref.index
+            mask_a_ref.index = mask_probe_ref.index
     if mask_a_ref.index > 0:
         mask_a = get_event_as(mask_a_ref, _stage_mask_change_archetype())
         result.lane = mask_a.lane
@@ -247,6 +276,17 @@ def get_stage_props(stage: DynamicStageLike, target_time: float | None = None) -
 
     # Query pivot changes
     pivot_a_ref, pivot_b_ref = query_event_list(first_pivot_change_ref, t, lambda e: e.time)
+    if left_limit and pivot_a_ref.index > 0:
+        pivot_curr = get_event_as(pivot_a_ref, _stage_pivot_change_archetype())
+        if pivot_curr.time == t:
+            pivot_probe_ref = +pivot_curr.prev_ref
+            while pivot_probe_ref.index > 0:
+                if get_event_as(pivot_probe_ref, _stage_pivot_change_archetype()).time != t:
+                    break
+                pivot_a_ref.index = pivot_probe_ref.index
+                pivot_probe_ref.index = get_event_as(pivot_probe_ref, _stage_pivot_change_archetype()).prev_ref.index
+            pivot_b_ref.index = pivot_a_ref.index
+            pivot_a_ref.index = pivot_probe_ref.index
     if pivot_a_ref.index > 0:
         pivot_a = get_event_as(pivot_a_ref, _stage_pivot_change_archetype())
         result.pivot_lane = pivot_a.lane
@@ -275,6 +315,17 @@ def get_stage_props(stage: DynamicStageLike, target_time: float | None = None) -
 
     # Query style changes
     style_a_ref, style_b_ref = query_event_list(first_style_change_ref, t, lambda e: e.time)
+    if left_limit and style_a_ref.index > 0:
+        style_curr = get_event_as(style_a_ref, _stage_style_change_archetype())
+        if style_curr.time == t:
+            style_probe_ref = +style_curr.prev_ref
+            while style_probe_ref.index > 0:
+                if get_event_as(style_probe_ref, _stage_style_change_archetype()).time != t:
+                    break
+                style_a_ref.index = style_probe_ref.index
+                style_probe_ref.index = get_event_as(style_probe_ref, _stage_style_change_archetype()).prev_ref.index
+            style_b_ref.index = style_a_ref.index
+            style_a_ref.index = style_probe_ref.index
     if style_a_ref.index > 0:
         style_a = get_event_as(style_a_ref, _stage_style_change_archetype())
         result.judge_line_color.start = style_a.judge_line_color

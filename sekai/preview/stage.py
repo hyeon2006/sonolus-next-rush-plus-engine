@@ -9,6 +9,7 @@ from sekai.lib.stage import (
     DynamicStageLike,
     StageBorderStyle,
     StageProps,
+    get_next_event_time,
     get_stage_props,
 )
 from sekai.preview.layout import (
@@ -91,8 +92,10 @@ def draw_preview_dynamic_stage(stage: DynamicStageLike, start_time: float, end_t
         props_a = +StageProps
         props_a @= get_stage_props(stage, t_a)
         while t_a < col_t_hi:
-            t_b = min(t_a + PREVIEW_DYNAMIC_STAGE_TIME_INCREMENT, col_t_hi)
-            props_b = get_stage_props(stage, t_b)
+            next_event = get_next_event_time(stage, t_a)
+            t_b = min(t_a + PREVIEW_DYNAMIC_STAGE_TIME_INCREMENT, col_t_hi, next_event)
+            at_event = t_b == next_event
+            props_b = get_stage_props(stage, t_b, left_limit=at_event)
 
             draw_dynamic_stage_lane_bg_slice(props_a, props_b, col, t_a, t_b, z_bg)
             draw_dynamic_stage_border_slice(True, props_a, props_b, col, t_a, t_b, z_left_a, z_left_b)
@@ -100,7 +103,10 @@ def draw_preview_dynamic_stage(stage: DynamicStageLike, start_time: float, end_t
             draw_dynamic_stage_dividers_slice(stage, props_a, props_b, col, t_a, t_b, z_div_a, z_div_b)
 
             t_a = t_b
-            props_a @= props_b
+            if at_event:
+                props_a @= get_stage_props(stage, t_a)
+            else:
+                props_a @= props_b
 
 
 def slice_lane_alpha(props_a: StageProps, props_b: StageProps) -> float:
