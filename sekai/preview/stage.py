@@ -1,6 +1,8 @@
 from math import ceil, floor
 from typing import assert_never
 
+from sonolus.script.values import swap
+
 from sekai.lib.layer import LAYER_PREVIEW_COVER, LAYER_STAGE, get_z, get_z_alt
 from sekai.lib.skin import ActiveSkin
 from sekai.lib.stage import (
@@ -219,6 +221,9 @@ def draw_solid_border_strip(
     center_a = edge_a + sign * width / 2
     center_b = edge_b + sign * width / 2
     layout = layout_preview_lane_rotated_strip(center_a, center_b, t_a, t_b, width, col)
+    if not is_left:
+        swap(layout.bl, layout.br)
+        swap(layout.tl, layout.tr)
     ActiveSkin.stage_border_preview.draw(layout, z=z, a=alpha)
 
 
