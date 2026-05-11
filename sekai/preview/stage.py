@@ -153,27 +153,33 @@ def draw_dynamic_stage_border_slice(
     if is_left:
         edge_a = props_a.lane - props_a.width
         edge_b = props_b.lane - props_b.width
-        style = props_b.left_border_style
+        style_a = props_a.left_border_style
+        style_b = props_b.left_border_style
     else:
         edge_a = props_a.lane + props_a.width
         edge_b = props_b.lane + props_b.width
-        style = props_b.right_border_style
+        style_a = props_a.right_border_style
+        style_b = props_b.right_border_style
 
     # Hide the border when clipping.
     bound = PREVIEW_DYNAMIC_STAGE_LANE_BOUND
     if abs(edge_a) > bound or abs(edge_b) > bound:
         return
 
-    if style.start == style.end:
-        draw_border_strip_for_style(is_left, style.start, edge_a, edge_b, col, t_a, t_b, alpha, z_a)
+    if style_b.start == style_b.end:
+        draw_border_strip_for_style(is_left, style_b.start, edge_a, edge_b, col, t_a, t_b, alpha, z_a)
     else:
-        progress = style.progress
+        if style_a.start == style_b.start and style_a.end == style_b.end:
+            progress = (style_a.progress + style_b.progress) / 2
+        else:
+            # Just go with b
+            progress = style_b.progress
         if 1 - progress > 0:
             draw_border_strip_for_style(
-                is_left, style.start, edge_a, edge_b, col, t_a, t_b, alpha * (1 - progress), z_a
+                is_left, style_b.start, edge_a, edge_b, col, t_a, t_b, alpha * (1 - progress), z_a
             )
         if progress > 0:
-            draw_border_strip_for_style(is_left, style.end, edge_a, edge_b, col, t_a, t_b, alpha * progress, z_b)
+            draw_border_strip_for_style(is_left, style_b.end, edge_a, edge_b, col, t_a, t_b, alpha * progress, z_b)
 
 
 def draw_border_strip_for_style(
@@ -251,17 +257,23 @@ def draw_dynamic_stage_dividers_slice(
     # During a division/parity transition, division.start and division.end describe two
     # different divider sets that need to cross-fade by `progress`. Outside a transition,
     # start == end and we draw one set at full alpha.
-    division = props_b.division
-    if division.start == division.end:
-        draw_dynamic_stage_division_set(stage, props_a, props_b, col, t_a, t_b, division.start, alpha, z_a)
+    division_a = props_a.division
+    division_b = props_b.division
+    if division_b.start == division_b.end:
+        draw_dynamic_stage_division_set(stage, props_a, props_b, col, t_a, t_b, division_b.start, alpha, z_a)
     else:
-        progress = division.progress
+        if division_a.start == division_b.start and division_a.end == division_b.end:
+            progress = (division_a.progress + division_b.progress) / 2
+        else:
+            progress = division_b.progress
         if 1 - progress > 0:
             draw_dynamic_stage_division_set(
-                stage, props_a, props_b, col, t_a, t_b, division.start, alpha * (1 - progress), z_a
+                stage, props_a, props_b, col, t_a, t_b, division_b.start, alpha * (1 - progress), z_a
             )
         if progress > 0:
-            draw_dynamic_stage_division_set(stage, props_a, props_b, col, t_a, t_b, division.end, alpha * progress, z_b)
+            draw_dynamic_stage_division_set(
+                stage, props_a, props_b, col, t_a, t_b, division_b.end, alpha * progress, z_b
+            )
 
 
 def draw_dynamic_stage_division_set(
@@ -325,12 +337,14 @@ def draw_dynamic_stage_division_set(
             draw_divider_strip(pos_a, pos_b, t_a, t_b, divider_w, col, alpha, z)
         elif in_mask_b:
             t_entry = bsearch_divider_mask_edge(stage, k, size, parity_offset, t_a, t_b, target_in_mask=True)
-            pos_entry = get_stage_props(stage, t_entry).pivot_lane + parity_offset + k * size
-            draw_divider_strip(pos_entry, pos_b, t_entry, t_b, divider_w, col, alpha, z)
+            if t_entry < t_b:
+                pos_entry = get_stage_props(stage, t_entry).pivot_lane + parity_offset + k * size
+                draw_divider_strip(pos_entry, pos_b, t_entry, t_b, divider_w, col, alpha, z)
         elif in_mask_a:
             t_exit = bsearch_divider_mask_edge(stage, k, size, parity_offset, t_a, t_b, target_in_mask=False)
-            pos_exit = get_stage_props(stage, t_exit).pivot_lane + parity_offset + k * size
-            draw_divider_strip(pos_a, pos_exit, t_a, t_exit, divider_w, col, alpha, z)
+            if t_exit > t_a:
+                pos_exit = get_stage_props(stage, t_exit).pivot_lane + parity_offset + k * size
+                draw_divider_strip(pos_a, pos_exit, t_a, t_exit, divider_w, col, alpha, z)
 
 
 def draw_divider_strip(
