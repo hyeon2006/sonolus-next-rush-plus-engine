@@ -45,10 +45,10 @@ PREVIEW_TEXT_W = 3.5 * PREVIEW_LANE_W - 2 * PREVIEW_TEXT_MARGIN_X
 
 PREVIEW_DYNAMIC_STAGE_TIME_INCREMENT = 1 / 60
 PREVIEW_DYNAMIC_STAGE_BSEARCH_ITERS = 6
-PREVIEW_DYNAMIC_STAGE_BORDER_DEFAULT_HW = 0.15
-PREVIEW_DYNAMIC_STAGE_BORDER_MEDIUM_HW = 0.075
-PREVIEW_DYNAMIC_STAGE_BORDER_LIGHT_HW = 0.04
-PREVIEW_DYNAMIC_STAGE_DIVIDER_HW = 0.04
+PREVIEW_DYNAMIC_STAGE_BORDER_DEFAULT_W = 0.15
+PREVIEW_DYNAMIC_STAGE_BORDER_MEDIUM_W = 0.075
+PREVIEW_DYNAMIC_STAGE_BORDER_LIGHT_W = 0.08
+PREVIEW_DYNAMIC_STAGE_DIVIDER_W = 0.08
 PREVIEW_DYNAMIC_STAGE_EPS = 0.001
 PREVIEW_DYNAMIC_STAGE_LANE_BOUND = 9.0 + (PREVIEW_MARGIN_X - PREVIEW_EXTEND_MARGIN_X) / PREVIEW_LANE_W
 
@@ -117,6 +117,20 @@ def layout_preview_lane_strip(l_a: float, r_a: float, t_a: float, l_b: float, r_
         br=Vec2(lane_to_preview_x(r_a, col), y_a),
         tr=Vec2(lane_to_preview_x(r_b, col), y_b),
         tl=Vec2(lane_to_preview_x(l_b, col), y_b),
+    )
+
+
+def layout_preview_lane_rotated_strip(
+    pos_a: float, pos_b: float, t_a: float, t_b: float, width: float, col: int
+) -> Quad:
+    center_a = Vec2(lane_to_preview_x(pos_a, col), time_to_preview_y(t_a, col))
+    center_b = Vec2(lane_to_preview_x(pos_b, col), time_to_preview_y(t_b, col))
+    offset = (center_b - center_a).orthogonal().normalize() * (width / 2 * PREVIEW_LANE_W)
+    return Quad(
+        bl=center_a + offset,
+        br=center_a - offset,
+        tr=center_b - offset,
+        tl=center_b + offset,
     )
 
 

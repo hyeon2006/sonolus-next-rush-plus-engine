@@ -14,11 +14,11 @@ from sekai.lib.stage import (
 )
 from sekai.preview.layout import (
     PREVIEW_COLUMN_SECS,
-    PREVIEW_DYNAMIC_STAGE_BORDER_DEFAULT_HW,
-    PREVIEW_DYNAMIC_STAGE_BORDER_LIGHT_HW,
-    PREVIEW_DYNAMIC_STAGE_BORDER_MEDIUM_HW,
+    PREVIEW_DYNAMIC_STAGE_BORDER_DEFAULT_W,
+    PREVIEW_DYNAMIC_STAGE_BORDER_LIGHT_W,
+    PREVIEW_DYNAMIC_STAGE_BORDER_MEDIUM_W,
     PREVIEW_DYNAMIC_STAGE_BSEARCH_ITERS,
-    PREVIEW_DYNAMIC_STAGE_DIVIDER_HW,
+    PREVIEW_DYNAMIC_STAGE_DIVIDER_W,
     PREVIEW_DYNAMIC_STAGE_EPS,
     PREVIEW_DYNAMIC_STAGE_LANE_BOUND,
     PREVIEW_DYNAMIC_STAGE_TIME_INCREMENT,
@@ -26,6 +26,7 @@ from sekai.preview.layout import (
     layout_preview_bottom_cover,
     layout_preview_lane,
     layout_preview_lane_by_edges,
+    layout_preview_lane_rotated_strip,
     layout_preview_lane_strip,
     layout_preview_top_cover,
     time_to_preview_col,
@@ -189,14 +190,14 @@ def draw_border_strip_for_style(
     match style:
         case StageBorderStyle.DEFAULT:
             draw_solid_border_strip(
-                is_left, PREVIEW_DYNAMIC_STAGE_BORDER_DEFAULT_HW, edge_a, edge_b, col, t_a, t_b, alpha, z
+                is_left, PREVIEW_DYNAMIC_STAGE_BORDER_DEFAULT_W, edge_a, edge_b, col, t_a, t_b, alpha, z
             )
         case StageBorderStyle.MEDIUM:
             draw_solid_border_strip(
-                is_left, PREVIEW_DYNAMIC_STAGE_BORDER_MEDIUM_HW, edge_a, edge_b, col, t_a, t_b, alpha, z
+                is_left, PREVIEW_DYNAMIC_STAGE_BORDER_MEDIUM_W, edge_a, edge_b, col, t_a, t_b, alpha, z
             )
         case StageBorderStyle.LIGHT:
-            draw_light_border_strip(PREVIEW_DYNAMIC_STAGE_BORDER_LIGHT_HW, edge_a, edge_b, col, t_a, t_b, alpha, z)
+            draw_light_border_strip(PREVIEW_DYNAMIC_STAGE_BORDER_LIGHT_W, edge_a, edge_b, col, t_a, t_b, alpha, z)
         case StageBorderStyle.DISABLED:
             return
         case _:
@@ -205,7 +206,7 @@ def draw_border_strip_for_style(
 
 def draw_solid_border_strip(
     is_left: bool,
-    half_width: float,
+    width: float,
     edge_a: float,
     edge_b: float,
     col: int,
@@ -214,23 +215,17 @@ def draw_solid_border_strip(
     alpha: float,
     z: float,
 ):
-    if is_left:
-        outer_a = edge_a - half_width
-        outer_b = edge_b - half_width
-        layout = layout_preview_lane_strip(outer_a, edge_a, t_a, outer_b, edge_b, t_b, col)
-    else:
-        outer_a = edge_a + half_width
-        outer_b = edge_b + half_width
-        layout = layout_preview_lane_strip(outer_a, edge_a, t_a, outer_b, edge_b, t_b, col)
+    sign = -1 if is_left else 1
+    center_a = edge_a + sign * width / 2
+    center_b = edge_b + sign * width / 2
+    layout = layout_preview_lane_rotated_strip(center_a, center_b, t_a, t_b, width, col)
     ActiveSkin.stage_border_preview.draw(layout, z=z, a=alpha)
 
 
 def draw_light_border_strip(
-    half_width: float, edge_a: float, edge_b: float, col: int, t_a: float, t_b: float, alpha: float, z: float
+    width: float, edge_a: float, edge_b: float, col: int, t_a: float, t_b: float, alpha: float, z: float
 ):
-    layout = layout_preview_lane_strip(
-        edge_a - half_width, edge_a + half_width, t_a, edge_b - half_width, edge_b + half_width, t_b, col
-    )
+    layout = layout_preview_lane_rotated_strip(edge_a, edge_b, t_a, t_b, width, col)
     ActiveSkin.lane_divider_preview.draw(layout, z=z, a=alpha)
 
 
@@ -300,7 +295,7 @@ def draw_dynamic_stage_division_set(
     parity_offset = size / 2 if parity == DivisionParity.ODD else 0
 
     eps = PREVIEW_DYNAMIC_STAGE_EPS
-    divider_hw = PREVIEW_DYNAMIC_STAGE_DIVIDER_HW
+    divider_w = PREVIEW_DYNAMIC_STAGE_DIVIDER_W
     bound = PREVIEW_DYNAMIC_STAGE_LANE_BOUND
 
     mask_l_a = max(props_a.lane - props_a.width, -bound)
@@ -322,23 +317,21 @@ def draw_dynamic_stage_division_set(
         in_mask_b = mask_l_b + eps < pos_b < mask_r_b - eps
 
         if in_mask_a and in_mask_b:
-            draw_divider_strip(pos_a, pos_b, t_a, t_b, divider_hw, col, alpha, z)
+            draw_divider_strip(pos_a, pos_b, t_a, t_b, divider_w, col, alpha, z)
         elif in_mask_b:
             t_entry = bsearch_divider_mask_edge(stage, k, size, parity_offset, t_a, t_b, target_in_mask=True)
             pos_entry = get_stage_props(stage, t_entry).pivot_lane + parity_offset + k * size
-            draw_divider_strip(pos_entry, pos_b, t_entry, t_b, divider_hw, col, alpha, z)
+            draw_divider_strip(pos_entry, pos_b, t_entry, t_b, divider_w, col, alpha, z)
         elif in_mask_a:
             t_exit = bsearch_divider_mask_edge(stage, k, size, parity_offset, t_a, t_b, target_in_mask=False)
             pos_exit = get_stage_props(stage, t_exit).pivot_lane + parity_offset + k * size
-            draw_divider_strip(pos_a, pos_exit, t_a, t_exit, divider_hw, col, alpha, z)
+            draw_divider_strip(pos_a, pos_exit, t_a, t_exit, divider_w, col, alpha, z)
 
 
 def draw_divider_strip(
-    pos_a: float, pos_b: float, t_a: float, t_b: float, half_width: float, col: int, alpha: float, z: float
+    pos_a: float, pos_b: float, t_a: float, t_b: float, width: float, col: int, alpha: float, z: float
 ):
-    layout = layout_preview_lane_strip(
-        pos_a - half_width, pos_a + half_width, t_a, pos_b - half_width, pos_b + half_width, t_b, col
-    )
+    layout = layout_preview_lane_rotated_strip(pos_a, pos_b, t_a, t_b, width, col)
     ActiveSkin.lane_divider_preview.draw(layout, z=z, a=alpha)
 
 
