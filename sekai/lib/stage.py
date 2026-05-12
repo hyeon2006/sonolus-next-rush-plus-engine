@@ -580,9 +580,11 @@ def draw_dynamic_stage(
     def draw_left_judgment_border(sprites: JudgmentSpriteSet, style: StageBorderStyle, z: float, a: float):
         match style:
             case StageBorderStyle.DEFAULT | StageBorderStyle.MEDIUM:
+                if width <= 0:
+                    return
                 layout = perspective_rect(
                     l,
-                    l + 1 / f / 2,
+                    min(l + 1 / f / 2, lane),
                     1 - DynamicLayout.note_h + DynamicLayout.note_h / f,
                     1 + DynamicLayout.note_h - DynamicLayout.note_h / f,
                     travel,
@@ -599,9 +601,11 @@ def draw_dynamic_stage(
     def draw_right_judgment_border(sprites: JudgmentSpriteSet, style: StageBorderStyle, z: float, a: float):
         match style:
             case StageBorderStyle.DEFAULT | StageBorderStyle.MEDIUM:
+                if width <= 0:
+                    return
                 layout = perspective_rect(
                     r,
-                    r - 1 / f / 2,
+                    max(r - 1 / f / 2, lane),
                     1 - DynamicLayout.note_h + DynamicLayout.note_h / f,
                     1 + DynamicLayout.note_h - DynamicLayout.note_h / f,
                     travel,
