@@ -443,24 +443,23 @@ def draw_connector(
         )
         alpha_segment_count = ceil(alpha_change_scale * quality * 10)
 
-    exact_single_quad = (
-        ease_type == EaseType.NONE
+    skip_curve_sampling = (
+        alpha_segment_count >= CONNECTOR_ALPHA_CURVE_SKIP_THRESHOLD
+        or ease_type == EaseType.NONE
         or (
-            abs(head_lane - tail_lane) <= CONNECTOR_FAST_PATH_LANE_EPSILON
-            and abs(head_size - tail_size) <= CONNECTOR_FAST_PATH_LANE_EPSILON
+            abs(start_lane - end_lane) <= CONNECTOR_FAST_PATH_LANE_EPSILON
+            and abs(start_size - end_size) <= CONNECTOR_FAST_PATH_LANE_EPSILON
+        )
+        or (
+        ease_type == EaseType.LINEAR
+        and abs(end_visual_progress - start_visual_progress) <= CONNECTOR_FAST_PATH_PROGRESS_THRESHOLD
+        and (
+            abs(start_lane - end_lane) <= CONNECTOR_FAST_PATH_LANE_EPSILON
+            or abs(start_size - end_size) <= CONNECTOR_FAST_PATH_LANE_EPSILON
+        )
         )
     )
-    short_same_lane_single_quad = (
-        ease_type == EaseType.LINEAR
-        and abs(head_lane - tail_lane) <= CONNECTOR_FAST_PATH_LANE_EPSILON
-        and abs(end_visual_progress - start_visual_progress) <= CONNECTOR_FAST_PATH_PROGRESS_THRESHOLD
-    )
-    fast_path = (
-        exact_single_quad
-        or short_same_lane_single_quad
-        or alpha_segment_count >= CONNECTOR_ALPHA_CURVE_SKIP_THRESHOLD
-    )
-    if fast_path:
+    if skip_curve_sampling:
         segment_count = max(1, alpha_segment_count)
     else:
         if alpha_change == 0:
