@@ -11,6 +11,7 @@ from sonolus.script.record import Record
 from sonolus.script.runtime import time
 from sonolus.script.sprite import Sprite
 from sonolus.script.timing import beat_to_time
+from sonolus.script.vec import Vec2
 
 from sekai.lib.ease import EaseType, ease
 from sekai.lib.effect import Effects
@@ -51,6 +52,9 @@ CONNECTOR_MIN_DRAW_ALPHA = 0.005
 CONNECTOR_CURVE_ERROR_TOLERANCE = 0.003
 CONNECTOR_EASE_CURVE_SEGMENT_SCALE = 1.25
 CONNECTOR_FAR_CURVE_ERROR_TOLERANCE_MIN_SCALE = 0.45
+CONNECTOR_FAST_PATH_PROGRESS_THRESHOLD = 0.08
+CONNECTOR_FAST_PATH_LANE_EPSILON = 1e-4
+CONNECTOR_ALPHA_CURVE_SKIP_THRESHOLD = 8
 
 
 class ConnectorKind(IntEnum):
@@ -416,51 +420,84 @@ def draw_connector(
     start_alpha = lerp(head_alpha, tail_alpha, start_frac)
     end_alpha = lerp(head_alpha, tail_alpha, end_frac)
     quality = get_connector_quality_option(kind)
-    start_left = transformed_vec_at(start_lane - start_size, start_travel)
-    start_right = transformed_vec_at(start_lane + start_size, start_travel)
-    end_left = transformed_vec_at(end_lane - end_size, end_travel)
-    end_right = transformed_vec_at(end_lane + end_size, end_travel)
-    curve_error = 0.0
-    curve_sample_count = 4
-    for i in range(1, curve_sample_count + 1):
-        r = i / (curve_sample_count + 1)
-        ease_frac = lerp(start_ease_frac, end_ease_frac, r)
-        interp_frac = unlerp_clamped(eased_head_ease_frac, eased_tail_ease_frac, ease(ease_type, ease_frac))
-        visual_progress = lerp(start_visual_progress, end_visual_progress, r)
-        travel = approach(visual_progress)
-        lane = lerp(head_lane, tail_lane, interp_frac)
-        size = max(1e-3, lerp(head_size, tail_size, interp_frac))
-        left = transformed_vec_at(lane - size, travel)
-        right = transformed_vec_at(lane + size, travel)
-        ref_frac = unlerp_clamped(start_travel, end_travel, travel)
-        ref_left = lerp(start_left, end_left, ref_frac)
-        ref_right = lerp(start_right, end_right, ref_frac)
-        curve_error = max(
-            curve_error,
-            abs(left.x - ref_left.x),
-            abs(left.y - ref_left.y),
-            abs(right.x - ref_right.x),
-            abs(right.y - ref_right.y),
-        )
-    avg_travel = clamp((start_travel + end_travel) * 0.5, 0, 1)
-    curve_error_tolerance = CONNECTOR_CURVE_ERROR_TOLERANCE * lerp(
-        CONNECTOR_FAR_CURVE_ERROR_TOLERANCE_MIN_SCALE,
-        1,
-        avg_travel,
-    )
-    curve_segment_scale = CONNECTOR_EASE_CURVE_SEGMENT_SCALE if ease_type not in (EaseType.NONE, EaseType.LINEAR) else 1
-    curve_segment_count = ceil((curve_error / curve_error_tolerance) ** 0.5 * quality * curve_segment_scale)
     alpha_change = abs(start_alpha - end_alpha) * alpha_option
-    alpha_distance = max(
-        abs(start_left.y - end_left.y),
-        abs(start_right.y - end_right.y),
+    start_left = +Vec2
+    start_right = +Vec2
+    end_left = +Vec2
+    end_right = +Vec2
+
+    alpha_segment_count = 0
+    if alpha_change != 0:
+        start_left @= transformed_vec_at(start_lane - start_size, start_travel)
+        start_right @= transformed_vec_at(start_lane + start_size, start_travel)
+        end_left @= transformed_vec_at(end_lane - end_size, end_travel)
+        end_right @= transformed_vec_at(end_lane + end_size, end_travel)
+        alpha_distance = max(
+            abs(start_left.y - end_left.y),
+            abs(start_right.y - end_right.y),
+        )
+        alpha_change_scale = max(
+            alpha_change**0.8 * 3,
+            alpha_change**0.5 * alpha_distance * 3,
+        )
+        alpha_segment_count = ceil(alpha_change_scale * quality * 10)
+
+    exact_single_quad = (
+        ease_type == EaseType.NONE
+        or (
+            abs(head_lane - tail_lane) <= CONNECTOR_FAST_PATH_LANE_EPSILON
+            and abs(head_size - tail_size) <= CONNECTOR_FAST_PATH_LANE_EPSILON
+        )
     )
-    alpha_change_scale = max(
-        alpha_change**0.8 * 3,
-        alpha_change**0.5 * alpha_distance * 3,
+    short_same_lane_single_quad = (
+        ease_type == EaseType.LINEAR
+        and abs(head_lane - tail_lane) <= CONNECTOR_FAST_PATH_LANE_EPSILON
+        and abs(end_visual_progress - start_visual_progress) <= CONNECTOR_FAST_PATH_PROGRESS_THRESHOLD
     )
-    alpha_segment_count = ceil(alpha_change_scale * quality * 10)
-    segment_count = max(1, curve_segment_count, alpha_segment_count)
+    fast_path = (
+        exact_single_quad
+        or short_same_lane_single_quad
+        or alpha_segment_count >= CONNECTOR_ALPHA_CURVE_SKIP_THRESHOLD
+    )
+    if fast_path:
+        segment_count = max(1, alpha_segment_count)
+    else:
+        if alpha_change == 0:
+            start_left @= transformed_vec_at(start_lane - start_size, start_travel)
+            start_right @= transformed_vec_at(start_lane + start_size, start_travel)
+            end_left @= transformed_vec_at(end_lane - end_size, end_travel)
+            end_right @= transformed_vec_at(end_lane + end_size, end_travel)
+        curve_error = 0.0
+        for r in (0.25, 0.75):
+            ease_frac = lerp(start_ease_frac, end_ease_frac, r)
+            interp_frac = unlerp_clamped(eased_head_ease_frac, eased_tail_ease_frac, ease(ease_type, ease_frac))
+            visual_progress = lerp(start_visual_progress, end_visual_progress, r)
+            travel = approach(visual_progress)
+            lane = lerp(head_lane, tail_lane, interp_frac)
+            size = max(1e-3, lerp(head_size, tail_size, interp_frac))
+            left = transformed_vec_at(lane - size, travel)
+            right = transformed_vec_at(lane + size, travel)
+            ref_frac = unlerp_clamped(start_travel, end_travel, travel)
+            ref_left = lerp(start_left, end_left, ref_frac)
+            ref_right = lerp(start_right, end_right, ref_frac)
+            curve_error = max(
+                curve_error,
+                abs(left.x - ref_left.x),
+                abs(left.y - ref_left.y),
+                abs(right.x - ref_right.x),
+                abs(right.y - ref_right.y),
+            )
+        avg_travel = clamp((start_travel + end_travel) * 0.5, 0, 1)
+        curve_error_tolerance = CONNECTOR_CURVE_ERROR_TOLERANCE * lerp(
+            CONNECTOR_FAR_CURVE_ERROR_TOLERANCE_MIN_SCALE,
+            1,
+            avg_travel,
+        )
+        curve_segment_scale = (
+            CONNECTOR_EASE_CURVE_SEGMENT_SCALE if ease_type not in (EaseType.NONE, EaseType.LINEAR) else 1
+        )
+        curve_segment_count = ceil((curve_error / curve_error_tolerance) ** 0.5 * quality * curve_segment_scale)
+        segment_count = max(1, curve_segment_count, alpha_segment_count)
 
     z_normal = get_connector_z(kind, segment_head_target_time, segment_head_lane, active=False, layer=layer)
     if visual_state == ConnectorVisualState.ACTIVE and active_sprite.is_available:
