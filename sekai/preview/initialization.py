@@ -1,5 +1,3 @@
-from math import ceil
-
 from sonolus.script.archetype import EntityRef, PreviewArchetype, callback, imported
 from sonolus.script.printing import PrintColor, PrintFormat
 from sonolus.script.quad import Quad
@@ -69,7 +67,9 @@ def print_preview_col_head_text():
 
 
 def draw_beat_lines():
-    for beat in range(int(PreviewData.max_beat) + 1):
+    visible_secs = PreviewLayout.visible_secs
+    beat = 0
+    while beat_to_time(beat) <= visible_secs:
         for beat_offset, extend_scale in (
             (0, 0.3),
             (0.25, 0.1),
@@ -77,6 +77,8 @@ def draw_beat_lines():
             (0.75, 0.1),
         ):
             t = beat_to_time(beat + beat_offset)
+            if t > visible_secs:
+                continue
             left_layout = +Quad
             right_layout = +Quad
             if LevelConfig.dynamic_stages:
@@ -87,6 +89,7 @@ def draw_beat_lines():
                 right_layout @= layout_preview_bar_line(t, extend="right_only", extend_scale=extend_scale)
             ActiveSkin.beat_line.draw(left_layout, z=get_z(LAYER_BEAT_LINE), a=0.5)
             ActiveSkin.beat_line.draw(right_layout, z=get_z(LAYER_BEAT_LINE), a=0.5)
+        beat += 1
 
 
 def draw_column_dividers():
@@ -95,8 +98,8 @@ def draw_column_dividers():
 
 
 def draw_camera_markers():
-    count = int(ceil(PreviewData.max_time / PREVIEW_COLUMN_SECS) * PREVIEW_COLUMN_SECS / PREVIEW_CAMERA_INTERVAL)
-    for i in range(count + 1):
+    count = int(PreviewLayout.visible_secs / PREVIEW_CAMERA_INTERVAL)
+    for i in range(count):
         t = (i + 0.5) * PREVIEW_CAMERA_INTERVAL
         camera = get_camera_info(t)
         left_layout = layout_preview_camera_marker(camera.lane - camera.size, t)

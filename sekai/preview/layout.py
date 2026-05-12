@@ -57,7 +57,6 @@ PREVIEW_DYNAMIC_STAGE_LANE_BOUND = 9.0 + (PREVIEW_MARGIN_X - PREVIEW_EXTEND_MARG
 @level_data
 class PreviewData:
     max_time: float
-    max_beat: float
     note_counts_by_col: Array[int, Dim[1000]]
     min_timescale_group: int
 
@@ -66,11 +65,13 @@ class PreviewData:
 class PreviewLayout:
     column_count: int
     column_width: float
+    visible_secs: float
 
 
 def init_preview_layout():
     PreviewLayout.column_count = time_to_preview_col(PreviewData.max_time) + 1
     PreviewLayout.column_width = 2 * PREVIEW_MARGIN_X + PREVIEW_LANE_W * (18 if LevelConfig.dynamic_stages else 12)
+    PreviewLayout.visible_secs = PreviewLayout.column_count * PREVIEW_COLUMN_SECS
 
     canvas().update(
         scroll_direction=ScrollDirection.LEFT_TO_RIGHT,

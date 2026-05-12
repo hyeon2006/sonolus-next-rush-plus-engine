@@ -111,7 +111,6 @@ class PreviewBaseNote(PreviewArchetype):
             self.size = size
 
         PreviewData.max_time = max(PreviewData.max_time, self.target_time)
-        PreviewData.max_beat = max(PreviewData.max_beat, self.beat)
 
         if self.is_scored:
             col = max(time_to_preview_col(self.target_time), 0)
