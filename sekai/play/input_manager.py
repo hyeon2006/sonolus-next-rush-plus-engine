@@ -146,9 +146,13 @@ def preassign_releases():
     active_input_releases = note.NoteMemory.active_release_input_notes
     active_input_releases.sort(key=lambda ref: ref.get().target_time)
     active_release_indexes = ArraySet[int, Dim[32]].new()
+    has_active_releases = False
     for i, touch in enumerate(touches()):
         if touch.ended:
             active_release_indexes.add(i)
+            has_active_releases = True
+    if not has_active_releases:
+        return
     for current_i in range(len(active_input_releases)):
         current = active_input_releases[current_i].get()
         for use_leniency in (False, True):
@@ -175,16 +179,16 @@ def preassign_releases():
                 hitbox_l = min(hitbox_l, current_l)
                 hitbox_r = max(hitbox_r, current_r)
             hitbox_layout = layout_hitbox(hitbox_l, hitbox_r)
+            if current.active_head_ref.index > 0:
+                active_connector_info = current.active_head_ref.get().active_connector_info
+                connector_hitbox = active_connector_info.get_hitbox(get_leniency(current.kind))
+                ignore_lockout = not any(
+                    not t.ended and connector_hitbox.contains_point(t.position) for t in touches()
+                )
+            else:
+                ignore_lockout = False
             for release_i in active_release_indexes:
                 touch = touches()[release_i]
-                if current.active_head_ref.index > 0:
-                    active_connector_info = current.active_head_ref.get().active_connector_info
-                    connector_hitbox = active_connector_info.get_hitbox(get_leniency(current.kind))
-                    ignore_lockout = not any(
-                        not t.ended and connector_hitbox.contains_point(t.position) for t in touches()
-                    )
-                else:
-                    ignore_lockout = False
                 if (
                     hitbox_layout.contains_point(touch.position)
                     and (ignore_lockout or is_allowed_release(touch, current.target_time))
