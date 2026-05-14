@@ -79,6 +79,14 @@ const activeConnectorKindMapping: Record<string, number> = {
     CriticalSlideConnector: ConnectorKind.ACTIVE_CRITICAL,
 }
 
+const activeSlideStartArchetypes = new Set([
+    'NormalSlideStartNote',
+    'CriticalSlideStartNote',
+    'HiddenSlideStartNote',
+    'NormalTraceSlideStartNote',
+    'CriticalTraceSlideStartNote',
+])
+
 const flickDirectionMapping: Record<number, number> = {
     [-1]: FlickDirection.UP_LEFT,
     0: FlickDirection.UP_OMNI,
@@ -468,8 +476,7 @@ export const extendedToLevelData = (data: LevelData, offset = 0): LevelData | un
         const head = resolveOriginal(ext, headRef)
         if (!start || !head) return false
         if (head.archetype !== 'HiddenSlideStartNote') return false
-        if (!['NormalSlideStartNote', 'CriticalSlideStartNote'].includes(start.archetype))
-            return false
+        if (!activeSlideStartArchetypes.has(start.archetype)) return false
 
         return (
             nearlyEqual(getNum(start, '#BEAT'), getNum(head, '#BEAT')) &&
@@ -613,16 +620,61 @@ export const extendedToLevelData = (data: LevelData, offset = 0): LevelData | un
     }
 
     function setInferredActiveHead(note: EntityBuilder, activeHead: EntityBuilder) {
-        if (note === activeHead) return
         if (note.refs.activeHead) return
 
         note.set('activeHead', activeHead)
     }
 
+    function isIgnoredSlideTickRef(ref: number | string | undefined) {
+        return resolveOriginal(ext, ref)?.archetype === 'IgnoredSlideTickNote'
+    }
+
+    function getNextConnectorWithHead(
+        startRef: number | string | undefined,
+        headRef: number | string | undefined,
+    ) {
+        return ext.connectors.find(
+            ({ e }) => getField(e, 'start') === startRef && getField(e, 'head') === headRef,
+        )
+    }
+
+    function resolveConnectorTailRef(
+        startRef: number | string | undefined,
+        tailRef: number | string | undefined,
+    ) {
+        const skippedNoteRefs: (number | string)[] = []
+        const skippedConnectors: { idx: number; e: ExtendedEntityData }[] = []
+        const visited = new Set<string>()
+        let resolvedTailRef = tailRef
+
+        while (isIgnoredSlideTickRef(resolvedTailRef)) {
+            if (resolvedTailRef === undefined) break
+
+            const key = String(resolvedTailRef)
+            if (visited.has(key)) break
+            visited.add(key)
+            skippedNoteRefs.push(resolvedTailRef)
+
+            const nextConnector = getNextConnectorWithHead(startRef, resolvedTailRef)
+            if (!nextConnector) break
+
+            skippedConnectors.push(nextConnector)
+            resolvedTailRef = getField(nextConnector.e, 'tail')
+        }
+
+        return { tailRef: resolvedTailRef, skippedNoteRefs, skippedConnectors }
+    }
+
     for (const { idx, e } of ext.connectors) {
         const startRef = getField(e, 'start')
         const headRef = getField(e, 'head')
-        const tailRef = getField(e, 'tail')
+        if (isIgnoredSlideTickRef(headRef)) continue
+
+        const { tailRef, skippedNoteRefs, skippedConnectors } = resolveConnectorTailRef(
+            startRef,
+            getField(e, 'tail'),
+        )
+        if (isIgnoredSlideTickRef(tailRef)) continue
 
         const tail = getNote(tailRef)
         const rawHeadOriginal = resolveOriginal(ext, headRef)
@@ -638,7 +690,7 @@ export const extendedToLevelData = (data: LevelData, offset = 0): LevelData | un
         let activeTail = getNote(endRef)
 
         if (!activeTail) {
-            activeTail = getNote(getUltimateTailRef(startRef, getField(e, 'tail')))
+            activeTail = getNote(getUltimateTailRef(startRef, tailRef))
         }
 
         if (!activeTail) {
@@ -676,6 +728,7 @@ export const extendedToLevelData = (data: LevelData, offset = 0): LevelData | un
             connector.set('activeHead', activeHead)
             connector.set('activeTail', activeTail)
             finalEntities.push(connector)
+            setInferredActiveHead(segmentHead, activeHead)
             segments.push({ head: segmentHead, tail })
         } else {
             for (let i = 0; i < segmentNotes.length - 1; i++) {
@@ -715,9 +768,23 @@ export const extendedToLevelData = (data: LevelData, offset = 0): LevelData | un
             setInferredActiveHead(segmentNote, activeHead)
         }
         setInferredActiveHead(activeTail, activeHead)
+        for (const skippedNoteRef of skippedNoteRefs) {
+            const skippedNote = getNote(skippedNoteRef)
+            if (!skippedNote) continue
+
+            skippedNote.set('attachHead', head)
+            skippedNote.set('attachTail', tail)
+            skippedNote.set('isAttached', 1)
+            setInferredActiveHead(skippedNote, activeHead)
+        }
 
         connectorsByIndex.set(idx, connectorLink)
         if (e.name) connectorsByName.set(e.name, connectorLink)
+        for (const skippedConnector of skippedConnectors) {
+            connectorsByIndex.set(skippedConnector.idx, connectorLink)
+            if (skippedConnector.e.name)
+                connectorsByName.set(skippedConnector.e.name, connectorLink)
+        }
     }
 
     function getConn(ref: number | string | undefined) {
