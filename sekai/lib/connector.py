@@ -7,7 +7,7 @@ from sonolus.script.easing import ease_out_cubic
 from sonolus.script.effect import Effect, LoopedEffectHandle
 from sonolus.script.interval import clamp, lerp, remap_clamped, unlerp_clamped
 from sonolus.script.particle import Particle, ParticleHandle
-from sonolus.script.quad import Quad, QuadLike
+from sonolus.script.quad import QuadLike
 from sonolus.script.record import Record
 from sonolus.script.runtime import time
 from sonolus.script.sprite import Sprite
@@ -30,12 +30,12 @@ from sekai.lib.layer import (
 )
 from sekai.lib.layout import (
     DynamicLayout,
+    Hitbox,
     Layout,
     approach,
     get_alpha,
     iter_slot_lanes,
     layout_circular_effect,
-    layout_hitbox,
     layout_linear_effect,
     layout_slide_connector_segment,
     layout_slot_glow_effect,
@@ -49,6 +49,7 @@ from sekai.lib.timescale import iter_timescale_changes_in_group_from_time
 CONNECTOR_TRAIL_SPAWN_PERIOD = 0.1
 CONNECTOR_SLOT_SPAWN_PERIOD = 0.2
 CONNECTOR_THROUGH_JUDGE_LINE_DESPAWN_DELAY = 5.0
+CONNECTOR_LENIENCY = 1
 
 
 class ConnectorKind(IntEnum):
@@ -537,17 +538,10 @@ class ActiveConnectorInfo(Record):
     visual_lane: float
     visual_size: float
     visual_y_offset: float
-    input_lane: float
-    input_size: float
+    hitbox: Hitbox
     active_start_time: float
     last_active_time: float
     connector_kind: ConnectorKind
-
-    def get_hitbox(self, leniency: float) -> Quad:
-        return layout_hitbox(
-            self.input_lane - self.input_size - leniency,
-            self.input_lane + self.input_size + leniency,
-        )
 
     @property
     def is_active(self) -> bool:

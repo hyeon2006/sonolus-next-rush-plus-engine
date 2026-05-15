@@ -18,7 +18,7 @@ from sonolus.script.timing import beat_to_bpm, beat_to_time
 from sekai.lib import archetype_names
 from sekai.lib.baseevent import BaseEvent, init_event_list
 from sekai.lib.ease import EaseType
-from sekai.lib.layout import layout_hitbox, preempt_time, touch_to_lane
+from sekai.lib.layout import layout_lane_area, preempt_time, touch_to_lane
 from sekai.lib.level_config import LevelConfig
 from sekai.lib.options import Options
 from sekai.lib.stage import (
@@ -122,7 +122,7 @@ class DynamicStage(PlayArchetype):
             rightmost = p.pivot_lane + 0.5 + floor(hi - p.pivot_lane - 0.5)
         if leftmost > rightmost:
             return
-        total_hitbox = layout_hitbox(leftmost - 0.5, rightmost + 0.5)
+        total_hitbox = layout_lane_area(leftmost - 0.5, rightmost + 0.5)
         empty_lanes = StageMemory.empty_lanes
         for touch in touches():
             if not total_hitbox.contains_point(touch.position):

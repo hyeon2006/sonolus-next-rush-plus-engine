@@ -106,6 +106,7 @@ class StageMaskChangeLike(Protocol):
     size: float
     ease: EaseType
     next_ref: EntityRef
+    prev_ref: EntityRef
 
     @classmethod
     def at(cls, index: int) -> StageMaskChangeLike: ...
@@ -122,6 +123,7 @@ class StagePivotChangeLike(Protocol):
     y_offset: float
     ease: EaseType
     next_ref: EntityRef
+    prev_ref: EntityRef
 
     @classmethod
     def at(cls, index: int) -> StagePivotChangeLike: ...
@@ -140,6 +142,7 @@ class StageStyleChangeLike(Protocol):
     judge_line_alpha: float
     ease: EaseType
     next_ref: EntityRef
+    prev_ref: EntityRef
 
     @classmethod
     def at(cls, index: int) -> StageStyleChangeLike: ...

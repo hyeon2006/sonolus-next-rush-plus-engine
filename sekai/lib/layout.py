@@ -7,7 +7,7 @@ from typing import Protocol, assert_never, cast
 from sonolus.script.archetype import EntityRef, get_archetype_by_name
 from sonolus.script.debug import static_error
 from sonolus.script.globals import level_data, level_memory
-from sonolus.script.interval import clamp, lerp, remap, unlerp
+from sonolus.script.interval import Interval, clamp, lerp, remap, unlerp
 from sonolus.script.num import Num
 from sonolus.script.quad import Quad, QuadLike, Rect
 from sonolus.script.record import Record
@@ -18,20 +18,17 @@ from sonolus.script.vec import Vec2
 from sekai.lib import archetype_names
 from sekai.lib.baseevent import get_event_as, query_event_list
 from sekai.lib.ease import EaseType, ease
-from sekai.lib.options import HitboxMode, Options, StageCoverNoteSpeedCompensation
+from sekai.lib.options import Options, StageCoverNoteSpeedCompensation
 from sekai.lib.timescale import CompositeTime
 
 LANE_T = 47 / 850
 LANE_B = 1176 / 850
 
-LANE_HITBOX_L = -6
-LANE_HITBOX_R = 6
-LANE_HITBOX_T = (803 / 850) * 0.6
-LANE_HITBOX_B = 1.5
-
 NOTE_H = 75 / 850 / 2
 NOTE_EDGE_W = 0.25
 NOTE_SLIM_EDGE_W = 0.125
+
+HITBOX_TARGET_HALF_HEIGHT = 0.25
 
 TARGET_ASPECT_RATIO = 16 / 9
 
@@ -269,8 +266,6 @@ def transformed_vec_at(lane: float, travel: float = 1.0) -> Vec2:
 
 
 def touch_to_lane(pos: Vec2) -> float:
-    if Options.hitbox_mode == HitboxMode.VERTICAL:
-        return (pos.x - DynamicLayout.x_translate) / DynamicLayout.w_scale
     y_raw = (pos.y - DynamicLayout.t) / DynamicLayout.h_scale
     x_raw = (pos.x - DynamicLayout.x_translate) / DynamicLayout.w_scale
     return x_raw / y_raw
@@ -642,18 +637,41 @@ def layout_sim_line(
     )
 
 
-def layout_hitbox(
-    l: float,
-    r: float,
-) -> Quad:
-    result = +Quad
-    if Options.hitbox_mode == HitboxMode.ANGLED:
-        result @= perspective_rect(l, r, LANE_T, LANE_B)
-    else:
-        bl = transform_vec(Vec2(l, LANE_HITBOX_B))
-        tr = transform_vec(Vec2(r, LANE_HITBOX_T))
-        result @= Rect(l=bl.x, r=tr.x, b=bl.y, t=tr.y).as_quad()
-    return result
+class Hitbox(Record):
+    target: Rect
+    bounds: Interval
+
+
+def compute_hitbox(lane: float, size: float, leniency: float, y_offset: float = 0.0) -> Hitbox:
+    travel = approach(1 - y_offset)
+    l_screen = transform_vec(Vec2((lane - size) * travel, travel)).x
+    r_screen = transform_vec(Vec2((lane + size) * travel, travel)).x
+    note_y = travel * DynamicLayout.h_scale + DynamicLayout.t
+    lane_w = DynamicLayout.w_scale
+    return Hitbox(
+        target=Rect(
+            l=l_screen,
+            r=r_screen,
+            t=note_y + HITBOX_TARGET_HALF_HEIGHT,
+            b=note_y - HITBOX_TARGET_HALF_HEIGHT,
+        ),
+        bounds=Interval(
+            start=l_screen - leniency * lane_w,
+            end=r_screen + leniency * lane_w,
+        ),
+    )
+
+
+def signed_distance_to_rect(p: Vec2, r: Rect) -> float:
+    dx = max(r.l - p.x, p.x - r.r)
+    dy = max(r.b - p.y, p.y - r.t)
+    outside = (max(dx, 0.0) ** 2 + max(dy, 0.0) ** 2) ** 0.5
+    inside = min(max(dx, dy), 0.0)
+    return -outside - inside
+
+
+def layout_lane_area(l: float, r: float) -> Quad:
+    return perspective_rect(l, r, LANE_T, LANE_B)
 
 
 def iter_slot_lanes(lane: float, size: float, pivot_lane: float = 0.0, half_offset: bool = False):

@@ -6,7 +6,7 @@ from sonolus.script.interval import clamp
 from sonolus.script.runtime import offset_adjusted_time, time, touches
 
 from sekai.lib import archetype_names
-from sekai.lib.layout import layout_hitbox, refresh_layout, touch_to_lane
+from sekai.lib.layout import layout_lane_area, refresh_layout, touch_to_lane
 from sekai.lib.level_config import LevelConfig
 from sekai.lib.stage import draw_stage_and_accessories, play_lane_hit_effects
 from sekai.lib.streams import Streams
@@ -41,7 +41,7 @@ class StaticStage(PlayArchetype):
                 empty_lanes.clear()
             return
         empty_lanes.clear()
-        total_hitbox = layout_hitbox(-7, 7)
+        total_hitbox = layout_lane_area(-7, 7)
         for touch in touches():
             if not total_hitbox.contains_point(touch.position):
                 continue

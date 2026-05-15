@@ -7,7 +7,6 @@ from sonolus.script.archetype import (
     StandardImport,
     WatchArchetype,
     entity_data,
-    entity_memory,
     imported,
     shared_memory,
 )
@@ -16,19 +15,23 @@ from sonolus.script.interval import lerp, remap_clamped, unlerp_clamped
 from sonolus.script.runtime import is_replay, is_skip, time
 from sonolus.script.timing import beat_to_time
 
-from sekai.debug import DISABLE_NOTES, SHOW_TICK_HITBOX_SIZE
+from sekai.debug import DISABLE_NOTES, SHOW_HITBOXES
 from sekai.lib.connector import ActiveConnectorInfo, ConnectorKind, ConnectorLayer
 from sekai.lib.ease import EaseType, ease
-from sekai.lib.layout import FlickDirection, progress_to
+from sekai.lib.layout import FlickDirection, compute_hitbox, progress_to
 from sekai.lib.note import (
     NoteEffectKind,
     NoteKind,
+    draw_hitbox_overlay,
     draw_note,
     get_attach_params,
     get_leniency,
     get_note_bucket,
     get_note_effect_kind,
+    get_note_window,
     get_visual_spawn_time,
+    has_release_input,
+    has_tap_input,
     is_head,
     map_note_kind,
     mirror_flick_direction,
@@ -78,11 +81,9 @@ class WatchBaseNote(WatchArchetype):
     visual_start_time: float = entity_data()
     start_time: float = entity_data()
     target_scaled_time: CompositeTime = entity_data()
+    target_y_offset: float = entity_data()
 
     active_connector_info: ActiveConnectorInfo = shared_memory()
-
-    hitbox_l: float = entity_memory()
-    hitbox_r: float = entity_memory()
 
     end_time: float = imported()
     played_hit_effects: bool = imported()
@@ -111,8 +112,10 @@ class WatchBaseNote(WatchArchetype):
             self.start_time = self.visual_start_time
 
         if self.stage_ref.index > 0:
+            stage_props = get_stage_props(self.stage_ref.get(), self.target_time)
             self.rel_lane = self.lane
-            self.lane += get_stage_props(self.stage_ref.get(), self.target_time).pivot_lane
+            self.lane += stage_props.pivot_lane
+            self.target_y_offset = stage_props.y_offset
 
         if self.next_ref.index > 0:
             self.next_ref.get().prev_ref = self.ref()
@@ -145,6 +148,13 @@ class WatchBaseNote(WatchArchetype):
             self.size = size
             self.visual_start_time = min(attach_head.visual_start_time, attach_tail.visual_start_time)
             self.start_time = self.visual_start_time
+            self.target_y_offset = remap_clamped(
+                attach_head.target_time,
+                attach_tail.target_time,
+                attach_head._basic_y_offset_at(self.target_time),
+                attach_tail._basic_y_offset_at(self.target_time),
+                self.target_time,
+            )
 
         if is_replay():
             if self.played_hit_effects:
@@ -158,7 +168,7 @@ class WatchBaseNote(WatchArchetype):
                     self.size,
                     self.end_time,
                     self.direction,
-                    y_offset=self._stage_y_offset_at(self.end_time),
+                    y_offset=self._basic_y_offset_at(self.end_time),
                     pivot_lane=self._stage_pivot_lane_at(self.end_time),
                     half_offset=self._stage_half_offset_at(self.end_time),
                 )
@@ -173,17 +183,12 @@ class WatchBaseNote(WatchArchetype):
                     self.size,
                     self.target_time,
                     self.direction,
-                    y_offset=self._stage_y_offset_at(self.target_time),
+                    y_offset=self._basic_y_offset_at(self.target_time),
                     pivot_lane=self._stage_pivot_lane_at(self.target_time),
                     half_offset=self._stage_half_offset_at(self.target_time),
                 )
 
         self.result.target_time = self.target_time
-
-        if SHOW_TICK_HITBOX_SIZE and self.kind in {NoteKind.NORM_TICK, NoteKind.CRIT_TICK, NoteKind.HIDE_TICK}:
-            leniency = get_leniency(self.kind)
-            self.hitbox_l = self.lane - self.size - leniency
-            self.hitbox_r = self.lane + self.size + leniency
 
         if self.stage_ref.index > 0:
             stage = self.stage_ref.get()
@@ -216,15 +221,6 @@ class WatchBaseNote(WatchArchetype):
             return
         if Options.disable_fake_notes and not self.is_scored:
             return
-        if SHOW_TICK_HITBOX_SIZE and self.kind in {NoteKind.NORM_TICK, NoteKind.CRIT_TICK, NoteKind.HIDE_TICK}:
-            draw_note(
-                NoteKind.DAMAGE,
-                (self.hitbox_l + self.hitbox_r) / 2,
-                (self.hitbox_r - self.hitbox_l) / 2,
-                self.visual_progress,
-                self.direction,
-                self.target_time,
-            )
         draw_note(
             self.kind,
             self.visual_lane,
@@ -233,6 +229,20 @@ class WatchBaseNote(WatchArchetype):
             self.direction,
             self.target_time,
         )
+        if SHOW_HITBOXES and self.is_scored:
+            input_interval = get_note_window(self.kind).bad + self.target_time
+            if time() in input_interval:
+                hitbox = compute_hitbox(
+                    self.lane,
+                    self.size,
+                    get_leniency(self.kind),
+                    self.target_y_offset,
+                )
+                draw_hitbox_overlay(
+                    hitbox,
+                    has_tap_input(self.kind) or has_release_input(self.kind),
+                    unlerp_clamped(input_interval.start, self.target_time, time()),
+                )
 
     def terminate(self):
         if is_skip():
@@ -277,10 +287,23 @@ class WatchBaseNote(WatchArchetype):
                 return lerp(current_head_lane, current_tail_lane, ease(self.connector_ease, note_ease_frac))
         return self._basic_visual_lane_at(t)
 
-    def _stage_y_offset_at(self, t: float) -> float:
+    def _basic_y_offset_at(self, t: float) -> float:
         if self.stage_ref.index <= 0:
             return 0.0
         return get_stage_props(self.stage_ref.get(), t).y_offset
+
+    def y_offset_at(self, t: float) -> float:
+        if self.is_attached:
+            head = self.attach_head_ref.get()
+            tail = self.attach_tail_ref.get()
+            return remap_clamped(
+                head.target_time,
+                tail.target_time,
+                head._basic_y_offset_at(t),
+                tail._basic_y_offset_at(t),
+                self.target_time,
+            )
+        return self._basic_y_offset_at(t)
 
     def _stage_pivot_lane_at(self, t: float) -> float:
         if self.stage_ref.index <= 0:

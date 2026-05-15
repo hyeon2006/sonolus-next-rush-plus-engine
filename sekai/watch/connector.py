@@ -7,9 +7,10 @@ from sonolus.script.interval import Interval, lerp, remap_clamped, unlerp_clampe
 from sonolus.script.particle import ParticleHandle
 from sonolus.script.runtime import is_replay, is_skip, time
 
-from sekai.debug import DISABLE_NOTES
+from sekai.debug import DISABLE_NOTES, SHOW_HITBOXES
 from sekai.lib import archetype_names
 from sekai.lib.connector import (
+    CONNECTOR_LENIENCY,
     CONNECTOR_SLOT_SPAWN_PERIOD,
     CONNECTOR_THROUGH_JUDGE_LINE_DESPAWN_DELAY,
     CONNECTOR_TRAIL_SPAWN_PERIOD,
@@ -26,7 +27,8 @@ from sekai.lib.connector import (
     update_linear_connector_particle,
 )
 from sekai.lib.ease import EaseType, ease
-from sekai.lib.note import draw_slide_note_head, get_attach_params
+from sekai.lib.layout import compute_hitbox
+from sekai.lib.note import draw_hitbox_overlay, draw_slide_note_head, get_attach_params
 from sekai.lib.options import Options
 from sekai.lib.streams import Streams
 from sekai.lib.timescale import group_hide_notes, update_timescale_group
@@ -102,7 +104,7 @@ class WatchConnector(WatchArchetype):
                 time(),
             )
             self.active_connector_info.connector_kind = self.kind
-        if group_hide_notes(self.segment_head.timescale_group):
+        if group_hide_notes(self.segment_head.timescale_group) and self.active_head_ref.index > 0:
             self.active_connector_info.connector_kind = ConnectorKind.NONE
 
     def update_parallel(self):
@@ -170,6 +172,19 @@ class WatchConnector(WatchArchetype):
                 layer=segment_head.segment_layer,
                 bypass_tail_target_time_check=segment_head.segment_through_judge_line,
             )
+        if SHOW_HITBOXES and self.active_head_ref.index > 0 and time() in self.visual_active_interval:
+            input_lane, input_size = self.get_attached_params(time())
+            head = self.head
+            tail = self.tail
+            input_y_offset = remap_clamped(
+                head.target_time,
+                tail.target_time,
+                head.y_offset_at(time()),
+                tail.y_offset_at(time()),
+                time(),
+            )
+            hitbox = compute_hitbox(input_lane, input_size, CONNECTOR_LENIENCY, input_y_offset)
+            draw_hitbox_overlay(hitbox, False, 0.6)
 
     def get_attached_params(self, target_time: float) -> tuple[float, float]:
         head = self.head_ref.get().effective_attach_head

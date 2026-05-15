@@ -1,21 +1,20 @@
 from __future__ import annotations
 
 from sonolus.script.archetype import PlayArchetype, callback
-from sonolus.script.array import Dim
+from sonolus.script.array import Array, Dim
 from sonolus.script.containers import ArrayMap, ArraySet
 from sonolus.script.globals import level_memory
 from sonolus.script.iterator import maybe_next
-from sonolus.script.runtime import Touch, touches
+from sonolus.script.runtime import Touch, time, touches
 
 from sekai.lib import archetype_names
 from sekai.lib.buckets import SLIDE_END_LOCKOUT_DURATION
-from sekai.lib.layout import layout_hitbox
-from sekai.lib.note import get_leniency, is_head
+from sekai.lib.layout import DynamicLayout, signed_distance_to_rect
+from sekai.lib.note import is_head
 from sekai.play import note
 
-# Notes within this threshold in seconds of each other in target time are considered simultaneous
-# when it comes to hitbox conflict resolution.
-SIMULTANEOUS_THRESHOLD = 0.002
+INPUT_SLOTS = 16
+INPUT_SCORE_TIME_SCALE = 0.05
 
 
 @level_memory
@@ -80,103 +79,139 @@ def update_input_state():
 
 
 def preassign_taps():
-    active_input_taps = note.NoteMemory.active_tap_input_notes
-    active_input_taps.sort(key=lambda ref: ref.get().target_time)
-    available_tap_indexes = ArraySet[int, Dim[32]].new()
-    for i, touch in enumerate(touches()):
-        if touch.started:
-            available_tap_indexes.add(i)
-    for current_i in range(len(active_input_taps)):
-        current = active_input_taps[current_i].get()
-        for use_leniency in (False, True):
-            if current.captured_touch_id != 0:
+    active = note.NoteMemory.active_tap_input_notes
+    active.sort(key=lambda ref: ref.get().target_time)
+
+    input_assigned = +Array[bool, Dim[INPUT_SLOTS]]
+    for i in range(INPUT_SLOTS):
+        if i >= len(touches()) or not touches()[i].started:
+            input_assigned[i] = True
+
+    scores = +Array[float, Dim[INPUT_SLOTS]]
+    preferred = +Array[int, Dim[INPUT_SLOTS]]
+
+    for _ in range(INPUT_SLOTS):
+        for i in range(INPUT_SLOTS):
+            scores[i] = 0.0
+            preferred[i] = -1
+
+        for i in range(INPUT_SLOTS):
+            if input_assigned[i]:
                 continue
-            leniency = get_leniency(current.kind) if use_leniency else 0.0
-            current_l = current.lane - current.size
-            current_r = current.lane + current.size
-            hitbox_l = current_l - leniency
-            hitbox_r = current_r + leniency
-            # Earlier notes have already been processed — if they could capture a tap,
-            # they would have done so already.
-            for other_i in range(current_i + 1, len(active_input_taps)):
-                other = active_input_taps[other_i].get()
-                if other.target_time - current.target_time > SIMULTANEOUS_THRESHOLD:
-                    # Since the notes are sorted by target time, we can stop checking further
-                    break
-                if other.captured_touch_id != 0:
+            touch = touches()[i]
+            for note_i in range(len(active)):
+                target_note = active[note_i].get()
+                if target_note.captured_touch_id != 0:
                     continue
-                other_l = other.lane - other.size
-                other_r = other.lane + other.size
-                if other_l < current_l:
-                    hitbox_l = max(hitbox_l, (current_l + other_r) / 2)
-                if other_r > current_r:
-                    hitbox_r = min(hitbox_r, (current_r + other_l) / 2)
-            if use_leniency:
-                hitbox_l = min(hitbox_l, current_l)
-                hitbox_r = max(hitbox_r, current_r)
-            hitbox_layout = layout_hitbox(hitbox_l, hitbox_r)
-            for tap_i in available_tap_indexes:
-                touch = touches()[tap_i]
-                if hitbox_layout.contains_point(touch.position) and touch.time in current.unadjusted_input_interval:
-                    disallow_empty(touch)
-                    if not is_head(current.kind):
-                        disallow_release(touch, current.target_time + SLIDE_END_LOCKOUT_DURATION)
-                    current.captured_touch_id = touch.id
-                    current.captured_touch_time = min(touch.time, touch.start_time)
-                    available_tap_indexes.remove(tap_i)
+                if touch.position.x not in target_note.hitbox.bounds:
+                    continue
+                if touch.time not in target_note.unadjusted_input_interval:
+                    continue
+                score = (
+                    signed_distance_to_rect(touch.position, target_note.hitbox.target) / DynamicLayout.w_scale
+                    + (time() - target_note.target_time) / INPUT_SCORE_TIME_SCALE
+                )
+                if preferred[i] == -1 or score > scores[i]:
+                    scores[i] = score
+                    preferred[i] = note_i
+
+        any_assigned = False
+        for i in range(INPUT_SLOTS):
+            note_i = preferred[i]
+            if note_i < 0:
+                continue
+            is_best = True
+            for j in range(INPUT_SLOTS):
+                if j == i or preferred[j] != note_i:
+                    continue
+                if scores[j] > scores[i] or (scores[j] == scores[i] and j < i):
+                    is_best = False
                     break
+            if not is_best:
+                continue
+            target_note = active[note_i].get()
+            touch = touches()[i]
+            disallow_empty(touch)
+            if not is_head(target_note.kind):
+                disallow_release(touch, target_note.target_time + SLIDE_END_LOCKOUT_DURATION)
+            target_note.captured_touch_id = touch.id
+            target_note.captured_touch_time = min(touch.time, touch.start_time)
+            input_assigned[i] = True
+            any_assigned = True
+
+        if not any_assigned:
+            break
 
 
 def preassign_releases():
-    active_input_releases = note.NoteMemory.active_release_input_notes
-    active_input_releases.sort(key=lambda ref: ref.get().target_time)
-    active_release_indexes = ArraySet[int, Dim[32]].new()
-    for i, touch in enumerate(touches()):
-        if touch.ended:
-            active_release_indexes.add(i)
-    for current_i in range(len(active_input_releases)):
-        current = active_input_releases[current_i].get()
-        for use_leniency in (False, True):
-            if current.captured_touch_id != 0:
+    active = note.NoteMemory.active_release_input_notes
+    active.sort(key=lambda ref: ref.get().target_time)
+
+    input_assigned = +Array[bool, Dim[INPUT_SLOTS]]
+    for i in range(INPUT_SLOTS):
+        if i >= len(touches()) or not touches()[i].ended:
+            input_assigned[i] = True
+
+    scores = +Array[float, Dim[INPUT_SLOTS]]
+    preferred = +Array[int, Dim[INPUT_SLOTS]]
+
+    for _ in range(INPUT_SLOTS):
+        for i in range(INPUT_SLOTS):
+            scores[i] = 0.0
+            preferred[i] = -1
+
+        for i in range(INPUT_SLOTS):
+            if input_assigned[i]:
                 continue
-            leniency = get_leniency(current.kind) if use_leniency else 0.0
-            current_l = current.lane - current.size
-            current_r = current.lane + current.size
-            hitbox_l = current_l - leniency
-            hitbox_r = current_r + leniency
-            for other_i in range(current_i + 1, len(active_input_releases)):
-                other = active_input_releases[other_i].get()
-                if other.target_time - current.target_time > SIMULTANEOUS_THRESHOLD:
-                    break
-                if other.captured_touch_id != 0:
+            touch = touches()[i]
+            for note_i in range(len(active)):
+                target_note = active[note_i].get()
+                if target_note.captured_touch_id != 0:
                     continue
-                other_l = other.lane - other.size
-                other_r = other.lane + other.size
-                if other_l < current_l:
-                    hitbox_l = max(hitbox_l, (current_l + other_r) / 2)
-                if other_r > current_r:
-                    hitbox_r = min(hitbox_r, (current_r + other_l) / 2)
-            if use_leniency:
-                hitbox_l = min(hitbox_l, current_l)
-                hitbox_r = max(hitbox_r, current_r)
-            hitbox_layout = layout_hitbox(hitbox_l, hitbox_r)
-            for release_i in active_release_indexes:
-                touch = touches()[release_i]
-                if current.active_head_ref.index > 0:
-                    active_connector_info = current.active_head_ref.get().active_connector_info
-                    connector_hitbox = active_connector_info.get_hitbox(get_leniency(current.kind))
-                    ignore_lockout = not any(
-                        not t.ended and connector_hitbox.contains_point(t.position) for t in touches()
-                    )
-                else:
-                    ignore_lockout = False
-                if (
-                    hitbox_layout.contains_point(touch.position)
-                    and (ignore_lockout or is_allowed_release(touch, current.target_time))
-                    and touch.time in current.unadjusted_input_interval
-                ):
-                    disallow_empty(touch)
-                    current.captured_touch_id = touch.id
-                    current.captured_touch_time = touch.time  # Unused currently, but set for consistency
-                    active_release_indexes.remove(release_i)
+                if touch.position.x not in target_note.hitbox.bounds:
+                    continue
+                if touch.time not in target_note.unadjusted_input_interval:
+                    continue
+                ignore_lockout = False
+                if target_note.active_head_ref.index > 0:
+                    head_bounds = target_note.active_head_ref.get().active_connector_info.hitbox.bounds
+                    ongoing = False
+                    for t in touches():
+                        if not t.ended and t.position.x in head_bounds:
+                            ongoing = True
+                            break
+                    ignore_lockout = not ongoing
+                if not ignore_lockout and not is_allowed_release(touch, target_note.target_time):
+                    continue
+                score = (
+                    signed_distance_to_rect(touch.position, target_note.hitbox.target) / DynamicLayout.w_scale
+                    + (time() - target_note.target_time) / INPUT_SCORE_TIME_SCALE
+                )
+                if preferred[i] == -1 or score > scores[i]:
+                    scores[i] = score
+                    preferred[i] = note_i
+
+        any_assigned = False
+        for i in range(INPUT_SLOTS):
+            note_i = preferred[i]
+            if note_i < 0:
+                continue
+            is_best = True
+            for j in range(INPUT_SLOTS):
+                if j == i or preferred[j] != note_i:
+                    continue
+                if scores[j] > scores[i] or (scores[j] == scores[i] and j < i):
+                    is_best = False
                     break
+            if not is_best:
+                continue
+            target_note = active[note_i].get()
+            touch = touches()[i]
+            disallow_empty(touch)
+            target_note.captured_touch_id = touch.id
+            target_note.captured_touch_time = touch.time
+            input_assigned[i] = True
+            any_assigned = True
+
+        if not any_assigned:
+            break

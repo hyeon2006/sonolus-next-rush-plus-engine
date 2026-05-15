@@ -9,9 +9,10 @@ from sonolus.script.particle import ParticleHandle
 from sonolus.script.runtime import input_offset, offset_adjusted_time, time, touches
 from sonolus.script.timing import beat_to_time
 
-from sekai.debug import DISABLE_NOTES
+from sekai.debug import DISABLE_NOTES, SHOW_HITBOXES
 from sekai.lib import archetype_names
 from sekai.lib.connector import (
+    CONNECTOR_LENIENCY,
     CONNECTOR_SLOT_SPAWN_PERIOD,
     CONNECTOR_THROUGH_JUDGE_LINE_DESPAWN_DELAY,
     CONNECTOR_TRAIL_SPAWN_PERIOD,
@@ -30,13 +31,13 @@ from sekai.lib.connector import (
     update_linear_connector_particle,
 )
 from sekai.lib.ease import EaseType, ease
-from sekai.lib.note import draw_slide_note_head, get_attach_params
+from sekai.lib.layout import compute_hitbox
+from sekai.lib.note import draw_hitbox_overlay, draw_slide_note_head, get_attach_params
 from sekai.lib.options import Options
 from sekai.lib.streams import Streams
 from sekai.lib.timescale import group_hide_notes, update_timescale_group
 from sekai.play import input_manager, note
 
-CONNECTOR_LENIENCY = 1
 START_LENIENCY_BEATS = 0.5
 
 
@@ -139,11 +140,25 @@ class Connector(PlayArchetype):
         if self.active_head_ref.index > 0:
             if time() in self.input_active_interval:
                 input_lane, input_size = self.get_attached_params(offset_adjusted_time())
-                self.active_connector_info.input_lane = input_lane
-                self.active_connector_info.input_size = input_size
-                hitbox = self.active_connector_info.get_hitbox(CONNECTOR_LENIENCY)
+                head = self.head
+                tail = self.tail
+                oat = offset_adjusted_time()
+                input_y_offset = remap_clamped(
+                    head.target_time,
+                    tail.target_time,
+                    head.y_offset_at(oat),
+                    tail.y_offset_at(oat),
+                    oat,
+                )
+                self.active_connector_info.hitbox @= compute_hitbox(
+                    input_lane,
+                    input_size,
+                    CONNECTOR_LENIENCY,
+                    input_y_offset,
+                )
+                bounds = self.active_connector_info.hitbox.bounds
                 for touch in touches():
-                    if not touch.ended and hitbox.contains_point(touch.position):
+                    if not touch.ended and touch.position.x in bounds:
                         input_manager.disallow_empty(touch)
                         if not self.active_connector_info.is_active:
                             self.active_connector_info.active_start_time = time()
@@ -167,7 +182,7 @@ class Connector(PlayArchetype):
                     time(),
                 )
                 self.active_connector_info.connector_kind = self.kind
-            if group_hide_notes(self.segment_head.timescale_group):
+            if group_hide_notes(self.segment_head.timescale_group) and self.active_head_ref.index > 0:
                 self.active_connector_info.connector_kind = ConnectorKind.NONE
 
     def update_parallel(self):
@@ -242,6 +257,8 @@ class Connector(PlayArchetype):
                 layer=segment_head.segment_layer,
                 bypass_tail_target_time_check=segment_head.segment_through_judge_line,
             )
+        if SHOW_HITBOXES and self.active_head_ref.index > 0 and time() in self.input_active_interval:
+            draw_hitbox_overlay(self.active_connector_info.hitbox, False, 0.6)
 
     def get_attached_params(self, target_time: float) -> tuple[float, float]:
         head = self.head_ref.get().effective_attach_head

@@ -29,11 +29,6 @@ class VibrateMode(IntEnum):
     MISS_AND_GOOD = 2
 
 
-class HitboxMode(IntEnum):
-    ANGLED = 0
-    VERTICAL = 1
-
-
 @options
 class Options:
     speed: float = slider_option(
@@ -250,16 +245,6 @@ class Options:
         max=4,
         step=0.05,
         unit=StandardText.PERCENTAGE_UNIT,
-    )
-    hitbox_mode: HitboxMode = select_option(
-        name="Hitbox Mode",
-        scope="Next Sekai",
-        values=[
-            "Angled",
-            "Vertical",
-        ],
-        advanced=True,
-        default=1,
     )
     alternative_approach_curve: bool = toggle_option(
         name="Alternative Approach Curve",

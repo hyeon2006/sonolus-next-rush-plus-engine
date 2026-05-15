@@ -19,19 +19,19 @@ from sonolus.script.bucket import Bucket, Judgment
 from sonolus.script.containers import VarArray
 from sonolus.script.globals import level_memory
 from sonolus.script.interval import Interval, lerp, remap_clamped, unlerp_clamped
-from sonolus.script.quad import Quad
 from sonolus.script.runtime import Touch, delta_time, input_offset, offset_adjusted_time, time, touches
 from sonolus.script.timing import beat_to_time
 
-from sekai.debug import DISABLE_NOTES, SHOW_TICK_HITBOX_SIZE
+from sekai.debug import DISABLE_NOTES, SHOW_HITBOXES
 from sekai.lib import archetype_names
 from sekai.lib.buckets import WINDOW_SCALE, SekaiWindow
 from sekai.lib.connector import ActiveConnectorInfo, ConnectorKind, ConnectorLayer
 from sekai.lib.ease import EaseType, ease
-from sekai.lib.layout import FlickDirection, Layout, layout_hitbox, progress_to
+from sekai.lib.layout import FlickDirection, Hitbox, Layout, compute_hitbox, progress_to
 from sekai.lib.note import (
     NoteEffectKind,
     NoteKind,
+    draw_hitbox_overlay,
     draw_note,
     get_attach_params,
     get_leniency,
@@ -93,6 +93,7 @@ class BaseNote(PlayArchetype):
     visual_start_time: float = entity_data()
     start_time: float = entity_data()
     target_scaled_time: CompositeTime = entity_data()
+    target_y_offset: float = entity_data()
 
     judgment_window: SekaiWindow = shared_memory()
     input_interval: Interval = shared_memory()
@@ -111,8 +112,7 @@ class BaseNote(PlayArchetype):
 
     should_play_hit_effects: bool = entity_memory()
 
-    hitbox_l: float = entity_memory()
-    hitbox_r: float = entity_memory()
+    hitbox: Hitbox = shared_memory()
 
     end_time: float = exported()
     played_hit_effects: bool = exported()
@@ -141,8 +141,10 @@ class BaseNote(PlayArchetype):
             self.start_time = min(self.visual_start_time, self.input_interval.start)
 
         if self.stage_ref.index > 0:
+            stage_props = get_stage_props(self.stage_ref.get(), self.target_time)
             self.rel_lane = self.lane
-            self.lane += get_stage_props(self.stage_ref.get(), self.target_time).pivot_lane
+            self.lane += stage_props.pivot_lane
+            self.target_y_offset = stage_props.y_offset
 
         if self.next_ref.index > 0:
             self.next_ref.get().prev_ref = self.ref()
@@ -176,15 +178,15 @@ class BaseNote(PlayArchetype):
             self.size = size
             self.visual_start_time = min(attach_head.visual_start_time, attach_tail.visual_start_time)
             self.start_time = min(self.visual_start_time, self.input_interval.start)
-
-        if is_head(self.kind):
-            self.active_connector_info.input_lane = self.lane
-            self.active_connector_info.input_size = self.size
+            self.target_y_offset = remap_clamped(
+                attach_head.target_time,
+                attach_tail.target_time,
+                attach_head._basic_y_offset_at(self.target_time),
+                attach_tail._basic_y_offset_at(self.target_time),
+                self.target_time,
+            )
 
         if self.is_scored:
-            leniency = get_leniency(self.kind)
-            self.hitbox_l = self.lane - self.size - leniency
-            self.hitbox_r = self.lane + self.size + leniency
             schedule_note_auto_sfx(self.effect_kind, self.target_time)
 
         if self.stage_ref.index > 0:
@@ -207,6 +209,14 @@ class BaseNote(PlayArchetype):
             return
 
         update_timescale_group(self.timescale_group)
+
+        if self.is_scored and time() in self.input_interval:
+            self.hitbox @= compute_hitbox(
+                self.lane,
+                self.size,
+                get_leniency(self.kind),
+                self.target_y_offset,
+            )
 
         if self.should_do_delayed_trigger():
             if self.best_touch_matches_direction:
@@ -300,15 +310,6 @@ class BaseNote(PlayArchetype):
             return
         if Options.disable_fake_notes and not self.is_scored:
             return
-        if SHOW_TICK_HITBOX_SIZE and self.kind in {NoteKind.NORM_TICK, NoteKind.CRIT_TICK, NoteKind.HIDE_TICK}:
-            draw_note(
-                NoteKind.DAMAGE,
-                (self.hitbox_l + self.hitbox_r) / 2,
-                (self.hitbox_r - self.hitbox_l) / 2,
-                self.visual_progress,
-                self.direction,
-                self.target_time,
-            )
         draw_note(
             self.kind,
             self.visual_lane,
@@ -317,6 +318,12 @@ class BaseNote(PlayArchetype):
             self.direction,
             self.target_time,
         )
+        if SHOW_HITBOXES and self.is_scored and time() in self.input_interval:
+            draw_hitbox_overlay(
+                self.hitbox,
+                has_tap_input(self.kind) or has_release_input(self.kind),
+                unlerp_clamped(self.input_interval.start, self.target_time, time()),
+            )
 
     def should_do_delayed_trigger(self) -> bool:
         # Don't trigger if the previous frame was before the target time.
@@ -342,9 +349,8 @@ class BaseNote(PlayArchetype):
             if offset_adjusted_time() < self.target_time + self.judgment_window.perfect.end:
                 return False
             # Otherwise, see if there's any ongoing touches in the hitbox.
-            hitbox = self.hitbox
             for touch in touches():
-                if not touch.ended and hitbox.contains_point(touch.position):
+                if not touch.ended and touch.position.x in self.hitbox.bounds:
                     return False
             # If we're past the perfect window, and there are no ongoing touches in the hitbox, we can trigger to
             # avoid delaying the trigger by too long.
@@ -394,10 +400,8 @@ class BaseNote(PlayArchetype):
         # Another touch is allowed to flick the note as long as it started after the start of the input interval,
         # so we don't care which touch matched the tap id, just that the tap id is set.
 
-        hitbox = self.hitbox
-
         for touch in touches():
-            if not self.check_touch_touch_is_eligible_for_flick(hitbox, touch):
+            if not self.check_touch_touch_is_eligible_for_flick(touch):
                 continue
             if not self.check_direction_matches(touch.angle):
                 continue
@@ -405,7 +409,7 @@ class BaseNote(PlayArchetype):
             self.judge(touch.time)
             return
         for touch in touches():
-            if not self.check_touch_touch_is_eligible_for_flick(hitbox, touch):
+            if not self.check_touch_touch_is_eligible_for_flick(touch):
                 continue
             input_manager.disallow_empty(touch)
             self.judge_wrong_way(touch.time)
@@ -416,10 +420,9 @@ class BaseNote(PlayArchetype):
             return
         if self.should_do_delayed_trigger():
             return
-        hitbox = self.hitbox
         has_touch = False
         for touch in touches():
-            if not self.check_touch_is_eligible_for_trace(hitbox, touch):
+            if not self.check_touch_is_eligible_for_trace(touch):
                 continue
             input_manager.disallow_empty(touch)
             has_touch = True
@@ -440,14 +443,13 @@ class BaseNote(PlayArchetype):
             return
         if self.should_do_delayed_trigger():
             return
-        hitbox = self.hitbox
         has_touch = False
         has_correct_direction_touch = False
         for touch in touches():
-            if not self.check_touch_is_eligible_for_trace(hitbox, touch):
+            if not self.check_touch_is_eligible_for_trace(touch):
                 continue
             input_manager.disallow_empty(touch)
-            if not self.check_touch_is_eligible_for_trace_flick(hitbox, touch):
+            if not self.check_touch_is_eligible_for_trace_flick(touch):
                 continue
             has_touch = True
             if self.check_direction_matches(touch.angle):
@@ -476,10 +478,9 @@ class BaseNote(PlayArchetype):
             self.best_touch_matches_direction = has_correct_direction_touch
 
     def handle_tick_input(self):
-        hitbox = self.hitbox
         has_touch = False
         for touch in touches():
-            if not hitbox.contains_point(touch.position):
+            if touch.position.x not in self.hitbox.bounds:
                 continue
             input_manager.disallow_empty(touch)
             has_touch = True
@@ -492,10 +493,9 @@ class BaseNote(PlayArchetype):
                 self.best_touch_matches_direction = True
 
     def handle_damage_input(self):
-        hitbox = self.hitbox
         has_touch = False
         for touch in touches():
-            if not hitbox.contains_point(touch.position):
+            if touch.position.x not in self.hitbox.bounds:
                 continue
             input_manager.disallow_empty(touch)
             has_touch = True
@@ -549,22 +549,22 @@ class BaseNote(PlayArchetype):
             case _:
                 assert_never(kind)
 
-    def check_touch_touch_is_eligible_for_flick(self, hitbox: Quad, touch: Touch) -> bool:
+    def check_touch_touch_is_eligible_for_flick(self, touch: Touch) -> bool:
         return (
             touch.start_time >= self.captured_touch_time
             and touch.speed >= Layout.flick_speed_threshold
-            and (hitbox.contains_point(touch.position) or hitbox.contains_point(touch.prev_position))
+            and (touch.position.x in self.hitbox.bounds or touch.prev_position.x in self.hitbox.bounds)
         )
 
-    def check_touch_is_eligible_for_trace(self, hitbox: Quad, touch: Touch) -> bool:
+    def check_touch_is_eligible_for_trace(self, touch: Touch) -> bool:
         # Note that this does not check the time, since time may not be updated if the touch is stationary.
-        return hitbox.contains_point(touch.position)
+        return touch.position.x in self.hitbox.bounds
 
-    def check_touch_is_eligible_for_trace_flick(self, hitbox: Quad, touch: Touch) -> bool:
+    def check_touch_is_eligible_for_trace_flick(self, touch: Touch) -> bool:
         return (
             touch.time >= self.unadjusted_input_interval.start
             and touch.speed >= Layout.flick_speed_threshold
-            and (hitbox.contains_point(touch.position) or hitbox.contains_point(touch.prev_position))
+            and (touch.position.x in self.hitbox.bounds or touch.prev_position.x in self.hitbox.bounds)
         )
 
     def check_direction_matches(self, angle: float) -> bool:
@@ -648,10 +648,6 @@ class BaseNote(PlayArchetype):
     def post_judge(self):
         if self.should_play_hit_effects:
             PlayLevelMemory.last_note_sfx_time = time()
-
-    @property
-    def hitbox(self) -> Quad:
-        return layout_hitbox(self.hitbox_l, self.hitbox_r)
 
     @property
     def progress(self) -> float:
@@ -740,6 +736,24 @@ class BaseNote(PlayArchetype):
                 self.target_time,
             )
         return self._basic_visual_y_offset
+
+    def _basic_y_offset_at(self, t: float) -> float:
+        if self.stage_ref.index <= 0:
+            return 0.0
+        return get_stage_props(self.stage_ref.get(), t).y_offset
+
+    def y_offset_at(self, t: float) -> float:
+        if self.is_attached:
+            head = self.attach_head_ref.get()
+            tail = self.attach_tail_ref.get()
+            return remap_clamped(
+                head.target_time,
+                tail.target_time,
+                head._basic_y_offset_at(t),
+                tail._basic_y_offset_at(t),
+                self.target_time,
+            )
+        return self._basic_y_offset_at(t)
 
     @property
     def visual_pivot_lane(self) -> float:

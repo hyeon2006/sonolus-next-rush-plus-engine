@@ -7,6 +7,7 @@ from sonolus.script.bucket import Bucket, Judgment
 from sonolus.script.easing import ease_in_cubic
 from sonolus.script.effect import Effect
 from sonolus.script.interval import lerp, remap_clamped
+from sonolus.script.quad import Rect
 from sonolus.script.runtime import is_tutorial, is_watch, level_life, level_score, time
 from sonolus.script.sprite import Sprite
 
@@ -44,6 +45,7 @@ from sekai.lib.layer import (
 )
 from sekai.lib.layout import (
     FlickDirection,
+    Hitbox,
     Layout,
     approach,
     get_alpha,
@@ -1133,3 +1135,48 @@ def is_critical(kind: NoteKind) -> bool:
         NoteKind.CRIT_TAIL_RELEASE,
         NoteKind.CRIT_TICK,
     }
+
+
+HITBOX_DEBUG_BORDER_THICKNESS = 0.01
+HITBOX_DEBUG_SIDE_HALF_HEIGHT = 0.4
+
+
+def draw_hitbox_overlay(hitbox: Hitbox, draw_target: bool, alpha: float = 1.0):
+    note_y = (hitbox.target.t + hitbox.target.b) / 2
+    side_t = note_y + HITBOX_DEBUG_SIDE_HALF_HEIGHT
+    side_b = note_y - HITBOX_DEBUG_SIDE_HALF_HEIGHT
+    t = HITBOX_DEBUG_BORDER_THICKNESS
+    z = get_z(LAYER_NOTE_ARROW + 1)
+    a = alpha
+
+    ActiveSkin.guide_blue.draw(
+        Rect(l=hitbox.bounds.start, r=hitbox.bounds.start + t, t=side_t, b=side_b).as_quad(),
+        z=z,
+        a=a,
+    )
+    ActiveSkin.guide_neutral.draw(
+        Rect(l=hitbox.bounds.start + t, r=hitbox.bounds.start + 2 * t, t=side_t, b=side_b).as_quad(),
+        z=z,
+        a=a,
+    )
+    ActiveSkin.guide_neutral.draw(
+        Rect(l=hitbox.bounds.end - 2 * t, r=hitbox.bounds.end - t, t=side_t, b=side_b).as_quad(),
+        z=z,
+        a=a,
+    )
+    ActiveSkin.guide_blue.draw(
+        Rect(l=hitbox.bounds.end - t, r=hitbox.bounds.end, t=side_t, b=side_b).as_quad(),
+        z=z,
+        a=a,
+    )
+
+    if draw_target:
+        tgt = hitbox.target
+        ActiveSkin.guide_black.draw(Rect(l=tgt.l - t, r=tgt.r + t, t=tgt.t + t, b=tgt.t).as_quad(), z=z, a=a)
+        ActiveSkin.guide_black.draw(Rect(l=tgt.l - t, r=tgt.r + t, t=tgt.b, b=tgt.b - t).as_quad(), z=z, a=a)
+        ActiveSkin.guide_black.draw(Rect(l=tgt.l - t, r=tgt.l, t=tgt.t, b=tgt.b).as_quad(), z=z, a=a)
+        ActiveSkin.guide_black.draw(Rect(l=tgt.r, r=tgt.r + t, t=tgt.t, b=tgt.b).as_quad(), z=z, a=a)
+        ActiveSkin.guide_neutral.draw(Rect(l=tgt.l, r=tgt.r, t=tgt.t, b=tgt.t - t).as_quad(), z=z, a=a)
+        ActiveSkin.guide_neutral.draw(Rect(l=tgt.l, r=tgt.r, t=tgt.b + t, b=tgt.b).as_quad(), z=z, a=a)
+        ActiveSkin.guide_neutral.draw(Rect(l=tgt.l, r=tgt.l + t, t=tgt.t - t, b=tgt.b + t).as_quad(), z=z, a=a)
+        ActiveSkin.guide_neutral.draw(Rect(l=tgt.r - t, r=tgt.r, t=tgt.t - t, b=tgt.b + t).as_quad(), z=z, a=a)
