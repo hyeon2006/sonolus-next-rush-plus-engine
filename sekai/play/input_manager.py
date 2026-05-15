@@ -9,7 +9,7 @@ from sonolus.script.runtime import Touch, time, touches
 
 from sekai.lib import archetype_names
 from sekai.lib.buckets import SLIDE_END_LOCKOUT_DURATION
-from sekai.lib.layout import DynamicLayout, signed_distance_to_rect
+from sekai.lib.layout import DynamicLayout, segment_closeness_score
 from sekai.lib.note import is_head
 from sekai.play import note
 
@@ -108,7 +108,7 @@ def preassign_taps():
                 if touch.time not in target_note.unadjusted_input_interval:
                     continue
                 score = (
-                    signed_distance_to_rect(touch.position, target_note.hitbox.target) / DynamicLayout.w_scale
+                    segment_closeness_score(touch.position, target_note.hitbox.target) / DynamicLayout.w_scale
                     + (time() - target_note.target_time) / INPUT_SCORE_TIME_SCALE
                 )
                 if preferred[i] == -1 or score > scores[i]:
@@ -184,7 +184,7 @@ def preassign_releases():
                 if not ignore_lockout and not is_allowed_release(touch, target_note.target_time):
                     continue
                 score = (
-                    signed_distance_to_rect(touch.position, target_note.hitbox.target) / DynamicLayout.w_scale
+                    segment_closeness_score(touch.position, target_note.hitbox.target) / DynamicLayout.w_scale
                     + (time() - target_note.target_time) / INPUT_SCORE_TIME_SCALE
                 )
                 if preferred[i] == -1 or score > scores[i]:

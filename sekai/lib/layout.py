@@ -28,8 +28,6 @@ NOTE_H = 75 / 850 / 2
 NOTE_EDGE_W = 0.25
 NOTE_SLIM_EDGE_W = 0.125
 
-HITBOX_TARGET_HALF_HEIGHT = 0.25
-
 TARGET_ASPECT_RATIO = 16 / 9
 
 # Value between 0 and 1 where smaller values mean a 'harsher' approach with more acceleration.
@@ -637,8 +635,13 @@ def layout_sim_line(
     )
 
 
+class HitboxTarget(Record):
+    l: Vec2
+    r: Vec2
+
+
 class Hitbox(Record):
-    target: Rect
+    target: HitboxTarget
     bounds: Interval
 
 
@@ -649,11 +652,9 @@ def compute_hitbox(lane: float, size: float, leniency: float, y_offset: float = 
     note_y = travel * DynamicLayout.h_scale + DynamicLayout.t
     lane_w = DynamicLayout.w_scale
     return Hitbox(
-        target=Rect(
-            l=l_screen,
-            r=r_screen,
-            t=note_y + HITBOX_TARGET_HALF_HEIGHT,
-            b=note_y - HITBOX_TARGET_HALF_HEIGHT,
+        target=HitboxTarget(
+            l=Vec2(l_screen, note_y),
+            r=Vec2(r_screen, note_y),
         ),
         bounds=Interval(
             start=l_screen - leniency * lane_w,
@@ -662,12 +663,10 @@ def compute_hitbox(lane: float, size: float, leniency: float, y_offset: float = 
     )
 
 
-def signed_distance_to_rect(p: Vec2, r: Rect) -> float:
-    dx = max(r.l - p.x, p.x - r.r)
-    dy = max(r.b - p.y, p.y - r.t)
-    outside = (max(dx, 0.0) ** 2 + max(dy, 0.0) ** 2) ** 0.5
-    inside = min(max(dx, dy), 0.0)
-    return -outside - inside
+def segment_closeness_score(p: Vec2, seg: HitboxTarget) -> float:
+    d = seg.r - seg.l
+    t = clamp((p - seg.l).dot(d) / d.dot(d), 0.0, 1.0)
+    return -(p - (seg.l + d * t)).magnitude
 
 
 def layout_lane_area(l: float, r: float) -> Quad:

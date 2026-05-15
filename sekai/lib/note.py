@@ -7,9 +7,10 @@ from sonolus.script.bucket import Bucket, Judgment
 from sonolus.script.easing import ease_in_cubic
 from sonolus.script.effect import Effect
 from sonolus.script.interval import lerp, remap_clamped
-from sonolus.script.quad import Rect
+from sonolus.script.quad import Quad, Rect
 from sonolus.script.runtime import is_tutorial, is_watch, level_life, level_score, time
 from sonolus.script.sprite import Sprite
+from sonolus.script.vec import Vec2
 
 from sekai.lib import archetype_names
 from sekai.lib.buckets import (
@@ -1139,10 +1140,13 @@ def is_critical(kind: NoteKind) -> bool:
 
 HITBOX_DEBUG_BORDER_THICKNESS = 0.01
 HITBOX_DEBUG_SIDE_HALF_HEIGHT = 0.4
+HITBOX_DEBUG_TARGET_END_HALF_HEIGHT = 0.05
+HITBOX_DEBUG_TARGET_END_WIDTH = 0.04
+HITBOX_DEBUG_TARGET_DOT_HALF = 0.012
 
 
 def draw_hitbox_overlay(hitbox: Hitbox, draw_target: bool, alpha: float = 1.0):
-    note_y = (hitbox.target.t + hitbox.target.b) / 2
+    note_y = (hitbox.target.l.y + hitbox.target.r.y) / 2
     side_t = note_y + HITBOX_DEBUG_SIDE_HALF_HEIGHT
     side_b = note_y - HITBOX_DEBUG_SIDE_HALF_HEIGHT
     t = HITBOX_DEBUG_BORDER_THICKNESS
@@ -1172,11 +1176,42 @@ def draw_hitbox_overlay(hitbox: Hitbox, draw_target: bool, alpha: float = 1.0):
 
     if draw_target:
         tgt = hitbox.target
-        ActiveSkin.guide_black.draw(Rect(l=tgt.l - t, r=tgt.r + t, t=tgt.t + t, b=tgt.t).as_quad(), z=z, a=a)
-        ActiveSkin.guide_black.draw(Rect(l=tgt.l - t, r=tgt.r + t, t=tgt.b, b=tgt.b - t).as_quad(), z=z, a=a)
-        ActiveSkin.guide_black.draw(Rect(l=tgt.l - t, r=tgt.l, t=tgt.t, b=tgt.b).as_quad(), z=z, a=a)
-        ActiveSkin.guide_black.draw(Rect(l=tgt.r, r=tgt.r + t, t=tgt.t, b=tgt.b).as_quad(), z=z, a=a)
-        ActiveSkin.guide_neutral.draw(Rect(l=tgt.l, r=tgt.r, t=tgt.t, b=tgt.t - t).as_quad(), z=z, a=a)
-        ActiveSkin.guide_neutral.draw(Rect(l=tgt.l, r=tgt.r, t=tgt.b + t, b=tgt.b).as_quad(), z=z, a=a)
-        ActiveSkin.guide_neutral.draw(Rect(l=tgt.l, r=tgt.l + t, t=tgt.t - t, b=tgt.b + t).as_quad(), z=z, a=a)
-        ActiveSkin.guide_neutral.draw(Rect(l=tgt.r - t, r=tgt.r, t=tgt.t - t, b=tgt.b + t).as_quad(), z=z, a=a)
+        end_h = HITBOX_DEBUG_TARGET_END_HALF_HEIGHT
+        end_w = HITBOX_DEBUG_TARGET_END_WIDTH
+        dot = HITBOX_DEBUG_TARGET_DOT_HALF
+        z_dot = get_z(LAYER_NOTE_ARROW + 2)
+        ActiveSkin.guide_neutral.draw(
+            Rect(l=tgt.l.x + end_w, r=tgt.r.x - end_w, t=note_y + t, b=note_y - t).as_quad(),
+            z=z,
+            a=a,
+        )
+        ActiveSkin.guide_neutral.draw(
+            Quad(
+                bl=Vec2(tgt.l.x, note_y - end_h),
+                tl=Vec2(tgt.l.x, note_y + end_h),
+                tr=Vec2(tgt.l.x + end_w, note_y + t),
+                br=Vec2(tgt.l.x + end_w, note_y - t),
+            ),
+            z=z,
+            a=a,
+        )
+        ActiveSkin.guide_neutral.draw(
+            Quad(
+                bl=Vec2(tgt.r.x - end_w, note_y - t),
+                tl=Vec2(tgt.r.x - end_w, note_y + t),
+                tr=Vec2(tgt.r.x, note_y + end_h),
+                br=Vec2(tgt.r.x, note_y - end_h),
+            ),
+            z=z,
+            a=a,
+        )
+        ActiveSkin.guide_black.draw(
+            Rect(l=tgt.l.x, r=tgt.l.x + 2 * dot, t=note_y + dot, b=note_y - dot).as_quad(),
+            z=z_dot,
+            a=a,
+        )
+        ActiveSkin.guide_black.draw(
+            Rect(l=tgt.r.x - 2 * dot, r=tgt.r.x, t=note_y + dot, b=note_y - dot).as_quad(),
+            z=z_dot,
+            a=a,
+        )
