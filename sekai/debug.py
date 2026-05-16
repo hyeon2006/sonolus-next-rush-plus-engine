@@ -1,2 +1,1 @@
-SHOW_HITBOXES = False
 DISABLE_NOTES = False

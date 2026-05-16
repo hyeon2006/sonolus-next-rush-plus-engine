@@ -9,7 +9,7 @@ from sonolus.script.particle import ParticleHandle
 from sonolus.script.runtime import input_offset, offset_adjusted_time, time, touches
 from sonolus.script.timing import beat_to_time
 
-from sekai.debug import DISABLE_NOTES, SHOW_HITBOXES
+from sekai.debug import DISABLE_NOTES
 from sekai.lib import archetype_names
 from sekai.lib.connector import (
     CONNECTOR_LENIENCY,
@@ -257,7 +257,7 @@ class Connector(PlayArchetype):
                 layer=segment_head.segment_layer,
                 bypass_tail_target_time_check=segment_head.segment_through_judge_line,
             )
-        if SHOW_HITBOXES and self.active_head_ref.index > 0 and time() in self.input_active_interval:
+        if Options.show_hitboxes and self.active_head_ref.index > 0 and time() in self.input_active_interval:
             draw_hitbox_overlay(self.active_connector_info.hitbox, False, 0.6)
 
     def get_attached_params(self, target_time: float) -> tuple[float, float]:

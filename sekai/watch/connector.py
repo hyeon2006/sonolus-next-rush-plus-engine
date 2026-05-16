@@ -7,7 +7,7 @@ from sonolus.script.interval import Interval, lerp, remap_clamped, unlerp_clampe
 from sonolus.script.particle import ParticleHandle
 from sonolus.script.runtime import is_replay, is_skip, time
 
-from sekai.debug import DISABLE_NOTES, SHOW_HITBOXES
+from sekai.debug import DISABLE_NOTES
 from sekai.lib import archetype_names
 from sekai.lib.connector import (
     CONNECTOR_LENIENCY,
@@ -172,7 +172,7 @@ class WatchConnector(WatchArchetype):
                 layer=segment_head.segment_layer,
                 bypass_tail_target_time_check=segment_head.segment_through_judge_line,
             )
-        if SHOW_HITBOXES and self.active_head_ref.index > 0 and time() in self.visual_active_interval:
+        if Options.show_hitboxes and self.active_head_ref.index > 0 and time() in self.visual_active_interval:
             input_lane, input_size = self.get_attached_params(time())
             head = self.head
             tail = self.tail

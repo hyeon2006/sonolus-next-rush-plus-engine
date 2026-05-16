@@ -15,7 +15,7 @@ from sonolus.script.interval import lerp, remap_clamped, unlerp_clamped
 from sonolus.script.runtime import is_replay, is_skip, time
 from sonolus.script.timing import beat_to_time
 
-from sekai.debug import DISABLE_NOTES, SHOW_HITBOXES
+from sekai.debug import DISABLE_NOTES
 from sekai.lib.connector import ActiveConnectorInfo, ConnectorKind, ConnectorLayer
 from sekai.lib.ease import EaseType, ease
 from sekai.lib.layout import FlickDirection, compute_hitbox, progress_to
@@ -229,7 +229,7 @@ class WatchBaseNote(WatchArchetype):
             self.direction,
             self.target_time,
         )
-        if SHOW_HITBOXES and self.is_scored:
+        if Options.show_hitboxes and self.is_scored:
             input_interval = get_note_window(self.kind).bad + self.target_time
             if time() in input_interval:
                 hitbox = compute_hitbox(

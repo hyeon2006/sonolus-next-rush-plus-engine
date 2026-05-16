@@ -277,6 +277,12 @@ class Options:
         advanced=True,
         default=1,
     )
+    show_hitboxes: bool = toggle_option(
+        name="Show Hitboxes",
+        advanced=True,
+        scope="Next Sekai",
+        default=False,
+    )
 
     replay_fallback_option_names = (
         StandardText.SPEED,

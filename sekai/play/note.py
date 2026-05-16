@@ -22,7 +22,7 @@ from sonolus.script.interval import Interval, lerp, remap_clamped, unlerp_clampe
 from sonolus.script.runtime import Touch, delta_time, input_offset, offset_adjusted_time, time, touches
 from sonolus.script.timing import beat_to_time
 
-from sekai.debug import DISABLE_NOTES, SHOW_HITBOXES
+from sekai.debug import DISABLE_NOTES
 from sekai.lib import archetype_names
 from sekai.lib.buckets import WINDOW_SCALE, SekaiWindow
 from sekai.lib.connector import ActiveConnectorInfo, ConnectorKind, ConnectorLayer
@@ -318,7 +318,7 @@ class BaseNote(PlayArchetype):
             self.direction,
             self.target_time,
         )
-        if SHOW_HITBOXES and self.is_scored and time() in self.input_interval:
+        if Options.show_hitboxes and self.is_scored and time() in self.input_interval:
             draw_hitbox_overlay(
                 self.hitbox,
                 has_tap_input(self.kind) or has_release_input(self.kind),
