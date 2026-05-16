@@ -115,7 +115,7 @@ class WatchBaseNote(WatchArchetype):
             stage_props = get_stage_props(self.stage_ref.get(), self.target_time)
             self.rel_lane = self.lane
             self.lane += stage_props.pivot_lane
-            self.target_y_offset = stage_props.y_offset
+            self.target_y_offset = self._basic_y_offset_at(self.target_time, left_limit=True)
 
         if self.next_ref.index > 0:
             self.next_ref.get().prev_ref = self.ref()
@@ -151,8 +151,8 @@ class WatchBaseNote(WatchArchetype):
             self.target_y_offset = remap_clamped(
                 attach_head.target_time,
                 attach_tail.target_time,
-                attach_head._basic_y_offset_at(self.target_time),
-                attach_tail._basic_y_offset_at(self.target_time),
+                attach_head._basic_y_offset_at(self.target_time, left_limit=True),
+                attach_tail._basic_y_offset_at(self.target_time, left_limit=True),
                 self.target_time,
             )
 
@@ -287,10 +287,10 @@ class WatchBaseNote(WatchArchetype):
                 return lerp(current_head_lane, current_tail_lane, ease(self.connector_ease, note_ease_frac))
         return self._basic_visual_lane_at(t)
 
-    def _basic_y_offset_at(self, t: float) -> float:
+    def _basic_y_offset_at(self, t: float, left_limit: bool = False) -> float:
         if self.stage_ref.index <= 0:
             return 0.0
-        return get_stage_props(self.stage_ref.get(), t).y_offset
+        return get_stage_props(self.stage_ref.get(), t, left_limit=left_limit).y_offset
 
     def y_offset_at(self, t: float) -> float:
         if self.is_attached:
