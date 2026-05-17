@@ -18,7 +18,7 @@ from sonolus.script.timing import beat_to_time
 from sekai.debug import DISABLE_NOTES
 from sekai.lib.buckets import SekaiWindow
 from sekai.lib.connector import ActiveConnectorInfo, ConnectorKind, ConnectorLayer
-from sekai.lib.ease import EaseType
+from sekai.lib.ease import EaseType, ease
 from sekai.lib.layout import FlickDirection, compute_hitbox, progress_to
 from sekai.lib.note import (
     NoteEffectKind,
@@ -52,7 +52,7 @@ from sekai.lib.timescale import (
     group_time_to_scaled_time,
     update_timescale_group,
 )
-from sekai.play.note import HITBOX_DRAW_MIN_EARLY_WINDOW, derive_note_archetypes
+from sekai.play.note import HITBOX_DRAW_MIN_EARLY_WINDOW, derive_note_archetypes, get_note_window
 from sekai.watch.custom_elements import spawn_custom
 from sekai.watch.dynamic_stage import WatchDynamicStage
 from sekai.watch.particle_manager import ParticleManager
@@ -87,7 +87,7 @@ class WatchBaseNote(WatchArchetype):
     visual_start_time: float = entity_data()
     start_time: float = entity_data()
     target_scaled_time: CompositeTime = entity_data()
-    target_y_offset: float = shared_memory()
+    target_y_offset: float = entity_data()
     not_render: float = shared_memory()
 
     active_connector_info: ActiveConnectorInfo = shared_memory()
