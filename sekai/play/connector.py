@@ -227,11 +227,11 @@ class Connector(PlayArchetype):
             return
         current_time = time()
         if self.active_head_ref.index > 0 and current_time in self.input_active_interval:
-            hitbox = self.active_connector_info.get_hitbox(CONNECTOR_LENIENCY)
+            bounds = self.active_connector_info.hitbox.bounds
             for touch in touches():
                 if (
                     not touch.ended
-                    and hitbox.contains_point(touch.position)
+                    and touch.position.x in bounds
                     and input_manager.is_allowed_empty(touch)
                     and (
                         self.can_consume_empty

@@ -18,7 +18,7 @@ from sonolus.script.timing import beat_to_time
 from sekai.debug import DISABLE_NOTES
 from sekai.lib.buckets import SekaiWindow
 from sekai.lib.connector import ActiveConnectorInfo, ConnectorKind, ConnectorLayer
-from sekai.lib.ease import EaseType
+from sekai.lib.ease import EaseType, ease
 from sekai.lib.layout import FlickDirection, compute_hitbox, progress_to
 from sekai.lib.note import (
     NoteEffectKind,
@@ -52,7 +52,7 @@ from sekai.lib.timescale import (
     group_time_to_scaled_time,
     update_timescale_group,
 )
-from sekai.play.note import derive_note_archetypes
+from sekai.play.note import derive_note_archetypes, get_note_window
 from sekai.watch.custom_elements import spawn_custom
 from sekai.watch.dynamic_stage import WatchDynamicStage
 from sekai.watch.particle_manager import ParticleManager
