@@ -766,6 +766,49 @@ export const extendedToLevelData = (data: LevelData, offset = 0): LevelData | un
         return { tailRef: resolvedTailRef, skippedNoteRefs, skippedConnectors }
     }
 
+    function refKey(ref: number | string | undefined) {
+        const original = resolveOriginal(ext, ref)
+        const index = original ? ext.entities.indexOf(original) : -1
+
+        return index >= 0 ? `index:${index}` : `${typeof ref}:${String(ref)}`
+    }
+
+    function getRefBeat(ref: number | string | undefined) {
+        return getNum(resolveOriginal(ext, ref) ?? { archetype: '', data: [] }, '#BEAT')
+    }
+
+    const activeTailRefsByStart = new Map<string, number | string | undefined>()
+
+    function getActiveTailRef(activeStartRef: number | string | undefined) {
+        const key = refKey(activeStartRef)
+        if (activeTailRefsByStart.has(key)) return activeTailRefsByStart.get(key)
+
+        let activeTailRef: number | string | undefined
+        let activeTailBeat = Number.NEGATIVE_INFINITY
+
+        for (const { e } of ext.connectors) {
+            const startRef = getField(e, 'start')
+            const headRef = getField(e, 'head')
+            if (isIgnoredSlideTickRef(headRef)) continue
+
+            const connectorActiveStartRef = getUltimateStartRef(e.archetype, startRef, headRef)
+            if (refKey(connectorActiveStartRef) !== key) continue
+
+            const endRef = getField(e, 'end')
+            const { tailRef } = resolveConnectorTailRef(e.archetype, startRef, getField(e, 'tail'))
+            const candidateTailRef =
+                endRef ?? getUltimateTailRef(e.archetype, activeStartRef, tailRef)
+            const candidateTailBeat = getRefBeat(candidateTailRef)
+            if (candidateTailBeat >= activeTailBeat) {
+                activeTailBeat = candidateTailBeat
+                activeTailRef = candidateTailRef
+            }
+        }
+
+        activeTailRefsByStart.set(key, activeTailRef)
+        return activeTailRef
+    }
+
     for (const { idx, e } of ext.connectors) {
         const startRef = getField(e, 'start')
         const headRef = getField(e, 'head')
@@ -789,11 +832,10 @@ export const extendedToLevelData = (data: LevelData, offset = 0): LevelData | un
         const head = usesStartAsHead ? activeHead : rawHead
         const headOriginal = resolveOriginal(ext, usesStartAsHead ? startRef : headRef)
 
-        const endRef = getField(e, 'end')
-        let activeTail = getNote(endRef)
+        let activeTail = getNote(getActiveTailRef(activeStartRef))
 
         if (!activeTail) {
-            activeTail = getNote(getUltimateTailRef(e.archetype, activeStartRef, tailRef))
+            activeTail = getNote(getField(e, 'end'))
         }
 
         if (!activeTail) {
