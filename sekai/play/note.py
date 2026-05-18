@@ -63,6 +63,7 @@ from sekai.play.common import PlayLevelMemory
 from sekai.play.dynamic_stage import DynamicStage
 
 DEFAULT_BEST_TOUCH_TIME = -1e8
+HITBOX_DRAW_MIN_EARLY_WINDOW = 0.050
 
 
 class BaseNote(PlayArchetype):
@@ -210,7 +211,10 @@ class BaseNote(PlayArchetype):
 
         update_timescale_group(self.timescale_group)
 
-        if self.is_scored and time() >= self.input_interval.start:
+        hitbox_start = self.input_interval.start
+        if Options.show_hitboxes:
+            hitbox_start = min(hitbox_start, self.target_time - HITBOX_DRAW_MIN_EARLY_WINDOW)
+        if self.is_scored and time() >= hitbox_start:
             self.hitbox @= compute_hitbox(
                 self.lane,
                 self.size,
@@ -318,12 +322,14 @@ class BaseNote(PlayArchetype):
             self.direction,
             self.target_time,
         )
-        if Options.show_hitboxes and self.is_scored and time() in self.input_interval:
-            draw_hitbox_overlay(
-                self.hitbox,
-                has_tap_input(self.kind) or has_release_input(self.kind),
-                unlerp_clamped(self.input_interval.start, self.target_time, time()),
-            )
+        if Options.show_hitboxes and self.is_scored:
+            draw_start = min(self.input_interval.start, self.target_time - HITBOX_DRAW_MIN_EARLY_WINDOW)
+            if draw_start <= time() <= self.input_interval.end:
+                draw_hitbox_overlay(
+                    self.hitbox,
+                    has_tap_input(self.kind) or has_release_input(self.kind),
+                    unlerp_clamped(draw_start, self.target_time, time()),
+                )
 
     def should_do_delayed_trigger(self) -> bool:
         # Don't trigger if the previous frame was before the target time.

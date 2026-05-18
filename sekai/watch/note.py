@@ -50,7 +50,7 @@ from sekai.lib.timescale import (
     group_time_to_scaled_time,
     update_timescale_group,
 )
-from sekai.play.note import derive_note_archetypes
+from sekai.play.note import HITBOX_DRAW_MIN_EARLY_WINDOW, derive_note_archetypes
 from sekai.watch.dynamic_stage import WatchDynamicStage
 
 
@@ -231,7 +231,8 @@ class WatchBaseNote(WatchArchetype):
         )
         if Options.show_hitboxes and self.is_scored:
             input_interval = get_note_window(self.kind).bad + self.target_time
-            if time() in input_interval:
+            draw_start = min(input_interval.start, self.target_time - HITBOX_DRAW_MIN_EARLY_WINDOW)
+            if draw_start <= time() <= input_interval.end:
                 hitbox = compute_hitbox(
                     self.lane,
                     self.size,
@@ -241,7 +242,7 @@ class WatchBaseNote(WatchArchetype):
                 draw_hitbox_overlay(
                     hitbox,
                     has_tap_input(self.kind) or has_release_input(self.kind),
-                    unlerp_clamped(input_interval.start, self.target_time, time()),
+                    unlerp_clamped(draw_start, self.target_time, time()),
                 )
 
     def terminate(self):
