@@ -210,7 +210,7 @@ class BaseNote(PlayArchetype):
 
         update_timescale_group(self.timescale_group)
 
-        if self.is_scored and time() in self.input_interval:
+        if self.is_scored and time() >= self.input_interval.start:
             self.hitbox @= compute_hitbox(
                 self.lane,
                 self.size,
