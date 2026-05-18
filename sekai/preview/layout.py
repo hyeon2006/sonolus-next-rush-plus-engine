@@ -51,7 +51,7 @@ PREVIEW_DYNAMIC_STAGE_BORDER_MEDIUM_W = 0.075
 PREVIEW_DYNAMIC_STAGE_BORDER_LIGHT_W = 0.075
 PREVIEW_DYNAMIC_STAGE_DIVIDER_W = 0.075
 PREVIEW_DYNAMIC_STAGE_EPS = 0.001
-PREVIEW_DYNAMIC_STAGE_LANE_BOUND = 9.0 + (PREVIEW_MARGIN_X - PREVIEW_EXTEND_MARGIN_X) / PREVIEW_LANE_W
+PREVIEW_DYNAMIC_STAGE_LANE_BOUND = 10.0 + (PREVIEW_MARGIN_X - PREVIEW_EXTEND_MARGIN_X) / PREVIEW_LANE_W
 
 
 @level_data
@@ -70,7 +70,7 @@ class PreviewLayout:
 
 def init_preview_layout():
     PreviewLayout.column_count = time_to_preview_col(PreviewData.max_time) + 1
-    PreviewLayout.column_width = 2 * PREVIEW_MARGIN_X + PREVIEW_LANE_W * (18 if LevelConfig.dynamic_stages else 12)
+    PreviewLayout.column_width = 2 * PREVIEW_MARGIN_X + PREVIEW_LANE_W * (20 if LevelConfig.dynamic_stages else 12)
     PreviewLayout.visible_secs = PreviewLayout.column_count * PREVIEW_COLUMN_SECS
 
     canvas().update(

@@ -16,6 +16,7 @@ from sekai.preview.layout import (
     PREVIEW_CAMERA_INTERVAL,
     PREVIEW_CAMERA_MARKER_ALPHA,
     PREVIEW_COLUMN_SECS,
+    PREVIEW_DYNAMIC_STAGE_LANE_BOUND,
     PreviewData,
     PreviewLayout,
     init_preview_layout,
@@ -99,10 +100,21 @@ def draw_column_dividers():
 
 def draw_camera_markers():
     count = int(PreviewLayout.visible_secs / PREVIEW_CAMERA_INTERVAL)
+    bound = PREVIEW_DYNAMIC_STAGE_LANE_BOUND
     for i in range(count):
         t = (i + 0.5) * PREVIEW_CAMERA_INTERVAL
         camera = get_camera_info(t)
-        left_layout = layout_preview_camera_marker(camera.lane - camera.size, t)
-        right_layout = layout_preview_camera_marker(camera.lane + camera.size, t)
-        ActiveSkin.special_line.draw(left_layout, z=get_z(LAYER_BEAT_LINE, etc=1), a=PREVIEW_CAMERA_MARKER_ALPHA)
-        ActiveSkin.special_line.draw(right_layout, z=get_z(LAYER_BEAT_LINE, etc=1), a=PREVIEW_CAMERA_MARKER_ALPHA)
+        left_lane = camera.lane - camera.size
+        right_lane = camera.lane + camera.size
+        if -bound <= left_lane <= bound:
+            ActiveSkin.special_line.draw(
+                layout_preview_camera_marker(left_lane, t),
+                z=get_z(LAYER_BEAT_LINE, etc=1),
+                a=PREVIEW_CAMERA_MARKER_ALPHA,
+            )
+        if -bound <= right_lane <= bound:
+            ActiveSkin.special_line.draw(
+                layout_preview_camera_marker(right_lane, t),
+                z=get_z(LAYER_BEAT_LINE, etc=1),
+                a=PREVIEW_CAMERA_MARKER_ALPHA,
+            )
