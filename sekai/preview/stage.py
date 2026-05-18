@@ -23,7 +23,6 @@ from sekai.preview.layout import (
     PREVIEW_DYNAMIC_STAGE_BSEARCH_ITERS,
     PREVIEW_DYNAMIC_STAGE_DIVIDER_W,
     PREVIEW_DYNAMIC_STAGE_EPS,
-    PREVIEW_DYNAMIC_STAGE_LANE_BOUND,
     PREVIEW_DYNAMIC_STAGE_TIME_INCREMENT,
     PreviewLayout,
     layout_preview_bottom_cover,
@@ -125,7 +124,7 @@ def draw_dynamic_stage_lane_bg_slice(
     if alpha <= 0:
         return
 
-    bound = PREVIEW_DYNAMIC_STAGE_LANE_BOUND
+    bound = PreviewLayout.lane_bound
     mask_l_a = max(props_a.lane - props_a.width, -bound)
     mask_r_a = min(props_a.lane + props_a.width, bound)
     mask_l_b = max(props_b.lane - props_b.width, -bound)
@@ -162,7 +161,7 @@ def draw_dynamic_stage_border_slice(
         style_a = props_a.right_border_style
         style_b = props_b.right_border_style
 
-    bound = PREVIEW_DYNAMIC_STAGE_LANE_BOUND
+    bound = PreviewLayout.lane_bound
     de = edge_b - edge_a
     if de == 0:
         if abs(edge_a) > bound:
@@ -334,7 +333,7 @@ def draw_dynamic_stage_division_set(
 
     eps = PREVIEW_DYNAMIC_STAGE_EPS
     divider_w = PREVIEW_DYNAMIC_STAGE_DIVIDER_W
-    bound = PREVIEW_DYNAMIC_STAGE_LANE_BOUND
+    bound = PreviewLayout.lane_bound
 
     mask_l_a = max(props_a.lane - props_a.width, -bound)
     mask_r_a = min(props_a.lane + props_a.width, bound)
@@ -392,7 +391,7 @@ def bsearch_divider_mask_edge(
     time). On exit we return the time on the in-mask side of the converged interval.
     """
     eps = PREVIEW_DYNAMIC_STAGE_EPS
-    bound = PREVIEW_DYNAMIC_STAGE_LANE_BOUND
+    bound = PreviewLayout.lane_bound
     bisect_lo = t_lo
     bisect_hi = t_hi
     for _ in range(PREVIEW_DYNAMIC_STAGE_BSEARCH_ITERS):

@@ -16,7 +16,6 @@ from sekai.preview.layout import (
     PREVIEW_CAMERA_INTERVAL,
     PREVIEW_CAMERA_MARKER_ALPHA,
     PREVIEW_COLUMN_SECS,
-    PREVIEW_DYNAMIC_STAGE_LANE_BOUND,
     PreviewData,
     PreviewLayout,
     init_preview_layout,
@@ -100,7 +99,7 @@ def draw_column_dividers():
 
 def draw_camera_markers():
     count = int(PreviewLayout.visible_secs / PREVIEW_CAMERA_INTERVAL)
-    bound = PREVIEW_DYNAMIC_STAGE_LANE_BOUND
+    bound = PreviewLayout.lane_bound
     for i in range(count):
         t = (i + 0.5) * PREVIEW_CAMERA_INTERVAL
         camera = get_camera_info(t)

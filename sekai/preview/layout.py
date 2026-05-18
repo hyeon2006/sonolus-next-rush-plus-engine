@@ -29,6 +29,17 @@ PREVIEW_NOTE_H = PREVIEW_LANE_W / 3
 PREVIEW_BAR_LINE_H = PREVIEW_LANE_W / 20
 PREVIEW_BAR_LINE_ALPHA = 0.8
 
+PREVIEW_CLASSIC_BASE_LANE_COUNT = 12
+PREVIEW_DYNAMIC_STAGE_BASE_LANE_COUNT = 20
+PREVIEW_CLASSIC_COLUMN_WIDTH = 2 * (PREVIEW_MARGIN_X + PREVIEW_LANE_W * PREVIEW_CLASSIC_BASE_LANE_COUNT / 2)
+PREVIEW_DYNAMIC_STAGE_COLUMN_WIDTH = 2 * (PREVIEW_MARGIN_X + PREVIEW_LANE_W * PREVIEW_DYNAMIC_STAGE_BASE_LANE_COUNT / 2)
+PREVIEW_CLASSIC_LANE_BOUND = (
+    PREVIEW_CLASSIC_BASE_LANE_COUNT / 2 + (PREVIEW_MARGIN_X - PREVIEW_EXTEND_MARGIN_X) / PREVIEW_LANE_W
+)
+PREVIEW_DYNAMIC_STAGE_LANE_BOUND = (
+    PREVIEW_DYNAMIC_STAGE_BASE_LANE_COUNT / 2 + (PREVIEW_MARGIN_X - PREVIEW_EXTEND_MARGIN_X) / PREVIEW_LANE_W
+)
+
 PREVIEW_CAMERA_MARKER_SIZE = PREVIEW_LANE_W * 0.15
 PREVIEW_CAMERA_INTERVAL = 0.015
 PREVIEW_CAMERA_MARKER_ALPHA = 0.6
@@ -51,7 +62,6 @@ PREVIEW_DYNAMIC_STAGE_BORDER_MEDIUM_W = 0.075
 PREVIEW_DYNAMIC_STAGE_BORDER_LIGHT_W = 0.075
 PREVIEW_DYNAMIC_STAGE_DIVIDER_W = 0.075
 PREVIEW_DYNAMIC_STAGE_EPS = 0.001
-PREVIEW_DYNAMIC_STAGE_LANE_BOUND = 10.0 + (PREVIEW_MARGIN_X - PREVIEW_EXTEND_MARGIN_X) / PREVIEW_LANE_W
 
 
 @level_data
@@ -66,12 +76,18 @@ class PreviewLayout:
     column_count: int
     column_width: float
     visible_secs: float
+    lane_bound: float
 
 
 def init_preview_layout():
     PreviewLayout.column_count = time_to_preview_col(PreviewData.max_time) + 1
-    PreviewLayout.column_width = 2 * PREVIEW_MARGIN_X + PREVIEW_LANE_W * (20 if LevelConfig.dynamic_stages else 12)
+    PreviewLayout.column_width = (
+        PREVIEW_DYNAMIC_STAGE_COLUMN_WIDTH if LevelConfig.dynamic_stages else PREVIEW_CLASSIC_COLUMN_WIDTH
+    )
     PreviewLayout.visible_secs = PreviewLayout.column_count * PREVIEW_COLUMN_SECS
+    PreviewLayout.lane_bound = (
+        PREVIEW_DYNAMIC_STAGE_LANE_BOUND if LevelConfig.dynamic_stages else PREVIEW_CLASSIC_LANE_BOUND
+    )
 
     canvas().update(
         scroll_direction=ScrollDirection.LEFT_TO_RIGHT,
@@ -301,9 +317,8 @@ def layout_preview_slide_connector_segment(
     end_y: float,
     col: int,
 ) -> Iterator[Quad]:
-    mx = lane_to_preview_x(0, col)
-    x_min = mx - PreviewLayout.column_width / 2 + PREVIEW_EXTEND_MARGIN_X
-    x_max = mx + PreviewLayout.column_width / 2 - PREVIEW_EXTEND_MARGIN_X
+    x_min = lane_to_preview_x(-PreviewLayout.lane_bound, col)
+    x_max = lane_to_preview_x(PreviewLayout.lane_bound, col)
     bl = Vec2(lane_to_preview_x(start_lane - start_size, col), start_y)
     br = Vec2(lane_to_preview_x(start_lane + start_size, col), start_y)
     tl = Vec2(lane_to_preview_x(end_lane - end_size, col), end_y)
