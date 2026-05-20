@@ -362,13 +362,15 @@ def perspective_vec(x: float, y: float, travel: float = 1.0) -> Vec2:
     return transform_vec(Vec2(x * y * travel, y * travel))
 
 
-def perspective_rect(l: float, r: float, t: float, b: float, travel: float = 1.0) -> Quad:
+def perspective_rect(l: float, r: float, t: float, b: float, travel: float = 1.0, p: float = 1.0) -> Quad:
+    t_x = 1 + (t - 1) * p
+    b_x = 1 + (b - 1) * p
     return transform_quad(
         Quad(
-            bl=Vec2(l * b * travel, b * travel),
-            br=Vec2(r * b * travel, b * travel),
-            tl=Vec2(l * t * travel, t * travel),
-            tr=Vec2(r * t * travel, t * travel),
+            bl=Vec2(l * b_x * travel, b * travel),
+            br=Vec2(r * b_x * travel, b * travel),
+            tl=Vec2(l * t_x * travel, t * travel),
+            tr=Vec2(r * t_x * travel, t * travel),
         )
     )
 
@@ -794,16 +796,7 @@ def layout_fallback_judge_line() -> Quad:
 
 
 def layout_note_body_by_edges(l: float, r: float, h: float, travel: float):
-    p = Options.note_perspective
-    return transform_quad(
-        Quad(
-            bl=Vec2(l * (1 + h * p) * travel, (1 + h) * travel),
-            br=Vec2(r * (1 + h * p) * travel, (1 + h) * travel),
-            tl=Vec2(l * (1 - h * p) * travel, (1 - h) * travel),
-            tr=Vec2(r * (1 - h * p) * travel, (1 - h) * travel),
-        )
-    )
-    return perspective_rect(l=l, r=r, t=1 - h, b=1 + h, travel=travel)
+    return perspective_rect(l=l, r=r, t=1 - h, b=1 + h, travel=travel, p=Options.note_perspective)
 
 
 def layout_note_body_slices_by_edges(
