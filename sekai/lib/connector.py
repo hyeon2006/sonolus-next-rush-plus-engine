@@ -11,7 +11,6 @@ from sonolus.script.record import Record
 from sonolus.script.runtime import time
 from sonolus.script.sprite import Sprite
 from sonolus.script.timing import beat_to_time
-from sonolus.script.vec import Vec2
 
 from sekai.lib.ease import EaseType, ease
 from sekai.lib.effect import Effects
@@ -392,7 +391,6 @@ def draw_connector(
         case _:
             assert_never(kind)
 
-    alpha_option = get_connector_alpha_option(kind)
     head_alpha = remap_clamped(
         segment_head_target_time, segment_tail_target_time, segment_head_alpha, segment_tail_alpha, head_target_time
     )
@@ -400,8 +398,7 @@ def draw_connector(
         segment_head_target_time, segment_tail_target_time, segment_head_alpha, segment_tail_alpha, tail_target_time
     )
 
-    current_time = time()
-    if current_time >= tail_target_time and not bypass_tail_target_time_check:
+    if time() >= tail_target_time and not bypass_tail_target_time_check:
         return
     start_visual_progress = clamp(head_visual_progress, Layout.progress_start, Layout.progress_cutoff)
     end_visual_progress = clamp(tail_visual_progress, Layout.progress_start, Layout.progress_cutoff)
@@ -421,97 +418,66 @@ def draw_connector(
     end_size = max(1e-3, lerp(head_size, tail_size, end_interp_frac))  # Lightweight rendering needs >0 size.
     start_alpha = lerp(head_alpha, tail_alpha, start_frac)
     end_alpha = lerp(head_alpha, tail_alpha, end_frac)
-    quality = get_connector_quality_option(kind)
-    alpha_change = abs(start_alpha - end_alpha) * alpha_option
-    start_left = +Vec2
-    start_right = +Vec2
-    end_left = +Vec2
-    end_right = +Vec2
+    start_pos_y = transformed_vec_at(start_lane, start_travel).y
+    end_pos_y = transformed_vec_at(end_lane, end_travel).y
 
-    alpha_segment_count = 0
-    if alpha_change != 0:
-        start_left @= transformed_vec_at(start_lane - start_size, start_travel)
-        start_right @= transformed_vec_at(start_lane + start_size, start_travel)
-        end_left @= transformed_vec_at(end_lane - end_size, end_travel)
-        end_right @= transformed_vec_at(end_lane + end_size, end_travel)
-        alpha_distance = max(
-            abs(start_left.y - end_left.y),
-            abs(start_right.y - end_right.y),
-        )
-        alpha_change_scale = max(
-            alpha_change**0.8 * 3,
-            alpha_change**0.5 * alpha_distance * 3,
-        )
-        alpha_segment_count = ceil(alpha_change_scale * quality * 10)
-
-    if ease_type == EaseType.NONE:
-        curve_segment_count = 0
-        segment_count = max(1, alpha_segment_count)
-    else:
-        skip_curve_sampling = (
-            alpha_segment_count >= CONNECTOR_ALPHA_CURVE_SKIP_THRESHOLD
-            or (
-                abs(start_lane - end_lane) <= CONNECTOR_FAST_PATH_LANE_EPSILON
-                and abs(start_size - end_size) <= CONNECTOR_FAST_PATH_LANE_EPSILON
-            )
-            or (
-                ease_type == EaseType.LINEAR
-                and abs(end_visual_progress - start_visual_progress) <= CONNECTOR_FAST_PATH_PROGRESS_THRESHOLD
-                and (
-                    abs(start_lane - end_lane) <= CONNECTOR_FAST_PATH_LANE_EPSILON
-                    or abs(start_size - end_size) <= CONNECTOR_FAST_PATH_LANE_EPSILON
-                )
-            )
-        )
-        if skip_curve_sampling:
-            curve_segment_count = 0
-        elif ease_type == EaseType.LINEAR:
-            perspective_factor = max(0.1, (start_travel + end_travel) * 0.5) ** 0.8
+    match ease_type:
+        case EaseType.NONE:
+            curve_change_scale = 0.0
+        case EaseType.LINEAR:
             x_diff = (
                 max(
                     abs((start_lane - start_size) - (end_lane - end_size)),
                     abs((start_lane + start_size) - (end_lane + end_size)),
                 )
                 * DynamicLayout.w_scale
-                / perspective_factor
-            ) * abs(end_visual_progress - start_visual_progress)
-            curve_segment_count = ceil(x_diff**0.8 * quality * 10)
-        else:
-            if alpha_change == 0:
-                start_left @= transformed_vec_at(start_lane - start_size, start_travel)
-                start_right @= transformed_vec_at(start_lane + start_size, start_travel)
-                end_left @= transformed_vec_at(end_lane - end_size, end_travel)
-                end_right @= transformed_vec_at(end_lane + end_size, end_travel)
-            curve_error = 0.0
+            )
+            y_diff = abs(start_pos_y - end_pos_y)
+            travel_adj = clamp(2 - max(start_travel, end_travel), 1, 2)
+            curve_change_scale = (min(x_diff, y_diff) * travel_adj) * 0.8
+        case _:
+            left_start_lane = start_lane - start_size
+            left_end_lane = end_lane - end_size
+            right_start_lane = start_lane + start_size
+            right_end_lane = end_lane + end_size
+            if abs(start_size - end_size) < 0.1:
+                ref_start_lane = start_lane
+                ref_end_lane = end_lane
+                ref_head_lane = head_lane
+                ref_tail_lane = tail_lane
+            elif abs(left_start_lane - left_end_lane) > abs(right_start_lane - right_end_lane):
+                ref_start_lane = left_start_lane
+                ref_end_lane = left_end_lane
+                ref_head_lane = head_lane - head_size
+                ref_tail_lane = tail_lane - tail_size
+            else:
+                ref_start_lane = right_start_lane
+                ref_end_lane = right_end_lane
+                ref_head_lane = head_lane + head_size
+                ref_tail_lane = tail_lane + tail_size
+            start_ref = transformed_vec_at(ref_start_lane, start_travel)
+            end_ref = transformed_vec_at(ref_end_lane, end_travel)
+            last_pos_offset = 0
+            total_pos_offsets = 0
             for r in (0.25, 0.75):
                 ease_frac = lerp(start_ease_frac, end_ease_frac, r)
                 interp_frac = unlerp_clamped(eased_head_ease_frac, eased_tail_ease_frac, ease(ease_type, ease_frac))
                 visual_progress = lerp(start_visual_progress, end_visual_progress, r)
                 travel = approach(visual_progress)
-                lane = lerp(head_lane, tail_lane, interp_frac)
-                size = max(1e-3, lerp(head_size, tail_size, interp_frac))
-                left = transformed_vec_at(lane - size, travel)
-                right = transformed_vec_at(lane + size, travel)
-                ref_frac = unlerp_clamped(start_travel, end_travel, travel)
-                ref_left = lerp(start_left, end_left, ref_frac)
-                ref_right = lerp(start_right, end_right, ref_frac)
-                curve_error = max(
-                    curve_error,
-                    abs(left.x - ref_left.x),
-                    abs(left.y - ref_left.y),
-                    abs(right.x - ref_right.x),
-                    abs(right.y - ref_right.y),
-                )
-            avg_travel = clamp((start_travel + end_travel) * 0.5, 0, 1)
-            curve_error_tolerance = CONNECTOR_CURVE_ERROR_TOLERANCE * lerp(
-                CONNECTOR_FAR_CURVE_ERROR_TOLERANCE_MIN_SCALE,
-                1,
-                avg_travel,
-            )
-            curve_segment_count = ceil(
-                (curve_error / curve_error_tolerance) ** 0.5 * quality * CONNECTOR_EASE_CURVE_SEGMENT_SCALE
-            )
-        segment_count = max(1, curve_segment_count, alpha_segment_count)
+                lane = lerp(ref_head_lane, ref_tail_lane, interp_frac)
+                pos = transformed_vec_at(lane, travel)
+                ref_pos = lerp(start_ref, end_ref, unlerp_clamped(start_travel, end_travel, travel))
+                current_pos_offset = pos.x - ref_pos.x
+                total_pos_offsets += abs(current_pos_offset - last_pos_offset) ** 0.6
+                last_pos_offset = current_pos_offset
+            total_pos_offsets += abs(last_pos_offset) ** 0.6
+            curve_change_scale = total_pos_offsets * 1.5
+    alpha_change_scale = max(
+        (abs(start_alpha - end_alpha) * get_connector_alpha_option(kind)) ** 0.8 * 3,
+        (abs(start_alpha - end_alpha) * get_connector_alpha_option(kind)) ** 0.5 * abs(start_pos_y - end_pos_y) * 3,
+    )
+    quality = get_connector_quality_option(kind)
+    segment_count = max(1, ceil(max(curve_change_scale, alpha_change_scale) * quality * 10))
 
     z_normal = get_connector_z(kind, segment_head_target_time, segment_head_lane, active=False, layer=layer)
     if visual_state == ConnectorVisualState.ACTIVE and active_sprite.is_available:
@@ -519,68 +485,36 @@ def draw_connector(
     else:
         z_active = z_normal
 
-    anim_factor1 = 1.0
-    anim_factor2 = 1.0
-    if visual_state == ConnectorVisualState.ACTIVE and active_sprite.is_available and Options.connector_animation:
-        anim_factor1, anim_factor2 = get_cross_fate_opacities(1.0, current_time - segment_head_target_time, 0.5)
-
-    # cache
     last_travel = start_travel
     last_lane = start_lane
     last_size = start_size
     last_alpha = start_alpha
     last_target_time = lerp(head_target_time, tail_target_time, start_frac)
 
-    inv_segment_count = 1.0 / segment_count
-
-    diff_frac = end_frac - start_frac
-    diff_ease_frac = end_ease_frac - start_ease_frac
-    diff_visual_progress = end_visual_progress - start_visual_progress
-    diff_lane = tail_lane - head_lane
-    diff_size = tail_size - head_size
-    diff_alpha = tail_alpha - head_alpha
-    diff_target_time = tail_target_time - head_target_time
-
-    ease_diff = eased_tail_ease_frac - eased_head_ease_frac
-    inv_ease_diff = 1.0 / ease_diff if ease_diff != 0.0 else 0.0
-
-    alpha_option_half = alpha_option * 0.5
-    is_active_draw = visual_state == ConnectorVisualState.ACTIVE and active_sprite.is_available
-    has_anim = Options.connector_animation
-    inactive_alpha_mult = 0.5 if visual_state == ConnectorVisualState.INACTIVE else 1.0
+    anim_factor1, anim_factor2 = (1, 1)
+    if visual_state == ConnectorVisualState.ACTIVE and active_sprite.is_available and Options.connector_animation:
+        anim_factor1, anim_factor2 = get_cross_fate_opacities(1.0, time() - segment_head_target_time, 0.5)
 
     for i in range(1, segment_count + 1):
-        segment_frac = i * inv_segment_count
-
-        next_frac = start_frac + diff_frac * segment_frac
-        next_ease_frac = start_ease_frac + diff_ease_frac * segment_frac
-
-        eased_next = ease(ease_type, next_ease_frac)
-        if inv_ease_diff != 0.0:
-            next_interp_frac = clamp((eased_next - eased_head_ease_frac) * inv_ease_diff, 0.0, 1.0)
-        else:
-            next_interp_frac = 0.0
-
-        next_visual_progress = start_visual_progress + diff_visual_progress * segment_frac
+        segment_frac = i / segment_count
+        next_frac = lerp(start_frac, end_frac, segment_frac)
+        next_ease_frac = lerp(start_ease_frac, end_ease_frac, segment_frac)
+        next_interp_frac = unlerp_clamped(eased_head_ease_frac, eased_tail_ease_frac, ease(ease_type, next_ease_frac))
+        next_visual_progress = lerp(start_visual_progress, end_visual_progress, segment_frac)
         next_travel = approach(next_visual_progress)
-        next_lane = head_lane + diff_lane * next_interp_frac
-        next_size = max(1e-3, head_size + diff_size * next_interp_frac)
-        next_alpha = head_alpha + diff_alpha * next_frac
-        next_target_time = head_target_time + diff_target_time * next_frac
+        next_lane = lerp(head_lane, tail_lane, next_interp_frac)
+        next_size = max(1e-3, lerp(head_size, tail_size, next_interp_frac))
+        next_alpha = lerp(head_alpha, tail_alpha, next_frac)
+        next_target_time = lerp(head_target_time, tail_target_time, next_frac)
 
         base_a = clamp(
-            get_alpha((last_target_time + next_target_time) * 0.5) * (last_alpha + next_alpha) * alpha_option_half,
+            get_alpha((last_target_time + next_target_time) / 2)
+            * (last_alpha + next_alpha)
+            / 2
+            * get_connector_alpha_option(kind),
             0,
             1,
         )
-
-        if base_a <= CONNECTOR_MIN_DRAW_ALPHA:
-            last_travel = next_travel
-            last_lane = next_lane
-            last_size = next_size
-            last_alpha = next_alpha
-            last_target_time = next_target_time
-            continue
 
         layout = layout_slide_connector_segment(
             start_lane=last_lane,
@@ -591,14 +525,16 @@ def draw_connector(
             end_travel=next_travel,
         )
 
-        if is_active_draw:
-            if has_anim:
+        if visual_state == ConnectorVisualState.ACTIVE and active_sprite.is_available:
+            if Options.connector_animation:
                 normal_sprite.draw(layout, z=z_normal, a=base_a * anim_factor1)
                 active_sprite.draw(layout, z=z_active, a=base_a * anim_factor2)
             else:
-                active_sprite.draw(layout, z=z_active, a=base_a)
+                normal_sprite.draw(layout, z=z_normal, a=base_a)
         else:
-            normal_sprite.draw(layout, z=z_normal, a=base_a * inactive_alpha_mult)
+            normal_sprite.draw(
+                layout, z=z_normal, a=base_a * (1 if visual_state != ConnectorVisualState.INACTIVE else 0.5)
+            )
 
         last_travel = next_travel
         last_lane = next_lane
