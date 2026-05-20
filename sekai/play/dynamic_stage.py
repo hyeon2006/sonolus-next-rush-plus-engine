@@ -81,7 +81,7 @@ class DynamicStage(PlayArchetype):
 
     props: StageProps = shared_memory()
 
-    @callback(order=-1)
+    @callback(order=-2)
     def preprocess(self):
         LevelConfig.dynamic_stages = True
         LevelConfig.skip_default_stage = True
@@ -200,7 +200,7 @@ class StageMaskChange(PlayArchetype, BaseEvent):
 
     time: float = entity_data()
 
-    @callback(order=-2)
+    @callback(order=-3)
     def preprocess(self):
         self.time = beat_to_time(self.beat)
         if Options.mirror:
@@ -229,7 +229,7 @@ class StagePivotChange(PlayArchetype, BaseEvent):
     y_offset: float = entity_data()
     time: float = entity_data()
 
-    @callback(order=-2)
+    @callback(order=-3)
     def preprocess(self):
         self.time = beat_to_time(self.beat)
         self.y_offset = self.abs_y_offset + self.y_beat_offset * 60 / beat_to_bpm(self.beat) / preempt_time()
@@ -259,7 +259,7 @@ class StageStyleChange(PlayArchetype, BaseEvent):
 
     time: float = entity_data()
 
-    @callback(order=-2)
+    @callback(order=-3)
     def preprocess(self):
         self.time = beat_to_time(self.beat)
         if Options.mirror:
