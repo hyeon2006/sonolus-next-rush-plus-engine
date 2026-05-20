@@ -547,15 +547,10 @@ class BaseNote(PlayArchetype):
     def handle_tap_input(self):
         if time() > self.input_interval.end:
             return
-
-        captured_touch_start = -1.0
-        for touch in touches():
-            if self.check_touch_is_eligible_for_trace_flick(touch) and touch.started:
-                input_manager.disallow_empty(touch)
-            if self.captured_touch_id != 0 and touch.id == self.captured_touch_id:
-                captured_touch_start = touch.start_time
-        if captured_touch_start != -1.0:
-            self.judge(captured_touch_start)
+        if self.captured_touch_id == 0:
+            return
+        touch = next(tap for tap in touches() if tap.id == self.captured_touch_id)
+        self.judge(touch.start_time)
 
     def handle_release_input(self):
         if time() > self.input_interval.end:
@@ -579,7 +574,7 @@ class BaseNote(PlayArchetype):
         for touch in touches():
             if self.check_touch_is_eligible_for_trace(touch) and touch.started:
                 input_manager.disallow_empty(touch)
-            if not self.check_touch_is_eligible_for_flick(touch):
+            if not self.check_touch_touch_is_eligible_for_flick(touch):
                 continue
             if not self.check_direction_matches(touch.angle):
                 if wrong_way_touch_time < 0:
@@ -643,14 +638,11 @@ class BaseNote(PlayArchetype):
                 current_touch_id = touch.id
         if not has_touch:
             return
-
-        is_just_reached = offset_adjusted_time() - delta_time() <= self.target_time <= offset_adjusted_time()
-
         if offset_adjusted_time() >= self.target_time:
             if current_touch_id > 0:
                 NoteMemory.flick_resolved_times[current_touch_id % 32] = self.target_time
             if has_correct_direction_touch:
-                if is_just_reached:
+                if offset_adjusted_time() - delta_time() <= self.target_time <= offset_adjusted_time():
                     self.complete()
                 else:
                     self.judge(offset_adjusted_time())
@@ -771,7 +763,7 @@ class BaseNote(PlayArchetype):
             case _:
                 assert_never(kind)
 
-    def check_touch_is_eligible_for_flick(self, touch: Touch) -> bool:
+    def check_touch_touch_is_eligible_for_flick(self, touch: Touch) -> bool:
         if touch.start_time < self.captured_touch_time or touch.speed < Layout.flick_speed_threshold:
             return False
         is_captured = self.captured_touch_id != 0 and touch.id == self.captured_touch_id
