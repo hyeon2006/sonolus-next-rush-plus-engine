@@ -87,7 +87,7 @@ class WatchBaseNote(WatchArchetype):
     visual_start_time: float = entity_data()
     start_time: float = entity_data()
     target_scaled_time: CompositeTime = entity_data()
-    target_y_offset: float = shared_memory()
+    target_y_offset: float = entity_data()
     not_render: float = shared_memory()
 
     active_connector_info: ActiveConnectorInfo = shared_memory()

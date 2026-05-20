@@ -369,6 +369,7 @@ class BaseNote(PlayArchetype):
             return
         if time() > self.input_interval.end:
             self.handle_late_miss()
+            return
         if is_head(self.kind) and time() > self.target_time:
             return
         if group_hide_notes(self.timescale_group):
