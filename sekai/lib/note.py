@@ -8,7 +8,7 @@ from sonolus.script.easing import ease_in_cubic
 from sonolus.script.effect import Effect
 from sonolus.script.interval import lerp, remap_clamped
 from sonolus.script.quad import Quad, Rect
-from sonolus.script.runtime import is_tutorial, is_watch, level_life, level_score, screen, time
+from sonolus.script.runtime import is_tutorial, is_watch, level_life, level_score, time
 from sonolus.script.sprite import Sprite
 from sonolus.script.vec import Vec2
 
@@ -1213,81 +1213,35 @@ def draw_hitbox_marker(
     )
 
 
+def draw_hitbox_bounds_overlay(bounds: Rect, alpha: float = 1.0):
+    t = HITBOX_DEBUG_BORDER_THICKNESS
+    a = alpha
+    z_bounds = get_z_alt(LAYER_GUIDE_CONNECTOR_OVER, 0)
+    tl = Vec2(bounds.l, bounds.t)
+    tr = Vec2(bounds.r, bounds.t)
+    bl = Vec2(bounds.l, bounds.b)
+    br = Vec2(bounds.r, bounds.b)
+    draw_hitbox_line(ActiveSkin.guide_blue, tl, tr, t, z_bounds, a)
+    draw_hitbox_line(ActiveSkin.guide_blue, bl, br, t, z_bounds, a)
+    draw_hitbox_line(ActiveSkin.guide_blue, tl, bl, t, z_bounds, a)
+    draw_hitbox_line(ActiveSkin.guide_blue, tr, br, t, z_bounds, a)
+    draw_hitbox_line(ActiveSkin.guide_blue, tl, br, t, z_bounds, a)
+    draw_hitbox_line(ActiveSkin.guide_blue, tr, bl, t, z_bounds, a)
+
+
 def draw_hitbox_overlay(hitbox: Hitbox, draw_target: bool, alpha: float = 1.0):
     note_y = (hitbox.target.l.y + hitbox.target.r.y) / 2
     t = HITBOX_DEBUG_BORDER_THICKNESS
     a = alpha
-    z_vert = get_z_alt(LAYER_GUIDE_CONNECTOR_OVER, 0)
     z_triangle = get_z_alt(LAYER_GUIDE_CONNECTOR_OVER, 1)
     z_apex = get_z_alt(LAYER_GUIDE_CONNECTOR_OVER, 2)
-    z_bounds = get_z_alt(LAYER_GUIDE_CONNECTOR_OVER, 3)
-    z_target = get_z_alt(LAYER_GUIDE_CONNECTOR_OVER, 4)
-    z_bounds_dot = get_z_alt(LAYER_GUIDE_CONNECTOR_OVER, 5)
-    z_target_dot = get_z_alt(LAYER_GUIDE_CONNECTOR_OVER, 6)
+    z_target = get_z_alt(LAYER_GUIDE_CONNECTOR_OVER, 3)
+    z_target_dot = get_z_alt(LAYER_GUIDE_CONNECTOR_OVER, 4)
 
-    ActiveSkin.guide_blue.draw(
-        Rect(
-            l=hitbox.bounds.start - t / 2,
-            r=hitbox.bounds.start + t / 2,
-            t=screen().t,
-            b=screen().b,
-        ).as_quad(),
-        z=z_vert,
-        a=a * 0.5,
-    )
-    ActiveSkin.guide_blue.draw(
-        Rect(
-            l=hitbox.bounds.end - t / 2,
-            r=hitbox.bounds.end + t / 2,
-            t=screen().t,
-            b=screen().b,
-        ).as_quad(),
-        z=z_vert,
-        a=a * 0.5,
-    )
-
-    apex_half = HITBOX_DEBUG_APEX_HALF
-    bounds_center_x = (hitbox.bounds.start + hitbox.bounds.end) / 2
-    bounds_apex = Vec2(bounds_center_x, note_y + HITBOX_DEBUG_TRIANGLE_HEIGHT)
-    draw_hitbox_line(
-        ActiveSkin.guide_blue,
-        Vec2(hitbox.bounds.start, note_y),
-        bounds_apex,
-        t,
-        z_triangle,
-        a,
-    )
-    draw_hitbox_line(
-        ActiveSkin.guide_blue,
-        Vec2(hitbox.bounds.end, note_y),
-        bounds_apex,
-        t,
-        z_triangle,
-        a,
-    )
-    ActiveSkin.guide_blue.draw(
-        Rect(
-            l=bounds_apex.x - apex_half,
-            r=bounds_apex.x + apex_half,
-            t=bounds_apex.y + apex_half,
-            b=bounds_apex.y - apex_half,
-        ).as_quad(),
-        z=z_apex,
-        a=a,
-    )
-
-    draw_hitbox_marker(
-        l_x=hitbox.bounds.start,
-        r_x=hitbox.bounds.end,
-        y=note_y,
-        main_sprite=ActiveSkin.guide_blue,
-        dot_sprite=ActiveSkin.guide_neutral,
-        z=z_bounds,
-        z_dot=z_bounds_dot,
-        a=a,
-    )
+    draw_hitbox_bounds_overlay(hitbox.bounds, alpha)
 
     if draw_target:
+        apex_half = HITBOX_DEBUG_APEX_HALF
         target_center_x = (hitbox.target.l.x + hitbox.target.r.x) / 2
         target_apex = Vec2(target_center_x, note_y + HITBOX_DEBUG_TRIANGLE_HEIGHT)
         draw_hitbox_line(
@@ -1306,7 +1260,7 @@ def draw_hitbox_overlay(hitbox: Hitbox, draw_target: bool, alpha: float = 1.0):
             z_triangle,
             a,
         )
-        ActiveSkin.guide_blue.draw(
+        ActiveSkin.guide_red.draw(
             Rect(
                 l=target_apex.x - apex_half,
                 r=target_apex.x + apex_half,

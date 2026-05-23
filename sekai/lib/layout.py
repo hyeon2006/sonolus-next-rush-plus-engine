@@ -7,7 +7,7 @@ from typing import Protocol, assert_never, cast
 from sonolus.script.archetype import EntityRef, get_archetype_by_name
 from sonolus.script.debug import static_error
 from sonolus.script.globals import level_data, level_memory
-from sonolus.script.interval import Interval, clamp, lerp, remap, unlerp
+from sonolus.script.interval import clamp, lerp, remap, unlerp
 from sonolus.script.num import Num
 from sonolus.script.quad import Quad, QuadLike, Rect
 from sonolus.script.record import Record
@@ -18,6 +18,7 @@ from sonolus.script.vec import Vec2
 from sekai.lib import archetype_names
 from sekai.lib.baseevent import get_event_as, query_event_list
 from sekai.lib.ease import EaseType, ease
+from sekai.lib.level_config import LevelConfig
 from sekai.lib.options import Options, StageCoverNoteSpeedCompensation
 from sekai.lib.timescale import CompositeTime
 
@@ -696,7 +697,7 @@ class HitboxTarget(Record):
 
 class Hitbox(Record):
     target: HitboxTarget
-    bounds: Interval
+    bounds: Rect
 
 
 def compute_hitbox(lane: float, size: float, leniency: float, y_offset: float = 0.0) -> Hitbox:
@@ -705,14 +706,18 @@ def compute_hitbox(lane: float, size: float, leniency: float, y_offset: float = 
     r_screen = transform_vec(Vec2((lane + size) * travel, travel)).x
     note_y = travel * DynamicLayout.h_scale + DynamicLayout.t
     lane_w = DynamicLayout.w_scale
+    vertical_half_lanes = 2.0 if LevelConfig.dynamic_stages else 3.0
+    vertical_extent = vertical_half_lanes * lane_w
     return Hitbox(
         target=HitboxTarget(
             l=Vec2(l_screen, note_y),
             r=Vec2(r_screen, note_y),
         ),
-        bounds=Interval(
-            start=l_screen - leniency * lane_w,
-            end=r_screen + leniency * lane_w,
+        bounds=Rect(
+            l=l_screen - leniency * lane_w,
+            r=r_screen + leniency * lane_w,
+            t=note_y + vertical_extent,
+            b=note_y - vertical_extent,
         ),
     )
 

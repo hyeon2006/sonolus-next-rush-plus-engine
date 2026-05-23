@@ -7,7 +7,7 @@ from sonolus.script.easing import ease_out_cubic
 from sonolus.script.effect import Effect, LoopedEffectHandle
 from sonolus.script.interval import clamp, lerp, remap_clamped, unlerp_clamped
 from sonolus.script.particle import Particle, ParticleHandle
-from sonolus.script.quad import QuadLike
+from sonolus.script.quad import QuadLike, Rect
 from sonolus.script.record import Record
 from sonolus.script.runtime import time
 from sonolus.script.sprite import Sprite
@@ -30,7 +30,6 @@ from sekai.lib.layer import (
 )
 from sekai.lib.layout import (
     DynamicLayout,
-    Hitbox,
     Layout,
     approach,
     get_alpha,
@@ -538,7 +537,7 @@ class ActiveConnectorInfo(Record):
     visual_lane: float
     visual_size: float
     visual_y_offset: float
-    hitbox: Hitbox
+    input_bounds: Rect
     active_start_time: float
     last_active_time: float
     connector_kind: ConnectorKind

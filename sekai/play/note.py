@@ -356,7 +356,7 @@ class BaseNote(PlayArchetype):
                 return False
             # Otherwise, see if there's any ongoing touches in the hitbox.
             for touch in touches():
-                if not touch.ended and touch.position.x in self.hitbox.bounds:
+                if not touch.ended and self.hitbox.bounds.contains_point(touch.position):
                     return False
             # If we're past the perfect window, and there are no ongoing touches in the hitbox, we can trigger to
             # avoid delaying the trigger by too long.
@@ -486,7 +486,7 @@ class BaseNote(PlayArchetype):
     def handle_tick_input(self):
         has_touch = False
         for touch in touches():
-            if touch.position.x not in self.hitbox.bounds:
+            if not self.hitbox.bounds.contains_point(touch.position):
                 continue
             input_manager.disallow_empty(touch)
             has_touch = True
@@ -501,7 +501,7 @@ class BaseNote(PlayArchetype):
     def handle_damage_input(self):
         has_touch = False
         for touch in touches():
-            if touch.position.x not in self.hitbox.bounds:
+            if not self.hitbox.bounds.contains_point(touch.position):
                 continue
             input_manager.disallow_empty(touch)
             has_touch = True
@@ -559,18 +559,24 @@ class BaseNote(PlayArchetype):
         return (
             touch.start_time >= self.captured_touch_time
             and touch.speed >= Layout.flick_speed_threshold
-            and (touch.position.x in self.hitbox.bounds or touch.prev_position.x in self.hitbox.bounds)
+            and (
+                self.hitbox.bounds.contains_point(touch.position)
+                or self.hitbox.bounds.contains_point(touch.prev_position)
+            )
         )
 
     def check_touch_is_eligible_for_trace(self, touch: Touch) -> bool:
         # Note that this does not check the time, since time may not be updated if the touch is stationary.
-        return touch.position.x in self.hitbox.bounds
+        return self.hitbox.bounds.contains_point(touch.position)
 
     def check_touch_is_eligible_for_trace_flick(self, touch: Touch) -> bool:
         return (
             touch.time >= self.unadjusted_input_interval.start
             and touch.speed >= Layout.flick_speed_threshold
-            and (touch.position.x in self.hitbox.bounds or touch.prev_position.x in self.hitbox.bounds)
+            and (
+                self.hitbox.bounds.contains_point(touch.position)
+                or self.hitbox.bounds.contains_point(touch.prev_position)
+            )
         )
 
     def check_direction_matches(self, angle: float) -> bool:

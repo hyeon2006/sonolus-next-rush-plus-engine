@@ -103,7 +103,7 @@ def preassign_taps():
                 target_note = active[note_i].get()
                 if target_note.captured_touch_id != 0:
                     continue
-                if touch.position.x not in target_note.hitbox.bounds:
+                if not target_note.hitbox.bounds.contains_point(touch.position):
                     continue
                 if touch.time not in target_note.unadjusted_input_interval:
                     continue
@@ -168,16 +168,16 @@ def preassign_releases():
                 target_note = active[note_i].get()
                 if target_note.captured_touch_id != 0:
                     continue
-                if touch.position.x not in target_note.hitbox.bounds:
+                if not target_note.hitbox.bounds.contains_point(touch.position):
                     continue
                 if touch.time not in target_note.unadjusted_input_interval:
                     continue
                 ignore_lockout = False
                 if target_note.active_head_ref.index > 0:
-                    head_bounds = target_note.active_head_ref.get().active_connector_info.hitbox.bounds
+                    head_bounds = target_note.active_head_ref.get().active_connector_info.input_bounds
                     ongoing = False
                     for t in touches():
-                        if not t.ended and t.position.x in head_bounds:
+                        if not t.ended and head_bounds.contains_point(t.position):
                             ongoing = True
                             break
                     ignore_lockout = not ongoing
