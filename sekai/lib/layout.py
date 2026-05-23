@@ -217,14 +217,14 @@ def refresh_layout():
     DynamicLayout.note_h = NOTE_H * (0.6 * size_zoom + 0.4)
 
     if is_play() or is_watch():
-        apply_camera_zoom(camera.zoom, camera.zoom_target_lane, camera.zoom_target_y, camera.rotate)
+        apply_camera_zoom(camera.zoom, camera.zoom_target_lane, camera.zoom_target_y, camera.rotate, camera.lane)
 
     DynamicLayout.scaled_note_h = DynamicLayout.note_h * DynamicLayout.h_scale
 
 
-def apply_camera_zoom(zoom: float, target_lane: float, target_y: float, rotate: float = 0.0):
-    anchor = transformed_vec_at(0.0, 1.0)
-    target = transformed_vec_at(target_lane, approach(1 - target_y))
+def apply_camera_zoom(zoom: float, target_lane: float, target_y: float, rotate: float = 0.0, camera_lane: float = 0.0):
+    anchor = transformed_vec_at(camera_lane, 1.0)
+    target = transformed_vec_at(camera_lane + target_lane, approach(1 - target_y))
     DynamicLayout.x_translate = zoom * (DynamicLayout.x_translate - target.x) + anchor.x
     DynamicLayout.w_scale = zoom * DynamicLayout.w_scale
     DynamicLayout.t = zoom * (DynamicLayout.t - target.y) + anchor.y
@@ -314,6 +314,13 @@ def transform_quad(q: QuadLike) -> Quad:
 
 def transformed_vec_at(lane: float, travel: float = 1.0) -> Vec2:
     return transform_vec(Vec2(lane * travel, travel))
+
+
+def pre_rotation_vec_at(lane: float, travel: float = 1.0) -> Vec2:
+    return Vec2(
+        lane * travel * DynamicLayout.w_scale + DynamicLayout.x_translate,
+        travel * DynamicLayout.h_scale + DynamicLayout.t,
+    )
 
 
 def touch_to_lane(pos: Vec2) -> float:
@@ -515,9 +522,11 @@ def layout_flick_arrow(
     base_tl = base_bl + up
     base_tr = base_br + up
     offset_scale = animation_progress if not is_down else 1 - animation_progress
-    offset = Vec2(animation_top_x_offset * DynamicLayout.w_scale, 2 * DynamicLayout.w_scale).rotate(
-        -DynamicLayout.rotate
-    ) * offset_scale * travel
+    offset = (
+        Vec2(animation_top_x_offset * DynamicLayout.w_scale, 2 * DynamicLayout.w_scale).rotate(-DynamicLayout.rotate)
+        * offset_scale
+        * travel
+    )
     result = Quad(
         bl=base_bl,
         br=base_br,

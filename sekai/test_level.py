@@ -158,6 +158,16 @@ camera_changes = [
         rotate=0.0,
         ease=EaseType.IN_OUT_QUAD,
     ),
+    LevelCameraChange(
+        beat=24.0,
+        lane=-6.0,
+        size=6.0,
+        zoom=1.0,
+        zoom_target_lane=6.0,
+        zoom_target_y=0.0,
+        rotate=0.0,
+        ease=EaseType.IN_OUT_QUAD,
+    ),
 ]
 
 regular_beats = [

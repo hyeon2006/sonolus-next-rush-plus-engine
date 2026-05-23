@@ -38,7 +38,7 @@ from sekai.lib.layout import (
     layout_linear_effect,
     layout_slide_connector_segment,
     layout_slot_glow_effect,
-    transformed_vec_at,
+    pre_rotation_vec_at,
 )
 from sekai.lib.options import Options
 from sekai.lib.particle import ActiveParticles
@@ -411,8 +411,8 @@ def draw_connector(
     end_size = max(1e-3, lerp(head_size, tail_size, end_interp_frac))  # Lightweight rendering needs >0 size.
     start_alpha = lerp(head_alpha, tail_alpha, start_frac)
     end_alpha = lerp(head_alpha, tail_alpha, end_frac)
-    start_pos_y = transformed_vec_at(start_lane, start_travel).y
-    end_pos_y = transformed_vec_at(end_lane, end_travel).y
+    start_pos_y = pre_rotation_vec_at(start_lane, start_travel).y
+    end_pos_y = pre_rotation_vec_at(end_lane, end_travel).y
 
     match ease_type:
         case EaseType.NONE:
@@ -448,8 +448,8 @@ def draw_connector(
                 ref_end_lane = right_end_lane
                 ref_head_lane = head_lane + head_size
                 ref_tail_lane = tail_lane + tail_size
-            start_ref = transformed_vec_at(ref_start_lane, start_travel)
-            end_ref = transformed_vec_at(ref_end_lane, end_travel)
+            start_ref = pre_rotation_vec_at(ref_start_lane, start_travel)
+            end_ref = pre_rotation_vec_at(ref_end_lane, end_travel)
             last_pos_offset = 0
             total_pos_offsets = 0
             for r in (0.25, 0.75):
@@ -458,7 +458,7 @@ def draw_connector(
                 visual_progress = lerp(start_visual_progress, end_visual_progress, r)
                 travel = approach(visual_progress)
                 lane = lerp(ref_head_lane, ref_tail_lane, interp_frac)
-                pos = transformed_vec_at(lane, travel)
+                pos = pre_rotation_vec_at(lane, travel)
                 ref_pos = lerp(start_ref, end_ref, unlerp_clamped(start_travel, end_travel, travel))
                 current_pos_offset = pos.x - ref_pos.x
                 total_pos_offsets += abs(current_pos_offset - last_pos_offset) ** 0.6
