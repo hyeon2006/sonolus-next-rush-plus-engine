@@ -29,7 +29,7 @@ from sekai.lib import archetype_names
 from sekai.lib.baseevent import get_event_as, query_event_list
 from sekai.lib.ease import EaseType, ease
 from sekai.lib.level_config import LevelConfig
-from sekai.lib.options import Options, StageCoverNoteSpeedCompensation, Version
+from sekai.lib.options import HitboxRange, Options, StageCoverNoteSpeedCompensation, Version
 from sekai.lib.timescale import CompositeTime
 
 LANE_T = 47 / 850
@@ -1511,6 +1511,12 @@ class Hitbox(Record):
     bounds: Quad
 
 
+def interpolate_hitbox_edge_x(base_x: float, base_y: float, target_x: float, target_y: float, y: float) -> float:
+    if base_y == target_y:
+        return target_x
+    return lerp(base_x, target_x, clamp((y - base_y) / (target_y - base_y), 0.0, 1.0))
+
+
 def compute_hitbox(lane: float, size: float, leniency: float, y_offset: float = 0.0) -> Hitbox:
     travel = approach(1 - y_offset)
     width_factor = tilt_width_factor(travel)
@@ -1519,7 +1525,7 @@ def compute_hitbox(lane: float, size: float, leniency: float, y_offset: float = 
     note_y = travel * DynamicLayout.h_scale + DynamicLayout.t
     # We intentionally don't adjust for tilt to give the same screen-space leniency at low tilt
     lane_w = DynamicLayout.w_scale
-    vertical_half_lanes = 2.0 if LevelConfig.dynamic_stages else 4.0
+    vertical_half_lanes = 3.0
     if (
         Options.stage_cover_scroll_speed_compensation != StageCoverNoteSpeedCompensation.OFF
         and LevelConfig.dynamic_stages
@@ -1528,20 +1534,35 @@ def compute_hitbox(lane: float, size: float, leniency: float, y_offset: float = 
         vertical_half_lanes *= clamp((1 - cover_travel) / (1 - APPROACH_SCALE), 0, 1)
     vertical_extent = vertical_half_lanes * lane_w
     rot = -DynamicLayout.rotate
-    bl_x = l_x - leniency * lane_w
-    br_x = r_x + leniency * lane_w
-    b_y = note_y - vertical_extent
     t_y = note_y + vertical_extent
+    bl_x_final, br_x_final = l_x - leniency * lane_w, r_x + leniency * lane_w
+    tl_x_final, tr_x_final = bl_x_final, br_x_final
+    b_y = note_y - vertical_extent
+
+    if Options.hitbox_range == HitboxRange.FULL_VERTICAL:
+        b_y = screen().b
+
+    elif Options.hitbox_range == HitboxRange.FULL_ADAPTIVE:
+        b_y = screen().b
+
+        base_travel = approach(1.0)
+        base_l_x = (lane - size) * base_travel * DynamicLayout.w_scale + DynamicLayout.x_translate
+        base_r_x = (lane + size) * base_travel * DynamicLayout.w_scale + DynamicLayout.x_translate
+        base_y = base_travel * DynamicLayout.h_scale + DynamicLayout.t
+
+        bl_x_final = interpolate_hitbox_edge_x(base_l_x, base_y, l_x, note_y, b_y) - (leniency * lane_w)
+        br_x_final = interpolate_hitbox_edge_x(base_r_x, base_y, r_x, note_y, b_y) + (leniency * lane_w)
+
     return Hitbox(
         target=HitboxTarget(
             l=Vec2(l_x, note_y).rotate(rot),
             r=Vec2(r_x, note_y).rotate(rot),
         ),
         bounds=Quad(
-            bl=Vec2(bl_x, b_y).rotate(rot),
-            br=Vec2(br_x, b_y).rotate(rot),
-            tl=Vec2(bl_x, t_y).rotate(rot),
-            tr=Vec2(br_x, t_y).rotate(rot),
+            bl=Vec2(bl_x_final, b_y).rotate(rot),
+            br=Vec2(br_x_final, b_y).rotate(rot),
+            tl=Vec2(tl_x_final, t_y).rotate(rot),
+            tr=Vec2(tr_x_final, t_y).rotate(rot),
         ),
     )
 
