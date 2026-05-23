@@ -1213,20 +1213,16 @@ def draw_hitbox_marker(
     )
 
 
-def draw_hitbox_bounds_overlay(bounds: Rect, alpha: float = 1.0):
+def draw_hitbox_bounds_overlay(bounds: Quad, alpha: float = 1.0):
     t = HITBOX_DEBUG_BORDER_THICKNESS
     a = alpha
     z_bounds = get_z_alt(LAYER_GUIDE_CONNECTOR_OVER, 0)
-    tl = Vec2(bounds.l, bounds.t)
-    tr = Vec2(bounds.r, bounds.t)
-    bl = Vec2(bounds.l, bounds.b)
-    br = Vec2(bounds.r, bounds.b)
-    draw_hitbox_line(ActiveSkin.guide_blue, tl, tr, t, z_bounds, a)
-    draw_hitbox_line(ActiveSkin.guide_blue, bl, br, t, z_bounds, a)
-    draw_hitbox_line(ActiveSkin.guide_blue, tl, bl, t, z_bounds, a)
-    draw_hitbox_line(ActiveSkin.guide_blue, tr, br, t, z_bounds, a)
-    draw_hitbox_line(ActiveSkin.guide_blue, tl, br, t, z_bounds, a)
-    draw_hitbox_line(ActiveSkin.guide_blue, tr, bl, t, z_bounds, a)
+    draw_hitbox_line(ActiveSkin.guide_blue, bounds.tl, bounds.tr, t, z_bounds, a)
+    draw_hitbox_line(ActiveSkin.guide_blue, bounds.bl, bounds.br, t, z_bounds, a)
+    draw_hitbox_line(ActiveSkin.guide_blue, bounds.tl, bounds.bl, t, z_bounds, a)
+    draw_hitbox_line(ActiveSkin.guide_blue, bounds.tr, bounds.br, t, z_bounds, a)
+    draw_hitbox_line(ActiveSkin.guide_blue, bounds.tl, bounds.br, t, z_bounds, a)
+    draw_hitbox_line(ActiveSkin.guide_blue, bounds.tr, bounds.bl, t, z_bounds, a)
 
 
 def draw_hitbox_overlay(hitbox: Hitbox, draw_target: bool, alpha: float = 1.0):

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from math import ceil, floor
+from math import ceil, floor, pi
 
 from sonolus.script.archetype import (
     EntityRef,
@@ -47,6 +47,7 @@ class CameraChange(PlayArchetype, BaseEvent):
     zoom: float = imported(default=1)
     zoom_target_lane: float = imported(name="zoomTargetLane")
     zoom_target_y: float = imported(name="zoomTargetY")
+    rotate: float = imported()
     ease: EaseType = imported()
     next_ref: EntityRef[CameraChange] = imported(name="next")
 
@@ -57,9 +58,11 @@ class CameraChange(PlayArchetype, BaseEvent):
         LevelConfig.dynamic_stages = True
         self.time = beat_to_time(self.beat)
         self.zoom = max(self.zoom, 0.01)
+        self.rotate = self.rotate * pi / 180
         if Options.mirror:
             self.lane *= -1
             self.zoom_target_lane *= -1
+            self.rotate *= -1
 
     def spawn_order(self) -> float:
         return 1e8

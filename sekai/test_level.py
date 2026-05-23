@@ -115,6 +115,7 @@ camera_changes = [
         zoom=1.0,
         zoom_target_lane=-5.0,
         zoom_target_y=0.0,
+        rotate=15.0,
         ease=EaseType.IN_OUT_QUAD,
     ),
     LevelCameraChange(
@@ -124,6 +125,7 @@ camera_changes = [
         zoom=1.8,
         zoom_target_lane=-5.0,
         zoom_target_y=0.0,
+        rotate=-15.0,
         ease=EaseType.IN_OUT_QUAD,
     ),
     LevelCameraChange(
@@ -133,6 +135,7 @@ camera_changes = [
         zoom=1.8,
         zoom_target_lane=3.0,
         zoom_target_y=0.0,
+        rotate=30.0,
         ease=EaseType.IN_OUT_QUAD,
     ),
     LevelCameraChange(
@@ -142,6 +145,7 @@ camera_changes = [
         zoom=2.2,
         zoom_target_lane=0.0,
         zoom_target_y=0.5,
+        rotate=90.0,
         ease=EaseType.IN_OUT_QUAD,
     ),
     LevelCameraChange(
@@ -151,6 +155,7 @@ camera_changes = [
         zoom=1.0,
         zoom_target_lane=0.0,
         zoom_target_y=0.0,
+        rotate=0.0,
         ease=EaseType.IN_OUT_QUAD,
     ),
 ]

@@ -96,7 +96,6 @@ class BaseNote(PlayArchetype):
     target_scaled_time: CompositeTime = entity_data()
     target_y_offset: float = entity_data()
 
-    judgment_window: SekaiWindow = shared_memory()
     input_interval: Interval = shared_memory()
     unadjusted_input_interval: Interval = shared_memory()
 
@@ -118,6 +117,10 @@ class BaseNote(PlayArchetype):
     end_time: float = exported()
     played_hit_effects: bool = exported()
 
+    @property
+    def judgment_window(self) -> SekaiWindow:
+        return get_note_window(self.kind)
+
     def init_data(self):
         if self.data_init_done:
             return
@@ -132,9 +135,9 @@ class BaseNote(PlayArchetype):
             self.direction = mirror_flick_direction(self.direction)
 
         self.target_time = beat_to_time(self.beat)
-        self.judgment_window = get_note_window(self.kind)
-        self.input_interval = self.judgment_window.bad + self.target_time + input_offset()
-        self.unadjusted_input_interval = self.judgment_window.bad + self.target_time
+        window = get_note_window(self.kind)
+        self.input_interval = window.bad + self.target_time + input_offset()
+        self.unadjusted_input_interval = window.bad + self.target_time
 
         if not self.is_attached:
             self.target_scaled_time = group_time_to_scaled_time(self.timescale_group, self.target_time)

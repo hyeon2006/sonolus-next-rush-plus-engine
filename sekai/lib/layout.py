@@ -64,6 +64,7 @@ class DynamicLayout:
     w_scale: float
     h_scale: float
     x_translate: float
+    rotate: float
     note_h: float
     scaled_note_h: float
 
@@ -74,6 +75,7 @@ class CameraInfo(Record):
     zoom: float
     zoom_target_lane: float
     zoom_target_y: float
+    rotate: float
 
 
 def init_layout():
@@ -120,6 +122,7 @@ class CameraChangeLike(Protocol):
     zoom: float
     zoom_target_lane: float
     zoom_target_y: float
+    rotate: float
     ease: EaseType
     next_ref: EntityRef
 
@@ -149,7 +152,7 @@ def get_camera_info(target_time: float | None = None) -> CameraInfo:
     result = +CameraInfo
     first_camera_ref = _initialization_archetype().at(0).first_camera_ref
     if first_camera_ref.index <= 0:
-        result @= CameraInfo(lane=0.0, size=6.0, zoom=1.0, zoom_target_lane=0.0, zoom_target_y=0.0)
+        result @= CameraInfo(lane=0.0, size=6.0, zoom=1.0, zoom_target_lane=0.0, zoom_target_y=0.0, rotate=0.0)
         return result
     t = time() if target_time is None else target_time
     camera_a_ref, camera_b_ref = query_event_list(first_camera_ref, t, lambda e: e.time)
@@ -166,6 +169,7 @@ def get_camera_info(target_time: float | None = None) -> CameraInfo:
                     zoom=lerp(camera_a.zoom, camera_b.zoom, p),
                     zoom_target_lane=lerp(camera_a.zoom_target_lane, camera_b.zoom_target_lane, p),
                     zoom_target_y=lerp(camera_a.zoom_target_y, camera_b.zoom_target_y, p),
+                    rotate=lerp(camera_a.rotate, camera_b.rotate, p),
                 )
                 return result
         result @= CameraInfo(
@@ -174,6 +178,7 @@ def get_camera_info(target_time: float | None = None) -> CameraInfo:
             zoom=camera_a.zoom,
             zoom_target_lane=camera_a.zoom_target_lane,
             zoom_target_y=camera_a.zoom_target_y,
+            rotate=camera_a.rotate,
         )
         return result
     if camera_b_ref.index > 0:
@@ -184,9 +189,10 @@ def get_camera_info(target_time: float | None = None) -> CameraInfo:
             zoom=camera_b.zoom,
             zoom_target_lane=camera_b.zoom_target_lane,
             zoom_target_y=camera_b.zoom_target_y,
+            rotate=camera_b.rotate,
         )
         return result
-    result @= CameraInfo(lane=0.0, size=6.0, zoom=1.0, zoom_target_lane=0.0, zoom_target_y=0.0)
+    result @= CameraInfo(lane=0.0, size=6.0, zoom=1.0, zoom_target_lane=0.0, zoom_target_y=0.0, rotate=0.0)
     return result
 
 
@@ -195,7 +201,7 @@ def refresh_layout():
     if is_play() or is_watch():
         camera @= get_camera_info()
     else:
-        camera @= CameraInfo(lane=0.0, size=6.0, zoom=1.0, zoom_target_lane=0.0, zoom_target_y=0.0)
+        camera @= CameraInfo(lane=0.0, size=6.0, zoom=1.0, zoom_target_lane=0.0, zoom_target_y=0.0, rotate=0.0)
 
     size_zoom = 6.0 / camera.size
 
@@ -207,15 +213,16 @@ def refresh_layout():
     DynamicLayout.w_scale = w
     DynamicLayout.h_scale = b - t
     DynamicLayout.x_translate = -camera.lane * w
+    DynamicLayout.rotate = 0.0
     DynamicLayout.note_h = NOTE_H * (0.6 * size_zoom + 0.4)
 
     if is_play() or is_watch():
-        apply_camera_zoom(camera.zoom, camera.zoom_target_lane, camera.zoom_target_y)
+        apply_camera_zoom(camera.zoom, camera.zoom_target_lane, camera.zoom_target_y, camera.rotate)
 
     DynamicLayout.scaled_note_h = DynamicLayout.note_h * DynamicLayout.h_scale
 
 
-def apply_camera_zoom(zoom: float, target_lane: float, target_y: float):
+def apply_camera_zoom(zoom: float, target_lane: float, target_y: float, rotate: float = 0.0):
     anchor = transformed_vec_at(0.0, 1.0)
     target = transformed_vec_at(target_lane, approach(1 - target_y))
     DynamicLayout.x_translate = zoom * (DynamicLayout.x_translate - target.x) + anchor.x
@@ -223,12 +230,14 @@ def apply_camera_zoom(zoom: float, target_lane: float, target_y: float):
     DynamicLayout.t = zoom * (DynamicLayout.t - target.y) + anchor.y
     DynamicLayout.h_scale = zoom * DynamicLayout.h_scale
     s = screen()
+    rot = -rotate
+    DynamicLayout.rotate = rotate
     set_background(
         Quad(
-            bl=Vec2(zoom * (s.bl.x - target.x) + anchor.x, zoom * (s.bl.y - target.y) + anchor.y),
-            br=Vec2(zoom * (s.br.x - target.x) + anchor.x, zoom * (s.br.y - target.y) + anchor.y),
-            tl=Vec2(zoom * (s.tl.x - target.x) + anchor.x, zoom * (s.tl.y - target.y) + anchor.y),
-            tr=Vec2(zoom * (s.tr.x - target.x) + anchor.x, zoom * (s.tr.y - target.y) + anchor.y),
+            bl=Vec2(zoom * (s.bl.x - target.x) + anchor.x, zoom * (s.bl.y - target.y) + anchor.y).rotate(rot),
+            br=Vec2(zoom * (s.br.x - target.x) + anchor.x, zoom * (s.br.y - target.y) + anchor.y).rotate(rot),
+            tl=Vec2(zoom * (s.tl.x - target.x) + anchor.x, zoom * (s.tl.y - target.y) + anchor.y).rotate(rot),
+            tr=Vec2(zoom * (s.tr.x - target.x) + anchor.x, zoom * (s.tr.y - target.y) + anchor.y).rotate(rot),
         )
     )
 
@@ -291,7 +300,7 @@ def transform_vec(v: Vec2) -> Vec2:
     return Vec2(
         v.x * DynamicLayout.w_scale + DynamicLayout.x_translate,
         v.y * DynamicLayout.h_scale + DynamicLayout.t,
-    )
+    ).rotate(-DynamicLayout.rotate)
 
 
 def transform_quad(q: QuadLike) -> Quad:
@@ -308,8 +317,9 @@ def transformed_vec_at(lane: float, travel: float = 1.0) -> Vec2:
 
 
 def touch_to_lane(pos: Vec2) -> float:
-    y_raw = (pos.y - DynamicLayout.t) / DynamicLayout.h_scale
-    x_raw = (pos.x - DynamicLayout.x_translate) / DynamicLayout.w_scale
+    unrotated = pos.rotate(DynamicLayout.rotate)
+    y_raw = (unrotated.y - DynamicLayout.t) / DynamicLayout.h_scale
+    x_raw = (unrotated.x - DynamicLayout.x_translate) / DynamicLayout.w_scale
     return x_raw / y_raw
 
 
@@ -369,13 +379,15 @@ def layout_stage_cover_and_line(l: float = -6, r: float = 6) -> tuple[Quad, Quad
     )
 
 
-def layout_full_width_stage_cover() -> Rect:
-    b = transform_vec(Vec2(0, lerp(APPROACH_SCALE, 1.0, Options.stage_cover))).y
-    return Rect(
-        l=screen().l,
-        r=screen().r,
-        t=1,
-        b=b,
+def layout_full_width_stage_cover() -> Quad:
+    pre_b = lerp(APPROACH_SCALE, 1.0, Options.stage_cover) * DynamicLayout.h_scale + DynamicLayout.t
+    big = 10.0
+    rot = -DynamicLayout.rotate
+    return Quad(
+        bl=Vec2(-big, pre_b).rotate(rot),
+        br=Vec2(big, pre_b).rotate(rot),
+        tl=Vec2(-big, big).rotate(rot),
+        tr=Vec2(big, big).rotate(rot),
     )
 
 
@@ -452,9 +464,18 @@ def layout_slim_note_body_fallback(lane: float, size: float, travel: float) -> Q
     )
 
 
-def layout_tick(lane: float, travel: float) -> Rect:
+def layout_tick(lane: float, travel: float) -> Quad:
     center = transform_vec(Vec2(lane, 1) * travel)
-    return Rect.from_center(center, Vec2(DynamicLayout.scaled_note_h, DynamicLayout.scaled_note_h) * -2 * travel)
+    h = -DynamicLayout.scaled_note_h * travel
+    rot = -DynamicLayout.rotate
+    dx = Vec2(h, 0).rotate(rot)
+    dy = Vec2(0, h).rotate(rot)
+    return Quad(
+        bl=center - dx - dy,
+        tl=center - dx + dy,
+        tr=center + dx + dy,
+        br=center + dx - dy,
+    )
 
 
 def layout_flick_arrow(
@@ -494,7 +515,9 @@ def layout_flick_arrow(
     base_tl = base_bl + up
     base_tr = base_br + up
     offset_scale = animation_progress if not is_down else 1 - animation_progress
-    offset = Vec2(animation_top_x_offset * DynamicLayout.w_scale, 2 * DynamicLayout.w_scale) * offset_scale * travel
+    offset = Vec2(animation_top_x_offset * DynamicLayout.w_scale, 2 * DynamicLayout.w_scale).rotate(
+        -DynamicLayout.rotate
+    ) * offset_scale * travel
     result = Quad(
         bl=base_bl,
         br=base_br,
@@ -548,8 +571,9 @@ def layout_flick_arrow_fallback(
         .as_quad()
         .rotate(rotation)
         .scale(Vec2(w, w) * DynamicLayout.w_scale * travel)
-        .translate(transform_vec(Vec2(lane, 1) * travel))
         .translate(offset)
+        .rotate(-DynamicLayout.rotate)
+        .translate(transform_vec(Vec2(lane, 1) * travel))
     )
 
 
@@ -568,10 +592,11 @@ def layout_slot_glow_effect(lane: float, size: float, height: float, y_offset: f
     s = 1 + 0.25 * Options.slot_effect_size
     travel = approach(1 - y_offset)
     h = 4.25 * DynamicLayout.w_scale * Options.slot_effect_size * travel
+    up = Vec2(0, h).rotate(-DynamicLayout.rotate)
     l_min = transformed_vec_at(lane - size, travel)
     r_min = transformed_vec_at(lane + size, travel)
-    l_max = transformed_vec_at((lane - size) * s, travel) + Vec2(0, h)
-    r_max = transformed_vec_at((lane + size) * s, travel) + Vec2(0, h)
+    l_max = transformed_vec_at((lane - size) * s, travel) + up
+    r_max = transformed_vec_at((lane + size) * s, travel) + up
     return Quad(
         bl=l_min,
         br=r_min,
@@ -624,16 +649,18 @@ def layout_circular_effect(lane: float, w: float, h: float, y_offset: float = 0.
     )
 
 
-def layout_tick_effect(lane: float, y_offset: float = 0.0) -> Rect:
+def layout_tick_effect(lane: float, y_offset: float = 0.0) -> Quad:
     travel = approach(1 - y_offset)
     w = 4 * DynamicLayout.w_scale * Options.note_effect_size * travel
-    h = w
     center = transformed_vec_at(lane, travel)
-    return Rect(
-        l=center.x - w,
-        r=center.x + w,
-        t=center.y + h,
-        b=center.y - h,
+    rot = -DynamicLayout.rotate
+    dx = Vec2(w, 0).rotate(rot)
+    dy = Vec2(0, w).rotate(rot)
+    return Quad(
+        bl=center - dx - dy,
+        tl=center - dx + dy,
+        tr=center + dx + dy,
+        br=center + dx - dy,
     )
 
 
@@ -686,13 +713,13 @@ class HitboxTarget(Record):
 
 class Hitbox(Record):
     target: HitboxTarget
-    bounds: Rect
+    bounds: Quad
 
 
 def compute_hitbox(lane: float, size: float, leniency: float, y_offset: float = 0.0) -> Hitbox:
     travel = approach(1 - y_offset)
-    l_screen = transform_vec(Vec2((lane - size) * travel, travel)).x
-    r_screen = transform_vec(Vec2((lane + size) * travel, travel)).x
+    l_x = (lane - size) * travel * DynamicLayout.w_scale + DynamicLayout.x_translate
+    r_x = (lane + size) * travel * DynamicLayout.w_scale + DynamicLayout.x_translate
     note_y = travel * DynamicLayout.h_scale + DynamicLayout.t
     lane_w = DynamicLayout.w_scale
     vertical_half_lanes = 2.0 if LevelConfig.dynamic_stages else 4.0
@@ -703,16 +730,21 @@ def compute_hitbox(lane: float, size: float, leniency: float, y_offset: float = 
         cover_travel = lerp(APPROACH_SCALE, 1.0, Options.stage_cover)
         vertical_half_lanes *= clamp((1 - cover_travel) / (1 - APPROACH_SCALE), 0, 1)
     vertical_extent = vertical_half_lanes * lane_w
+    rot = -DynamicLayout.rotate
+    bl_x = l_x - leniency * lane_w
+    br_x = r_x + leniency * lane_w
+    b_y = note_y - vertical_extent
+    t_y = note_y + vertical_extent
     return Hitbox(
         target=HitboxTarget(
-            l=Vec2(l_screen, note_y),
-            r=Vec2(r_screen, note_y),
+            l=Vec2(l_x, note_y).rotate(rot),
+            r=Vec2(r_x, note_y).rotate(rot),
         ),
-        bounds=Rect(
-            l=l_screen - leniency * lane_w,
-            r=r_screen + leniency * lane_w,
-            t=note_y + vertical_extent,
-            b=note_y - vertical_extent,
+        bounds=Quad(
+            bl=Vec2(bl_x, b_y).rotate(rot),
+            br=Vec2(br_x, b_y).rotate(rot),
+            tl=Vec2(bl_x, t_y).rotate(rot),
+            tr=Vec2(br_x, t_y).rotate(rot),
         ),
     )
 

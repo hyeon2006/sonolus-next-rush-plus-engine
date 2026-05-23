@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from math import pi
+
 from sonolus.script.archetype import (
     EntityRef,
     StandardImport,
@@ -40,6 +42,7 @@ class WatchCameraChange(WatchArchetype, BaseEvent):
     zoom: float = imported(default=1)
     zoom_target_lane: float = imported(name="zoomTargetLane")
     zoom_target_y: float = imported(name="zoomTargetY")
+    rotate: float = imported()
     ease: EaseType = imported()
     next_ref: EntityRef[WatchCameraChange] = imported(name="next")
 
@@ -50,9 +53,11 @@ class WatchCameraChange(WatchArchetype, BaseEvent):
         LevelConfig.dynamic_stages = True
         self.time = beat_to_time(self.beat)
         self.zoom = max(self.zoom, 0.01)
+        self.rotate = self.rotate * pi / 180
         if Options.mirror:
             self.lane *= -1
             self.zoom_target_lane *= -1
+            self.rotate *= -1
 
 
 class WatchDynamicStage(WatchArchetype):
