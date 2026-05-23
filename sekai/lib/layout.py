@@ -216,30 +216,19 @@ def refresh_layout():
 
 
 def apply_camera_zoom(zoom: float, target_lane: float, target_y: float):
-    # Apply a uniform zoom on top of the already-computed 1x DynamicLayout, centered on the
-    # (target_lane, target_y) point. This is folded directly into DynamicLayout (rather than a
-    # render-only skin transform) so that hitboxes, touch input, effects, and the hitbox overlay
-    # all stay consistent with the zoomed visuals. At zoom=1 it reduces to the identity.
+    anchor = transformed_vec_at(0.0, 1.0)
     target = transformed_vec_at(target_lane, approach(1 - target_y))
-    inv = 1 / zoom
-    # Smoothly slide the view center toward the target as zoom increases (the target lands at
-    # target/zoom on screen), then clamp it so the zoomed window never extends past the original
-    # 1x screen bounds.
-    soft = 1 - inv * inv
-    a = aspect_ratio()
-    mx = clamp(target.x * soft, -a * (1 - inv), a * (1 - inv))
-    my = clamp(target.y * soft, -(1 - inv), 1 - inv)
-    DynamicLayout.x_translate = zoom * (DynamicLayout.x_translate - mx)
+    DynamicLayout.x_translate = zoom * (DynamicLayout.x_translate - target.x) + anchor.x
     DynamicLayout.w_scale = zoom * DynamicLayout.w_scale
-    DynamicLayout.t = zoom * (DynamicLayout.t - my)
+    DynamicLayout.t = zoom * (DynamicLayout.t - target.y) + anchor.y
     DynamicLayout.h_scale = zoom * DynamicLayout.h_scale
     s = screen()
     set_background(
         Quad(
-            bl=Vec2(zoom * (s.bl.x - mx), zoom * (s.bl.y - my)),
-            br=Vec2(zoom * (s.br.x - mx), zoom * (s.br.y - my)),
-            tl=Vec2(zoom * (s.tl.x - mx), zoom * (s.tl.y - my)),
-            tr=Vec2(zoom * (s.tr.x - mx), zoom * (s.tr.y - my)),
+            bl=Vec2(zoom * (s.bl.x - target.x) + anchor.x, zoom * (s.bl.y - target.y) + anchor.y),
+            br=Vec2(zoom * (s.br.x - target.x) + anchor.x, zoom * (s.br.y - target.y) + anchor.y),
+            tl=Vec2(zoom * (s.tl.x - target.x) + anchor.x, zoom * (s.tl.y - target.y) + anchor.y),
+            tr=Vec2(zoom * (s.tr.x - target.x) + anchor.x, zoom * (s.tr.y - target.y) + anchor.y),
         )
     )
 

@@ -27,7 +27,7 @@ class PreviewCameraChange(PreviewArchetype, BaseEvent):
     beat: StandardImport.BEAT
     lane: float = imported()
     size: float = imported()
-    zoom: float = imported()
+    zoom: float = imported(default=1)
     zoom_target_lane: float = imported(name="zoomTargetLane")
     zoom_target_y: float = imported(name="zoomTargetY")
     ease: EaseType = imported()
@@ -39,7 +39,7 @@ class PreviewCameraChange(PreviewArchetype, BaseEvent):
     def preprocess(self):
         LevelConfig.dynamic_stages = True
         self.time = beat_to_time(self.beat)
-        self.zoom = max(self.zoom, 1.0)
+        self.zoom = max(self.zoom, 0.01)
         if Options.mirror:
             self.lane *= -1
             self.zoom_target_lane *= -1
