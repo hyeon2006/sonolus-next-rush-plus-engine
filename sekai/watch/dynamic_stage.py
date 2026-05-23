@@ -37,6 +37,9 @@ class WatchCameraChange(WatchArchetype, BaseEvent):
     beat: StandardImport.BEAT
     lane: float = imported()
     size: float = imported()
+    zoom: float = imported()
+    zoom_target_lane: float = imported(name="zoomTargetLane")
+    zoom_target_y: float = imported(name="zoomTargetY")
     ease: EaseType = imported()
     next_ref: EntityRef[WatchCameraChange] = imported(name="next")
 
@@ -46,8 +49,10 @@ class WatchCameraChange(WatchArchetype, BaseEvent):
     def preprocess(self):
         LevelConfig.dynamic_stages = True
         self.time = beat_to_time(self.beat)
+        self.zoom = max(self.zoom, 1.0)
         if Options.mirror:
             self.lane *= -1
+            self.zoom_target_lane *= -1
 
 
 class WatchDynamicStage(WatchArchetype):

@@ -132,6 +132,9 @@ class LevelCameraChange:
     beat: float
     lane: float = 0.0
     size: float = 6.0
+    zoom: float = 1.0
+    zoom_target_lane: float = 0.0
+    zoom_target_y: float = 0.0
     ease: EaseType = EaseType.LINEAR
 
 
@@ -435,7 +438,15 @@ def _build_camera_changes(
     if not level_cameras:
         return None
     camera_entities = [
-        CameraChange(beat=c.beat, lane=c.lane, size=c.size, ease=c.ease)
+        CameraChange(
+            beat=c.beat,
+            lane=c.lane,
+            size=c.size,
+            zoom=c.zoom,
+            zoom_target_lane=c.zoom_target_lane,
+            zoom_target_y=c.zoom_target_y,
+            ease=c.ease,
+        )
         for c in sorted(level_cameras, key=lambda c: c.beat)
     ]
     _chain_next_refs(camera_entities)

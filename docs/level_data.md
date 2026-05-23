@@ -18,6 +18,9 @@ A camera change event. The presence of at least one **CameraChange** entity enab
 * **#BEAT (float)**
 * **lane (float)**: Horizontal camera position in stage lanes. Positive values pan the camera to the right (drawn objects shift left). Defaults to 0.
 * **size (float)**: Visible width of the field, in lanes (half-width). A `size` of 6 covers the full default stage; smaller values zoom in (e.g. `size=3` is 2x zoom). Defaults to 6.
+* **zoom (float)**: Uniform zoom applied on top of the perspective field, where `1` is no zoom and `2` makes everything twice as big (zoomed twice as far in). Assumed to be at least 1.
+* **zoomTargetLane (float)**: The lane the zoom centers on. Behaves like `lane` (positive is to the right; flipped by the mirror option). Defaults to 0.
+* **zoomTargetY (float)**: The vertical point the zoom centers on, expressed like a pivot `yOffset`: `0` is the judge line and positive values move up the stage, following the approach curve (and approach-curve compensation). Defaults to 0.
 * **ease (EaseType)**
 * **next (ref?[CameraChange])**: A reference to the next **CameraChange** event.
 

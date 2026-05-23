@@ -11,7 +11,7 @@ from sonolus.script.interval import Interval, clamp, lerp, remap, unlerp
 from sonolus.script.num import Num
 from sonolus.script.quad import Quad, QuadLike, Rect
 from sonolus.script.record import Record
-from sonolus.script.runtime import aspect_ratio, is_play, is_watch, screen, time
+from sonolus.script.runtime import aspect_ratio, is_play, is_watch, screen, set_background, time
 from sonolus.script.values import swap
 from sonolus.script.vec import Vec2
 
@@ -70,6 +70,9 @@ class DynamicLayout:
 class CameraInfo(Record):
     lane: float
     size: float
+    zoom: float
+    zoom_target_lane: float
+    zoom_target_y: float
 
 
 def init_layout():
@@ -113,6 +116,9 @@ class CameraChangeLike(Protocol):
     time: float
     lane: float
     size: float
+    zoom: float
+    zoom_target_lane: float
+    zoom_target_y: float
     ease: EaseType
     next_ref: EntityRef
 
@@ -142,7 +148,7 @@ def get_camera_info(target_time: float | None = None) -> CameraInfo:
     result = +CameraInfo
     first_camera_ref = _initialization_archetype().at(0).first_camera_ref
     if first_camera_ref.index <= 0:
-        result @= CameraInfo(lane=0.0, size=6.0)
+        result @= CameraInfo(lane=0.0, size=6.0, zoom=1.0, zoom_target_lane=0.0, zoom_target_y=0.0)
         return result
     t = time() if target_time is None else target_time
     camera_a_ref, camera_b_ref = query_event_list(first_camera_ref, t, lambda e: e.time)
@@ -156,15 +162,30 @@ def get_camera_info(target_time: float | None = None) -> CameraInfo:
                 result @= CameraInfo(
                     lane=lerp(camera_a.lane, camera_b.lane, p),
                     size=lerp(camera_a.size, camera_b.size, p),
+                    zoom=lerp(camera_a.zoom, camera_b.zoom, p),
+                    zoom_target_lane=lerp(camera_a.zoom_target_lane, camera_b.zoom_target_lane, p),
+                    zoom_target_y=lerp(camera_a.zoom_target_y, camera_b.zoom_target_y, p),
                 )
                 return result
-        result @= CameraInfo(lane=camera_a.lane, size=camera_a.size)
+        result @= CameraInfo(
+            lane=camera_a.lane,
+            size=camera_a.size,
+            zoom=camera_a.zoom,
+            zoom_target_lane=camera_a.zoom_target_lane,
+            zoom_target_y=camera_a.zoom_target_y,
+        )
         return result
     if camera_b_ref.index > 0:
         camera_b = get_event_as(camera_b_ref, camera_archetype)
-        result @= CameraInfo(lane=camera_b.lane, size=camera_b.size)
+        result @= CameraInfo(
+            lane=camera_b.lane,
+            size=camera_b.size,
+            zoom=camera_b.zoom,
+            zoom_target_lane=camera_b.zoom_target_lane,
+            zoom_target_y=camera_b.zoom_target_y,
+        )
         return result
-    result @= CameraInfo(lane=0.0, size=6.0)
+    result @= CameraInfo(lane=0.0, size=6.0, zoom=1.0, zoom_target_lane=0.0, zoom_target_y=0.0)
     return result
 
 
@@ -173,20 +194,53 @@ def refresh_layout():
     if is_play() or is_watch():
         camera @= get_camera_info()
     else:
-        camera @= CameraInfo(lane=0.0, size=6.0)
+        camera @= CameraInfo(lane=0.0, size=6.0, zoom=1.0, zoom_target_lane=0.0, zoom_target_y=0.0)
 
-    zoom = 6.0 / camera.size
+    size_zoom = 6.0 / camera.size
 
     t = Layout.field_h * (0.5 + 1.15875 * (47 / 1176))
     b = Layout.field_h * (0.5 - 1.15875 * (803 / 1176))
-    w = Layout.field_w * ((1.15875 * (1420 / 1176)) / TARGET_ASPECT_RATIO / 12) * zoom
+    w = Layout.field_w * ((1.15875 * (1420 / 1176)) / TARGET_ASPECT_RATIO / 12) * size_zoom
 
     DynamicLayout.t = t
     DynamicLayout.w_scale = w
     DynamicLayout.h_scale = b - t
     DynamicLayout.x_translate = -camera.lane * w
-    DynamicLayout.note_h = NOTE_H * (0.6 * zoom + 0.4)
+    DynamicLayout.note_h = NOTE_H * (0.6 * size_zoom + 0.4)
+
+    if is_play() or is_watch():
+        apply_camera_zoom(camera.zoom, camera.zoom_target_lane, camera.zoom_target_y)
+
     DynamicLayout.scaled_note_h = DynamicLayout.note_h * DynamicLayout.h_scale
+
+
+def apply_camera_zoom(zoom: float, target_lane: float, target_y: float):
+    # Apply a uniform zoom on top of the already-computed 1x DynamicLayout, centered on the
+    # (target_lane, target_y) point. This is folded directly into DynamicLayout (rather than a
+    # render-only skin transform) so that hitboxes, touch input, effects, and the hitbox overlay
+    # all stay consistent with the zoomed visuals. At zoom=1 it reduces to the identity.
+    target = transformed_vec_at(target_lane, approach(1 - target_y))
+    inv = 1 / zoom
+    # Smoothly slide the view center toward the target as zoom increases (the target lands at
+    # target/zoom on screen), then clamp it so the zoomed window never extends past the original
+    # 1x screen bounds.
+    soft = 1 - inv * inv
+    a = aspect_ratio()
+    mx = clamp(target.x * soft, -a * (1 - inv), a * (1 - inv))
+    my = clamp(target.y * soft, -(1 - inv), 1 - inv)
+    DynamicLayout.x_translate = zoom * (DynamicLayout.x_translate - mx)
+    DynamicLayout.w_scale = zoom * DynamicLayout.w_scale
+    DynamicLayout.t = zoom * (DynamicLayout.t - my)
+    DynamicLayout.h_scale = zoom * DynamicLayout.h_scale
+    s = screen()
+    set_background(
+        Quad(
+            bl=Vec2(zoom * (s.bl.x - mx), zoom * (s.bl.y - my)),
+            br=Vec2(zoom * (s.br.x - mx), zoom * (s.br.y - my)),
+            tl=Vec2(zoom * (s.tl.x - mx), zoom * (s.tl.y - my)),
+            tr=Vec2(zoom * (s.tr.x - mx), zoom * (s.tr.y - my)),
+        )
+    )
 
 
 def approach(progress: float) -> float:

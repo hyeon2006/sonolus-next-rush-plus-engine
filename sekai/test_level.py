@@ -107,7 +107,52 @@ stage_b = LevelStage(
 )
 
 camera_changes = [
-    LevelCameraChange(beat=0.0, lane=0.0, size=6.0, ease=EaseType.LINEAR),
+    LevelCameraChange(beat=0.0, lane=0.0, size=6.0, ease=EaseType.IN_OUT_QUAD),
+    LevelCameraChange(
+        beat=4.0,
+        lane=0.0,
+        size=6.0,
+        zoom=1.0,
+        zoom_target_lane=-5.0,
+        zoom_target_y=0.0,
+        ease=EaseType.IN_OUT_QUAD,
+    ),
+    LevelCameraChange(
+        beat=8.0,
+        lane=0.0,
+        size=6.0,
+        zoom=1.8,
+        zoom_target_lane=-5.0,
+        zoom_target_y=0.0,
+        ease=EaseType.IN_OUT_QUAD,
+    ),
+    LevelCameraChange(
+        beat=12.0,
+        lane=0.0,
+        size=6.0,
+        zoom=1.8,
+        zoom_target_lane=3.0,
+        zoom_target_y=0.0,
+        ease=EaseType.IN_OUT_QUAD,
+    ),
+    LevelCameraChange(
+        beat=16.0,
+        lane=0.0,
+        size=6.0,
+        zoom=2.2,
+        zoom_target_lane=0.0,
+        zoom_target_y=0.5,
+        ease=EaseType.IN_OUT_QUAD,
+    ),
+    LevelCameraChange(
+        beat=20.0,
+        lane=0.0,
+        size=6.0,
+        zoom=1.0,
+        zoom_target_lane=0.0,
+        zoom_target_y=0.0,
+        ease=EaseType.IN_OUT_QUAD,
+    ),
 ]
 
 regular_beats = [
