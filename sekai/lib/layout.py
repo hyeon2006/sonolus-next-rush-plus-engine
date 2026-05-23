@@ -695,7 +695,13 @@ def compute_hitbox(lane: float, size: float, leniency: float, y_offset: float = 
     r_screen = transform_vec(Vec2((lane + size) * travel, travel)).x
     note_y = travel * DynamicLayout.h_scale + DynamicLayout.t
     lane_w = DynamicLayout.w_scale
-    vertical_half_lanes = 2.0 if LevelConfig.dynamic_stages else 3.0
+    vertical_half_lanes = 2.0 if LevelConfig.dynamic_stages else 4.0
+    if (
+        Options.stage_cover_scroll_speed_compensation != StageCoverNoteSpeedCompensation.OFF
+        and LevelConfig.dynamic_stages
+    ):
+        cover_travel = lerp(APPROACH_SCALE, 1.0, Options.stage_cover)
+        vertical_half_lanes *= clamp((1 - cover_travel) / (1 - APPROACH_SCALE), 0, 1)
     vertical_extent = vertical_half_lanes * lane_w
     return Hitbox(
         target=HitboxTarget(
