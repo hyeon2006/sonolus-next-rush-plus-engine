@@ -19,7 +19,7 @@ from sekai.lib import archetype_names
 from sekai.lib.baseevent import get_event_as, query_event_list
 from sekai.lib.ease import EaseType, ease
 from sekai.lib.level_config import LevelConfig
-from sekai.lib.options import Options, StageCoverNoteSpeedCompensation, Version
+from sekai.lib.options import HitboxRange, Options, StageCoverNoteSpeedCompensation, Version
 from sekai.lib.timescale import CompositeTime
 
 LANE_T = 47 / 850
@@ -1290,7 +1290,7 @@ def compute_hitbox(lane: float, size: float, leniency: float, y_offset: float = 
             l=l_screen - leniency * lane_w,
             r=r_screen + leniency * lane_w,
             t=note_y + vertical_extent,
-            b=note_y - vertical_extent,
+            b=screen().b if Options.hitbox_range == HitboxRange.UNLIMITED else note_y - vertical_extent,
         ),
     )
 
