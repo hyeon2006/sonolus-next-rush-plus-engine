@@ -40,8 +40,6 @@ PREVIEW_DYNAMIC_STAGE_LANE_BOUND = (
     PREVIEW_DYNAMIC_STAGE_BASE_LANE_COUNT / 2 + (PREVIEW_MARGIN_X - PREVIEW_EXTEND_MARGIN_X) / PREVIEW_LANE_W
 )
 
-PREVIEW_CAMERA_MARKER_SIZE = PREVIEW_LANE_W * 0.15
-PREVIEW_CAMERA_INTERVAL = 0.015
 PREVIEW_CAMERA_MARKER_ALPHA = 0.6
 
 PREVIEW_COVER_ALPHA = 1.0
@@ -242,11 +240,17 @@ def layout_preview_tick(lane: float, col: int, y: float) -> Rect:
     return Rect.from_center(center, Vec2(PREVIEW_NOTE_H, PREVIEW_NOTE_H) * 2)
 
 
-def layout_preview_camera_marker(lane: float, time: float) -> Rect:
-    col = time_to_preview_col(time)
+def layout_preview_camera_jump_connector(lane_lo: float, lane_hi: float, time: float, width: float, col: int) -> Quad:
+    half_h = width / 2 * PREVIEW_LANE_W
     y = time_to_preview_y(time, col)
-    center = Vec2(lane_to_preview_x(lane, col), y)
-    return Rect.from_center(center, Vec2(PREVIEW_CAMERA_MARKER_SIZE, PREVIEW_CAMERA_MARKER_SIZE))
+    x_lo = lane_to_preview_x(lane_lo, col)
+    x_hi = lane_to_preview_x(lane_hi, col)
+    return Quad(
+        bl=Vec2(x_lo, y - half_h),
+        br=Vec2(x_hi, y - half_h),
+        tr=Vec2(x_hi, y + half_h),
+        tl=Vec2(x_lo, y + half_h),
+    )
 
 
 def layout_preview_flick_arrow(lane: float, size: float, direction: FlickDirection, col: int, y: float) -> Rect:

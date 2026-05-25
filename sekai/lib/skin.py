@@ -317,7 +317,8 @@ class BaseSkin:
     preview_divider: StandardSprite.GRID_NEUTRAL
     bpm_change_line: StandardSprite.GRID_PURPLE
     timescale_change_line: StandardSprite.GRID_YELLOW
-    special_line: StandardSprite.GRID_RED
+    camera_line: StandardSprite.GRID_RED
+    camera_target_line: StandardSprite.GRID_CYAN
 
 
 EMPTY_SPRITE = Sprite(-1)
@@ -829,7 +830,8 @@ class ActiveSkin:
     preview_divider: Sprite
     bpm_change_line: Sprite
     timescale_change_line: Sprite
-    special_line: Sprite
+    camera_line: Sprite
+    camera_target_line: Sprite
 
 
 def init_skin():
@@ -1337,4 +1339,5 @@ def init_skin():
     ActiveSkin.preview_divider = BaseSkin.preview_divider
     ActiveSkin.bpm_change_line = BaseSkin.bpm_change_line
     ActiveSkin.timescale_change_line = BaseSkin.timescale_change_line
-    ActiveSkin.special_line = BaseSkin.special_line
+    ActiveSkin.camera_line = BaseSkin.camera_line
+    ActiveSkin.camera_target_line = BaseSkin.camera_target_line

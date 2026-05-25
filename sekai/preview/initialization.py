@@ -1,27 +1,31 @@
 from sonolus.script.archetype import EntityRef, PreviewArchetype, callback, imported
+from sonolus.script.interval import lerp
 from sonolus.script.printing import PrintColor, PrintFormat
 from sonolus.script.quad import Quad
+from sonolus.script.sprite import Sprite
 from sonolus.script.timing import beat_to_time
 
 from sekai.lib import archetype_names
 from sekai.lib.baseevent import init_event_list
 from sekai.lib.layer import LAYER_BEAT_LINE, get_z
-from sekai.lib.layout import get_camera_info
+from sekai.lib.layout import CameraInfo, get_camera_info, get_next_camera_event_time
 from sekai.lib.level_config import EngineRevision, LevelConfig, init_level_config
 from sekai.lib.particle import init_particles
 from sekai.lib.skin import ActiveSkin, init_skin
 from sekai.lib.ui import init_ui
 from sekai.preview.dynamic_stage import PreviewCameraChange
 from sekai.preview.layout import (
-    PREVIEW_CAMERA_INTERVAL,
     PREVIEW_CAMERA_MARKER_ALPHA,
     PREVIEW_COLUMN_SECS,
+    PREVIEW_DYNAMIC_STAGE_DIVIDER_W,
+    PREVIEW_DYNAMIC_STAGE_TIME_INCREMENT,
     PreviewData,
     PreviewLayout,
     init_preview_layout,
     layout_preview_bar_line,
-    layout_preview_camera_marker,
+    layout_preview_camera_jump_connector,
     layout_preview_column_divider,
+    layout_preview_lane_rotated_strip,
     print_at_col_top,
 )
 from sekai.preview.stage import draw_preview_cover, draw_preview_stage
@@ -98,22 +102,135 @@ def draw_column_dividers():
 
 
 def draw_camera_markers():
-    count = int(PreviewLayout.visible_secs / PREVIEW_CAMERA_INTERVAL)
+    z_edge = get_z(LAYER_BEAT_LINE, etc=1)
+    z_target = get_z(LAYER_BEAT_LINE, etc=2)
+    for col in range(PreviewLayout.column_count):
+        col_t_lo = col * PREVIEW_COLUMN_SECS
+        col_t_hi = (col + 1) * PREVIEW_COLUMN_SECS
+
+        t_a = col_t_lo
+        camera_a = +CameraInfo
+        camera_a_next = +CameraInfo
+        camera_a @= get_camera_info(t_a)
+        while t_a < col_t_hi:
+            next_event = get_next_camera_event_time(t_a)
+            t_b = min(t_a + PREVIEW_DYNAMIC_STAGE_TIME_INCREMENT, col_t_hi, next_event)
+            at_event = t_b == next_event
+            camera_b = get_camera_info(t_b, left_limit=at_event)
+
+            draw_camera_line_slice(
+                ActiveSkin.camera_line,
+                camera_a.lane - camera_a.size,
+                camera_b.lane - camera_b.size,
+                col,
+                t_a,
+                t_b,
+                z_edge,
+            )
+            draw_camera_line_slice(
+                ActiveSkin.camera_line,
+                camera_a.lane + camera_a.size,
+                camera_b.lane + camera_b.size,
+                col,
+                t_a,
+                t_b,
+                z_edge,
+            )
+            draw_camera_line_slice(
+                ActiveSkin.camera_target_line,
+                camera_a.lane + camera_a.zoom_target_lane,
+                camera_b.lane + camera_b.zoom_target_lane,
+                col,
+                t_a,
+                t_b,
+                z_target,
+            )
+
+            t_a = t_b
+            if at_event:
+                camera_a_next @= get_camera_info(t_a)
+                draw_camera_jump_connectors(camera_b, camera_a_next, col, t_a, z_edge, z_target)
+                camera_a @= camera_a_next
+            else:
+                camera_a @= camera_b
+
+
+def draw_camera_line_slice(
+    sprite: Sprite,
+    lane_a: float,
+    lane_b: float,
+    col: int,
+    t_a: float,
+    t_b: float,
+    z: float,
+):
     bound = PreviewLayout.lane_bound
-    for i in range(count):
-        t = (i + 0.5) * PREVIEW_CAMERA_INTERVAL
-        camera = get_camera_info(t)
-        left_lane = camera.lane - camera.size
-        right_lane = camera.lane + camera.size
-        if -bound <= left_lane <= bound:
-            ActiveSkin.special_line.draw(
-                layout_preview_camera_marker(left_lane, t),
-                z=get_z(LAYER_BEAT_LINE, etc=1),
-                a=PREVIEW_CAMERA_MARKER_ALPHA,
-            )
-        if -bound <= right_lane <= bound:
-            ActiveSkin.special_line.draw(
-                layout_preview_camera_marker(right_lane, t),
-                z=get_z(LAYER_BEAT_LINE, etc=1),
-                a=PREVIEW_CAMERA_MARKER_ALPHA,
-            )
+    de = lane_b - lane_a
+    if de == 0:
+        if abs(lane_a) > bound:
+            return
+        clip_t_a = t_a
+        clip_t_b = t_b
+        clip_lane_a = lane_a
+        clip_lane_b = lane_b
+    else:
+        frac_pos = (bound - lane_a) / de
+        frac_neg = (-bound - lane_a) / de
+        frac_lo = max(0.0, min(frac_pos, frac_neg))
+        frac_hi = min(1.0, max(frac_pos, frac_neg))
+        if frac_lo >= frac_hi:
+            return
+        clip_t_a = lerp(t_a, t_b, frac_lo)
+        clip_t_b = lerp(t_a, t_b, frac_hi)
+        clip_lane_a = lerp(lane_a, lane_b, frac_lo)
+        clip_lane_b = lerp(lane_a, lane_b, frac_hi)
+
+    layout = layout_preview_lane_rotated_strip(
+        clip_lane_a, clip_lane_b, clip_t_a, clip_t_b, PREVIEW_DYNAMIC_STAGE_DIVIDER_W, col
+    )
+    sprite.draw(layout, z=z, a=PREVIEW_CAMERA_MARKER_ALPHA)
+
+
+def draw_camera_jump_connectors(
+    camera_pre: CameraInfo,
+    camera_post: CameraInfo,
+    col: int,
+    t: float,
+    z_edge: float,
+    z_target: float,
+):
+    left_pre = camera_pre.lane - camera_pre.size
+    left_post = camera_post.lane - camera_post.size
+    if left_pre != left_post:
+        draw_camera_jump_connector(ActiveSkin.camera_line, left_pre, left_post, col, t, z_edge)
+
+    right_pre = camera_pre.lane + camera_pre.size
+    right_post = camera_post.lane + camera_post.size
+    if right_pre != right_post:
+        draw_camera_jump_connector(ActiveSkin.camera_line, right_pre, right_post, col, t, z_edge)
+
+    target_pre = camera_pre.lane + camera_pre.zoom_target_lane
+    target_post = camera_post.lane + camera_post.zoom_target_lane
+    if target_pre != target_post:
+        draw_camera_jump_connector(ActiveSkin.camera_target_line, target_pre, target_post, col, t, z_target)
+
+
+def draw_camera_jump_connector(
+    sprite: Sprite,
+    lane_a: float,
+    lane_b: float,
+    col: int,
+    t: float,
+    z: float,
+):
+    bound = PreviewLayout.lane_bound
+    lo = min(lane_a, lane_b)
+    hi = max(lane_a, lane_b)
+    if hi <= -bound or lo >= bound:
+        return
+    clip_lo = max(lo, -bound)
+    clip_hi = min(hi, bound)
+    if clip_hi <= clip_lo:
+        return
+    layout = layout_preview_camera_jump_connector(clip_lo, clip_hi, t, PREVIEW_DYNAMIC_STAGE_DIVIDER_W, col)
+    sprite.draw(layout, z=z, a=PREVIEW_CAMERA_MARKER_ALPHA)

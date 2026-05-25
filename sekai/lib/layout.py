@@ -125,6 +125,7 @@ class CameraChangeLike(Protocol):
     rotate: float
     ease: EaseType
     next_ref: EntityRef
+    prev_ref: EntityRef
 
     @classmethod
     def at(cls, index: int) -> CameraChangeLike: ...
@@ -148,7 +149,7 @@ def _initialization_archetype() -> type[InitializationLike]:
     return cast(type[InitializationLike], get_archetype_by_name(archetype_names.INITIALIZATION))
 
 
-def get_camera_info(target_time: float | None = None) -> CameraInfo:
+def get_camera_info(target_time: float | None = None, left_limit: bool = False) -> CameraInfo:
     result = +CameraInfo
     first_camera_ref = _initialization_archetype().at(0).first_camera_ref
     if first_camera_ref.index <= 0:
@@ -157,6 +158,17 @@ def get_camera_info(target_time: float | None = None) -> CameraInfo:
     t = time() if target_time is None else target_time
     camera_a_ref, camera_b_ref = query_event_list(first_camera_ref, t, lambda e: e.time)
     camera_archetype = _camera_change_archetype()
+    if left_limit and camera_a_ref.index > 0:
+        camera_curr = get_event_as(camera_a_ref, camera_archetype)
+        if camera_curr.time == t:
+            camera_probe_ref = +camera_curr.prev_ref
+            while camera_probe_ref.index > 0:
+                if get_event_as(camera_probe_ref, camera_archetype).time != t:
+                    break
+                camera_a_ref.index = camera_probe_ref.index
+                camera_probe_ref.index = get_event_as(camera_probe_ref, camera_archetype).prev_ref.index
+            camera_b_ref.index = camera_a_ref.index
+            camera_a_ref.index = camera_probe_ref.index
     if camera_a_ref.index > 0:
         camera_a = get_event_as(camera_a_ref, camera_archetype)
         if camera_b_ref.index > 0:
@@ -193,6 +205,16 @@ def get_camera_info(target_time: float | None = None) -> CameraInfo:
         )
         return result
     result @= CameraInfo(lane=0.0, size=6.0, zoom=1.0, zoom_target_lane=0.0, zoom_target_y=0.0, rotate=0.0)
+    return result
+
+
+def get_next_camera_event_time(t: float) -> float:
+    result = 1e8
+    first_camera_ref = _initialization_archetype().at(0).first_camera_ref
+    if first_camera_ref.index > 0:
+        _, b_ref = query_event_list(first_camera_ref, t, lambda e: e.time)
+        if b_ref.index > 0:
+            result = min(result, get_event_as(b_ref, _camera_change_archetype()).time)
     return result
 
 
@@ -388,7 +410,7 @@ def layout_stage_cover_and_line(l: float = -6, r: float = 6) -> tuple[Quad, Quad
 
 def layout_full_width_stage_cover() -> Quad:
     pre_b = lerp(APPROACH_SCALE, 1.0, Options.stage_cover) * DynamicLayout.h_scale + DynamicLayout.t
-    big = 10.0
+    big = 20.0
     rot = -DynamicLayout.rotate
     return Quad(
         bl=Vec2(-big, pre_b).rotate(rot),
