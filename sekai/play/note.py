@@ -27,7 +27,7 @@ from sekai.lib import archetype_names
 from sekai.lib.buckets import WINDOW_SCALE, SekaiWindow
 from sekai.lib.connector import ActiveConnectorInfo, ConnectorKind, ConnectorLayer
 from sekai.lib.ease import EaseType, ease
-from sekai.lib.layout import FlickDirection, Hitbox, Layout, compute_hitbox, progress_to
+from sekai.lib.layout import DynamicLayout, FlickDirection, Hitbox, Layout, compute_hitbox, progress_to
 from sekai.lib.note import (
     NoteEffectKind,
     NoteKind,
@@ -597,7 +597,7 @@ class BaseNote(PlayArchetype):
                 target_angle = -pi / 2 + 1
             case _:
                 assert_never(self.direction)
-        angle_diff = abs((angle - target_angle + pi) % (2 * pi) - pi)
+        angle_diff = abs((angle + DynamicLayout.rotate - target_angle + pi) % (2 * pi) - pi)
         return angle_diff <= leniency
 
     def judge(self, actual_time: float):
