@@ -3,7 +3,7 @@ from sonolus.script.containers import sort_linked_entities
 from sonolus.script.interval import lerp
 from sonolus.script.printing import PrintColor, PrintFormat
 from sonolus.script.quad import Quad
-from sonolus.script.sprite import Sprite
+from sonolus.script.sprite import Sprite, ZIndex
 from sonolus.script.timing import beat_to_time
 
 from sekai.lib import archetype_names
@@ -165,7 +165,7 @@ def draw_camera_line_slice(
     col: int,
     t_a: float,
     t_b: float,
-    z: float,
+    z: ZIndex,
 ):
     bound = PreviewLayout.lane_bound
     de = lane_b - lane_a
@@ -199,8 +199,8 @@ def draw_camera_jump_connectors(
     camera_post: CameraInfo,
     col: int,
     t: float,
-    z_edge: float,
-    z_target: float,
+    z_edge: ZIndex,
+    z_target: ZIndex,
 ):
     left_pre = camera_pre.lane - camera_pre.size
     left_post = camera_post.lane - camera_post.size
@@ -224,7 +224,7 @@ def draw_camera_jump_connector(
     lane_b: float,
     col: int,
     t: float,
-    z: float,
+    z: ZIndex,
 ):
     bound = PreviewLayout.lane_bound
     lo = min(lane_a, lane_b)
