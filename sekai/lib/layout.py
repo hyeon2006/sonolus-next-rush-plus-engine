@@ -11,7 +11,7 @@ from sonolus.script.interval import clamp, lerp, remap, unlerp
 from sonolus.script.num import Num
 from sonolus.script.quad import Quad, QuadLike, Rect
 from sonolus.script.record import Record
-from sonolus.script.runtime import aspect_ratio, is_play, is_watch, screen, set_background, time
+from sonolus.script.runtime import aspect_ratio, background, is_play, is_watch, screen, set_background, time
 from sonolus.script.values import swap
 from sonolus.script.vec import Vec2
 
@@ -56,6 +56,7 @@ class Layout:
     progress_start: float
     progress_cutoff: float
     flick_speed_threshold: float
+    initial_background: Quad
 
 
 @level_memory
@@ -92,6 +93,8 @@ def init_layout():
 
     Layout.field_w = field_w
     Layout.field_h = field_h
+
+    Layout.initial_background = background()
 
     Layout.approach_start = 0.0
 
@@ -251,15 +254,15 @@ def apply_camera_zoom(zoom: float, target_lane: float, target_y: float, rotate: 
     DynamicLayout.w_scale = zoom * DynamicLayout.w_scale
     DynamicLayout.t = zoom * (DynamicLayout.t - target.y) + anchor.y
     DynamicLayout.h_scale = zoom * DynamicLayout.h_scale
-    s = screen()
+    bg = Layout.initial_background
     rot = -rotate
     DynamicLayout.rotate = rotate
     set_background(
         Quad(
-            bl=Vec2(zoom * (s.bl.x - target.x) + anchor.x, zoom * (s.bl.y - target.y) + anchor.y).rotate(rot),
-            br=Vec2(zoom * (s.br.x - target.x) + anchor.x, zoom * (s.br.y - target.y) + anchor.y).rotate(rot),
-            tl=Vec2(zoom * (s.tl.x - target.x) + anchor.x, zoom * (s.tl.y - target.y) + anchor.y).rotate(rot),
-            tr=Vec2(zoom * (s.tr.x - target.x) + anchor.x, zoom * (s.tr.y - target.y) + anchor.y).rotate(rot),
+            bl=Vec2(zoom * (bg.bl.x - target.x) + anchor.x, zoom * (bg.bl.y - target.y) + anchor.y).rotate(rot),
+            br=Vec2(zoom * (bg.br.x - target.x) + anchor.x, zoom * (bg.br.y - target.y) + anchor.y).rotate(rot),
+            tl=Vec2(zoom * (bg.tl.x - target.x) + anchor.x, zoom * (bg.tl.y - target.y) + anchor.y).rotate(rot),
+            tr=Vec2(zoom * (bg.tr.x - target.x) + anchor.x, zoom * (bg.tr.y - target.y) + anchor.y).rotate(rot),
         )
     )
 
