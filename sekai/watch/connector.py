@@ -127,7 +127,9 @@ class WatchConnector(WatchArchetype):
             if self.active_tail_ref.index > 0 and time() >= self.active_tail.despawn_time():
                 return
             if time() >= head.target_time and not segment_head.segment_through_judge_line:
-                head_visual_progress = 1.0 - head.visual_y_offset
+                head_visual_progress = 1.0 - remap_clamped(
+                    head.target_time, tail.target_time, head.visual_y_offset, tail.visual_y_offset, time()
+                )
                 head_target_time = time()
                 if self.ease_type == EaseType.NONE:
                     head_lane = head.visual_lane
