@@ -93,6 +93,9 @@ class DynamicLayout:
     scaled_note_h: float
     progress_start: float
     progress_cutoff: float
+    width_offset: float
+    lane_t: float
+    lane_b: float
 
 
 class CameraInfo(Record):
@@ -316,9 +319,17 @@ def refresh_layout():
     DynamicLayout.x_translate = -camera.lane * w
     DynamicLayout.rotate = 0.0
     DynamicLayout.stage_tilt = clamp(camera.stage_tilt, 0.0, 1.0)
+    tilt = current_stage_tilt()
+
+    DynamicLayout.width_offset = (1 - tilt) * STAGE_WIDTH_MID
+    vanish_tilt = max(tilt, STAGE_TILT_VANISH_MIN)
+    vanish_ext = (1 - vanish_tilt) * STAGE_WIDTH_MID / vanish_tilt
+    DynamicLayout.lane_t = LANE_T - vanish_ext
+    DynamicLayout.lane_b = LANE_B + vanish_ext
+
     base_note_h = NOTE_H * (0.6 * size_zoom + 0.4)
     flat_note_h = STAGE_WIDTH_MID * DynamicLayout.w_scale / (2 * abs(DynamicLayout.h_scale))
-    DynamicLayout.note_h = lerp(flat_note_h, base_note_h, current_stage_tilt())
+    DynamicLayout.note_h = lerp(flat_note_h, base_note_h, tilt)
 
     if is_play() or is_watch():
         apply_camera_zoom(camera.zoom, camera.zoom_target, camera.zoom_anchor, camera.rotate)
@@ -461,19 +472,7 @@ def width_factor_at_tilt(depth: float, tilt: float) -> float:
 
 
 def tilt_width_factor(depth: float) -> float:
-    return width_factor_at_tilt(depth, current_stage_tilt())
-
-
-def tilt_lane_t() -> float:
-    tilt = max(current_stage_tilt(), STAGE_TILT_VANISH_MIN)
-    vanishing_depth = -(1 - tilt) * STAGE_WIDTH_MID / tilt
-    return vanishing_depth + LANE_T
-
-
-def tilt_lane_b() -> float:
-    tilt = max(current_stage_tilt(), STAGE_TILT_VANISH_MIN)
-    extension = (1 - tilt) * STAGE_WIDTH_MID / tilt
-    return LANE_B + extension
+    return current_stage_tilt() * depth + DynamicLayout.width_offset
 
 
 def tilt_depth(line_y: float, travel: float) -> float:
@@ -548,7 +547,7 @@ def layout_sekai_stage() -> Quad:
 
 
 def layout_lane_by_edges(l: float, r: float, y_offset: float = 0.0) -> Quad:
-    return perspective_rect(l=l, r=r, t=tilt_lane_t(), b=tilt_lane_b(), travel=approach(1 - y_offset))
+    return perspective_rect(l=l, r=r, t=DynamicLayout.lane_t, b=DynamicLayout.lane_b, travel=approach(1 - y_offset))
 
 
 def layout_lane(lane: float, size: float, y_offset: float = 0.0) -> Quad:
@@ -560,7 +559,7 @@ def layout_stage_cover(l: float = -6, r: float = 6) -> Quad:
     return perspective_rect(
         l=l,
         r=r,
-        t=tilt_lane_t(),
+        t=DynamicLayout.lane_t,
         b=b,
     )
 
@@ -571,7 +570,7 @@ def layout_stage_cover_and_line(l: float = -6, r: float = 6) -> tuple[Quad, Quad
     return perspective_rect(
         l=l,
         r=r,
-        t=tilt_lane_t(),
+        t=DynamicLayout.lane_t,
         b=cover_b,
     ), perspective_rect(
         l=l,

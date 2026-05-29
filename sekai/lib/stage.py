@@ -565,10 +565,12 @@ def draw_dynamic_stage(
     thickness_scale = lerp(1.0, clamp(1 / travel, 1, 4) if travel > 0 else 4, current_stage_tilt())
     judgment_divider_size = 0.014 * thickness_scale * tilt_width_factor(travel) * DynamicLayout.w_scale
     judgment_divider_offset = Vec2(judgment_divider_size, 0).rotate(-DynamicLayout.rotate)
+    divider_depth_b = tilt_depth(1 + nh - nh / f + 0.001, travel)
+    divider_depth_t = tilt_depth(1 - nh + nh / f - 0.001, travel)
 
     def layout_judgment_divider(lane: float):
-        b = transformed_vec_at(lane, tilt_depth(1 + nh - nh / f + 0.001, travel))
-        t = transformed_vec_at(lane, tilt_depth(1 - nh + nh / f - 0.001, travel))
+        b = transformed_vec_at(lane, divider_depth_b)
+        t = transformed_vec_at(lane, divider_depth_t)
         return Quad(
             bl=b - judgment_divider_offset,
             tl=t - judgment_divider_offset,
