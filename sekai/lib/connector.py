@@ -30,7 +30,6 @@ from sekai.lib.layer import (
 )
 from sekai.lib.layout import (
     DynamicLayout,
-    Layout,
     approach,
     get_alpha,
     iter_slot_lanes,
@@ -316,8 +315,11 @@ def draw_connector(
     bypass_tail_target_time_check: bool = False,
 ):
     if (
-        (head_visual_progress < Layout.progress_start and tail_visual_progress < Layout.progress_start)
-        or (head_visual_progress > Layout.progress_cutoff and tail_visual_progress > Layout.progress_cutoff)
+        (head_visual_progress < DynamicLayout.progress_start and tail_visual_progress < DynamicLayout.progress_start)
+        or (
+            head_visual_progress > DynamicLayout.progress_cutoff
+            and tail_visual_progress > DynamicLayout.progress_cutoff
+        )
         or head_visual_progress == tail_visual_progress
     ):
         return
@@ -393,8 +395,8 @@ def draw_connector(
 
     if time() >= tail_target_time and not bypass_tail_target_time_check:
         return
-    start_visual_progress = clamp(head_visual_progress, Layout.progress_start, Layout.progress_cutoff)
-    end_visual_progress = clamp(tail_visual_progress, Layout.progress_start, Layout.progress_cutoff)
+    start_visual_progress = clamp(head_visual_progress, DynamicLayout.progress_start, DynamicLayout.progress_cutoff)
+    end_visual_progress = clamp(tail_visual_progress, DynamicLayout.progress_start, DynamicLayout.progress_cutoff)
     start_frac = unlerp_clamped(head_visual_progress, tail_visual_progress, start_visual_progress)
     end_frac = unlerp_clamped(head_visual_progress, tail_visual_progress, end_visual_progress)
     start_ease_frac = lerp(head_ease_frac, tail_ease_frac, start_frac)

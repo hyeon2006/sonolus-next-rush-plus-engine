@@ -7,7 +7,7 @@ from typing import Protocol, assert_never, cast
 from sonolus.script.archetype import EntityRef, get_archetype_by_name
 from sonolus.script.debug import static_error
 from sonolus.script.globals import level_data, level_memory
-from sonolus.script.interval import clamp, lerp, remap, unlerp
+from sonolus.script.interval import clamp, lerp, remap, remap_clamped, unlerp
 from sonolus.script.num import Num
 from sonolus.script.quad import Quad, QuadLike, Rect
 from sonolus.script.record import Record
@@ -42,6 +42,19 @@ APPROACH_SCALE = 1.06**-45
 # such that something like a flick arrow below the judge line isn't obviously suddenly cut off.
 DEFAULT_APPROACH_CUTOFF = 2.5
 
+# Stage width at 0 tilt
+STAGE_WIDTH_MID = (APPROACH_SCALE + 1) / 2
+
+# As tilt decreases, the perspective vanishing point (where the width factor reaches 0) recedes
+# upward and the stage top is extended toward it. This floors the effective tilt used for that
+# extent so it stays finite (instead of diverging) as tilt approaches 0.
+STAGE_TILT_VANISH_MIN = 0.2
+
+# Tilt at/below which (with no stage cover) notes spawn from the very top of the stage bounding box
+# (LANE_T = top of screen on landscape) instead of the usual spawn depth, so the extended flatter
+# stage has no empty-lane gap above the notes. Between this and tilt 1 the spawn depth interpolates.
+STAGE_TILT_SPAWN_TOP = 0.95
+
 
 class FlickDirection(IntEnum):
     UP_OMNI = 0
@@ -62,8 +75,8 @@ class Layout:
     field_w: float
     field_h: float
     approach_start: float
-    progress_start: float
-    progress_cutoff: float
+    cover_depth: float
+    cutoff_depth: float
     flick_speed_threshold: float
     initial_background: Quad
 
@@ -75,8 +88,11 @@ class DynamicLayout:
     h_scale: float
     x_translate: float
     rotate: float
+    stage_tilt: float
     note_h: float
     scaled_note_h: float
+    progress_start: float
+    progress_cutoff: float
 
 
 class CameraInfo(Record):
@@ -87,6 +103,7 @@ class CameraInfo(Record):
     zoom_target: Vec2  # screen-space zoom target
     zoom_anchor: Vec2  # screen-space anchor (encodes the vertical align)
     rotate: float
+    stage_tilt: float
 
 
 def init_layout():
@@ -108,22 +125,24 @@ def init_layout():
 
     Layout.approach_start = 0.0
 
-    refresh_layout()
+    # Fixed approach-curve depths for the cover/spawn and far cutoff boundaries. These are
+    # tilt-independent (they pin screen positions); refresh_layout() converts them to the
+    # equivalent progress bounds under the current tilt each frame.
+    if Options.stage_cover:
+        Layout.cover_depth = lerp(APPROACH_SCALE, 1.0, Options.stage_cover)
+    else:
+        Layout.cover_depth = APPROACH_SCALE
+    if Options.hidden:
+        Layout.cutoff_depth = lerp(1.0, APPROACH_SCALE, Options.hidden)
+    else:
+        Layout.cutoff_depth = DEFAULT_APPROACH_CUTOFF
 
     if Options.stage_cover and Options.stage_cover_scroll_speed_compensation != StageCoverNoteSpeedCompensation.OFF:
         target_travel = lerp(APPROACH_SCALE, 1.0, Options.stage_cover)
-        candidate = inverse_approach(target_travel)
+        candidate = inverse_approach_untilted(target_travel)
         Layout.approach_start = clamp(candidate, 0, 0.99)
 
-    if Options.stage_cover:
-        Layout.progress_start = inverse_approach(lerp(APPROACH_SCALE, 1.0, Options.stage_cover))
-    else:
-        Layout.progress_start = 0.0
-
-    if Options.hidden:
-        Layout.progress_cutoff = inverse_approach(lerp(1.0, APPROACH_SCALE, Options.hidden))
-    else:
-        Layout.progress_cutoff = inverse_approach(DEFAULT_APPROACH_CUTOFF)
+    refresh_layout()
 
     Layout.flick_speed_threshold = 2 * DynamicLayout.w_scale
 
@@ -137,6 +156,7 @@ class CameraChangeLike(Protocol):
     zoom_target_y: float
     zoom_vertical_align: ZoomVerticalAlign
     rotate: float
+    stage_tilt: float
     ease: EaseType
     next_ref: EntityRef
     prev_ref: EntityRef
@@ -175,6 +195,7 @@ def get_camera_info(target_time: float | None = None, left_limit: bool = False) 
             zoom_target=Vec2(0.0, 0.0),
             zoom_anchor=Vec2(0.0, 0.0),
             rotate=0.0,
+            stage_tilt=1.0,
         )
         return result
     t = time() if target_time is None else target_time
@@ -198,10 +219,10 @@ def get_camera_info(target_time: float | None = None, left_limit: bool = False) 
             if camera_b.time > camera_a.time:
                 p = ease(camera_a.ease, unlerp(camera_a.time, camera_b.time, t))
                 ta = camera_zoom_target_at(
-                    camera_a.lane, camera_a.size, camera_a.zoom_target_lane, camera_a.zoom_target_y
+                    camera_a.lane, camera_a.size, camera_a.zoom_target_lane, camera_a.zoom_target_y, camera_a.stage_tilt
                 )
                 tb = camera_zoom_target_at(
-                    camera_b.lane, camera_b.size, camera_b.zoom_target_lane, camera_b.zoom_target_y
+                    camera_b.lane, camera_b.size, camera_b.zoom_target_lane, camera_b.zoom_target_y, camera_b.stage_tilt
                 )
                 aa = camera_zoom_anchor(camera_a.zoom_vertical_align)
                 ab = camera_zoom_anchor(camera_b.zoom_vertical_align)
@@ -213,6 +234,7 @@ def get_camera_info(target_time: float | None = None, left_limit: bool = False) 
                     zoom_target=Vec2(lerp(ta.x, tb.x, p), lerp(ta.y, tb.y, p)),
                     zoom_anchor=Vec2(lerp(aa.x, ab.x, p), lerp(aa.y, ab.y, p)),
                     rotate=lerp(camera_a.rotate, camera_b.rotate, p),
+                    stage_tilt=lerp(camera_a.stage_tilt, camera_b.stage_tilt, p),
                 )
                 return result
         result @= CameraInfo(
@@ -221,10 +243,11 @@ def get_camera_info(target_time: float | None = None, left_limit: bool = False) 
             zoom=camera_a.zoom,
             zoom_target_lane=camera_a.zoom_target_lane,
             zoom_target=camera_zoom_target_at(
-                camera_a.lane, camera_a.size, camera_a.zoom_target_lane, camera_a.zoom_target_y
+                camera_a.lane, camera_a.size, camera_a.zoom_target_lane, camera_a.zoom_target_y, camera_a.stage_tilt
             ),
             zoom_anchor=camera_zoom_anchor(camera_a.zoom_vertical_align),
             rotate=camera_a.rotate,
+            stage_tilt=camera_a.stage_tilt,
         )
         return result
     if camera_b_ref.index > 0:
@@ -235,10 +258,11 @@ def get_camera_info(target_time: float | None = None, left_limit: bool = False) 
             zoom=camera_b.zoom,
             zoom_target_lane=camera_b.zoom_target_lane,
             zoom_target=camera_zoom_target_at(
-                camera_b.lane, camera_b.size, camera_b.zoom_target_lane, camera_b.zoom_target_y
+                camera_b.lane, camera_b.size, camera_b.zoom_target_lane, camera_b.zoom_target_y, camera_b.stage_tilt
             ),
             zoom_anchor=camera_zoom_anchor(camera_b.zoom_vertical_align),
             rotate=camera_b.rotate,
+            stage_tilt=camera_b.stage_tilt,
         )
         return result
     result @= CameraInfo(
@@ -249,6 +273,7 @@ def get_camera_info(target_time: float | None = None, left_limit: bool = False) 
         zoom_target=Vec2(0.0, 0.0),
         zoom_anchor=Vec2(0.0, 0.0),
         rotate=0.0,
+        stage_tilt=1.0,
     )
     return result
 
@@ -276,6 +301,7 @@ def refresh_layout():
             zoom_target=Vec2(0.0, 0.0),
             zoom_anchor=Vec2(0.0, 0.0),
             rotate=0.0,
+            stage_tilt=1.0,
         )
 
     size_zoom = 6.0 / camera.size
@@ -289,24 +315,33 @@ def refresh_layout():
     DynamicLayout.h_scale = b - t
     DynamicLayout.x_translate = -camera.lane * w
     DynamicLayout.rotate = 0.0
-    DynamicLayout.note_h = NOTE_H * (0.6 * size_zoom + 0.4)
+    DynamicLayout.stage_tilt = clamp(camera.stage_tilt, 0.0, 1.0)
+    base_note_h = NOTE_H * (0.6 * size_zoom + 0.4)
+    flat_note_h = STAGE_WIDTH_MID * DynamicLayout.w_scale / (2 * abs(DynamicLayout.h_scale))
+    DynamicLayout.note_h = lerp(flat_note_h, base_note_h, current_stage_tilt())
 
     if is_play() or is_watch():
         apply_camera_zoom(camera.zoom, camera.zoom_target, camera.zoom_anchor, camera.rotate)
 
     DynamicLayout.scaled_note_h = DynamicLayout.note_h * DynamicLayout.h_scale
 
+    if Options.stage_cover:
+        spawn_depth = Layout.cover_depth
+    else:
+        spawn_blend = remap_clamped(STAGE_TILT_SPAWN_TOP, 1.0, 0.0, 1.0, DynamicLayout.stage_tilt)
+        spawn_depth = lerp(LANE_T, Layout.cover_depth, spawn_blend)
+    DynamicLayout.progress_start = inverse_approach_tilt(spawn_depth)
+    DynamicLayout.progress_cutoff = inverse_approach_tilt(Layout.cutoff_depth)
 
-def camera_zoom_target_at(lane: float, size: float, target_lane: float, target_y: float) -> Vec2:
-    # Screen-space position of the zoom target under the base (pre-zoom) camera transform.
-    # Mirrors transform_vec for the base transform, where rotate == 0.
+
+def camera_zoom_target_at(lane: float, size: float, target_lane: float, target_y: float, tilt: float) -> Vec2:
     size_zoom = 6.0 / size
     w = Layout.field_w * FIELD_W_FACTOR * size_zoom
     t_top = Layout.field_h * FIELD_T_FACTOR
     b = Layout.field_h * FIELD_B_FACTOR
-    travel = approach(1 - target_y)
+    travel = approach_at_tilt(1 - target_y, tilt)
     target_total_lane = lane + target_lane
-    return Vec2(target_total_lane * travel * w - lane * w, travel * (b - t_top) + t_top)
+    return Vec2(target_total_lane * width_factor_at_tilt(travel, tilt) * w - lane * w, travel * (b - t_top) + t_top)
 
 
 def camera_zoom_anchor(align: ZoomVerticalAlign) -> Vec2:
@@ -335,18 +370,36 @@ def apply_camera_zoom(zoom: float, target: Vec2, anchor: Vec2, rotate: float = 0
     )
 
 
-def approach(progress: float) -> float:
-    progress = lerp(Layout.approach_start, 1.0, progress)
+def current_stage_tilt() -> float:
+    if is_play() or is_watch():
+        return DynamicLayout.stage_tilt
+    return 1.0
+
+
+def approach_curve_base(x: float) -> float:
     if Options.alternative_approach_curve:
         d_0 = 1 / APPROACH_SCALE
         d_1 = 2.5
         v_1 = (d_0 - d_1) / d_1**2
-        d = 1 / lerp(d_0, d_1, progress) if progress < 1 else 1 / d_1 + v_1 * (progress - 1)
+        d = 1 / lerp(d_0, d_1, x) if x < 1 else 1 / d_1 + v_1 * (x - 1)
         return remap(1 / d_0, 1 / d_1, APPROACH_SCALE, 1, d)
-    return APPROACH_SCALE ** (1 - progress)
+    return APPROACH_SCALE ** (1 - x)
 
 
-def inverse_approach(approach_value: float) -> float:
+def approach_at_tilt(progress: float, tilt: float) -> float:
+    x = lerp(Layout.approach_start, 1.0, progress)
+    base = approach_curve_base(x)
+    if tilt >= 1.0:
+        return base
+    linear = lerp(APPROACH_SCALE, 1.0, x)
+    return lerp(linear, base, tilt)
+
+
+def approach(progress: float) -> float:
+    return approach_at_tilt(progress, current_stage_tilt())
+
+
+def inverse_approach_untilted(approach_value: float) -> float:
     if Options.alternative_approach_curve:
         d_0 = 1 / APPROACH_SCALE
         d_1 = 2.5
@@ -359,6 +412,20 @@ def inverse_approach(approach_value: float) -> float:
     else:
         raw = 1 - log(approach_value) / log(APPROACH_SCALE)
     return unlerp(Layout.approach_start, 1.0, raw)
+
+
+def inverse_approach_tilt(approach_value: float) -> float:
+    tilt = current_stage_tilt()
+    if tilt >= 1.0:
+        return inverse_approach_untilted(approach_value)
+    lo = -1.0
+    hi = 4.0
+    for _ in range(20):
+        mid = (lo + hi) / 2
+        too_low = approach_at_tilt(mid, tilt) < approach_value
+        lo = mid if too_low else lo
+        hi = hi if too_low else mid
+    return (lo + hi) / 2
 
 
 def progress_to(
@@ -389,6 +456,34 @@ def get_alpha(target_time: float, now: float | None = None) -> float:
     return 1.0
 
 
+def width_factor_at_tilt(depth: float, tilt: float) -> float:
+    return tilt * depth + (1 - tilt) * STAGE_WIDTH_MID
+
+
+def tilt_width_factor(depth: float) -> float:
+    return width_factor_at_tilt(depth, current_stage_tilt())
+
+
+def tilt_lane_t() -> float:
+    tilt = max(current_stage_tilt(), STAGE_TILT_VANISH_MIN)
+    vanishing_depth = -(1 - tilt) * STAGE_WIDTH_MID / tilt
+    return vanishing_depth + LANE_T
+
+
+def tilt_lane_b() -> float:
+    tilt = max(current_stage_tilt(), STAGE_TILT_VANISH_MIN)
+    extension = (1 - tilt) * STAGE_WIDTH_MID / tilt
+    return LANE_B + extension
+
+
+def tilt_depth(line_y: float, travel: float) -> float:
+    return travel + (line_y - 1.0) * lerp(1.0, travel, current_stage_tilt())
+
+
+def tilt_widened_edge(bottom_edge: float, top_edge: float) -> float:
+    return lerp(bottom_edge, top_edge, current_stage_tilt())
+
+
 def transform_vec(v: Vec2) -> Vec2:
     return Vec2(
         v.x * DynamicLayout.w_scale + DynamicLayout.x_translate,
@@ -406,12 +501,12 @@ def transform_quad(q: QuadLike) -> Quad:
 
 
 def transformed_vec_at(lane: float, travel: float = 1.0) -> Vec2:
-    return transform_vec(Vec2(lane * travel, travel))
+    return transform_vec(Vec2(lane * tilt_width_factor(travel), travel))
 
 
 def pre_rotation_vec_at(lane: float, travel: float = 1.0) -> Vec2:
     return Vec2(
-        lane * travel * DynamicLayout.w_scale + DynamicLayout.x_translate,
+        lane * tilt_width_factor(travel) * DynamicLayout.w_scale + DynamicLayout.x_translate,
         travel * DynamicLayout.h_scale + DynamicLayout.t,
     )
 
@@ -420,20 +515,27 @@ def touch_to_lane(pos: Vec2) -> float:
     unrotated = pos.rotate(DynamicLayout.rotate)
     y_raw = (unrotated.y - DynamicLayout.t) / DynamicLayout.h_scale
     x_raw = (unrotated.x - DynamicLayout.x_translate) / DynamicLayout.w_scale
-    return x_raw / y_raw
+    width = tilt_width_factor(y_raw)
+    if -1e-6 < width < 1e-6:
+        width = 1e-6 if width >= 0 else -1e-6
+    return x_raw / width
 
 
 def perspective_vec(x: float, y: float, travel: float = 1.0) -> Vec2:
-    return transform_vec(Vec2(x * y * travel, y * travel))
+    return transform_vec(Vec2(x * tilt_width_factor(y * travel), y * travel))
 
 
 def perspective_rect(l: float, r: float, t: float, b: float, travel: float = 1.0) -> Quad:
+    depth_b = tilt_depth(b, travel)
+    depth_t = tilt_depth(t, travel)
+    wb = tilt_width_factor(depth_b)
+    wt = tilt_width_factor(depth_t)
     return transform_quad(
         Quad(
-            bl=Vec2(l * b * travel, b * travel),
-            br=Vec2(r * b * travel, b * travel),
-            tl=Vec2(l * t * travel, t * travel),
-            tr=Vec2(r * t * travel, t * travel),
+            bl=Vec2(l * wb, depth_b),
+            br=Vec2(r * wb, depth_b),
+            tl=Vec2(l * wt, depth_t),
+            tr=Vec2(r * wt, depth_t),
         )
     )
 
@@ -446,7 +548,7 @@ def layout_sekai_stage() -> Quad:
 
 
 def layout_lane_by_edges(l: float, r: float, y_offset: float = 0.0) -> Quad:
-    return perspective_rect(l=l, r=r, t=LANE_T, b=LANE_B, travel=approach(1 - y_offset))
+    return perspective_rect(l=l, r=r, t=tilt_lane_t(), b=tilt_lane_b(), travel=approach(1 - y_offset))
 
 
 def layout_lane(lane: float, size: float, y_offset: float = 0.0) -> Quad:
@@ -458,7 +560,7 @@ def layout_stage_cover(l: float = -6, r: float = 6) -> Quad:
     return perspective_rect(
         l=l,
         r=r,
-        t=LANE_T,
+        t=tilt_lane_t(),
         b=b,
     )
 
@@ -469,7 +571,7 @@ def layout_stage_cover_and_line(l: float = -6, r: float = 6) -> tuple[Quad, Quad
     return perspective_rect(
         l=l,
         r=r,
-        t=LANE_T,
+        t=tilt_lane_t(),
         b=cover_b,
     ), perspective_rect(
         l=l,
@@ -503,7 +605,8 @@ def layout_hidden_cover(l: float = -6, r: float = 6) -> Quad:
 
 
 def layout_fallback_judge_line() -> Quad:
-    return perspective_rect(l=-6, r=6, t=1 - DynamicLayout.note_h, b=1 + DynamicLayout.note_h)
+    nh = DynamicLayout.note_h
+    return perspective_rect(l=-6, r=6, t=1 - nh, b=1 + nh)
 
 
 def layout_note_body_by_edges(l: float, r: float, h: float, travel: float):
@@ -565,8 +668,8 @@ def layout_slim_note_body_fallback(lane: float, size: float, travel: float) -> Q
 
 
 def layout_tick(lane: float, travel: float) -> Quad:
-    center = transform_vec(Vec2(lane, 1) * travel)
-    h = -DynamicLayout.scaled_note_h * travel
+    center = transformed_vec_at(lane, travel)
+    h = -DynamicLayout.scaled_note_h * tilt_width_factor(travel)
     rot = -DynamicLayout.rotate
     dx = Vec2(h, 0).rotate(rot)
     dy = Vec2(0, h).rotate(rot)
@@ -609,8 +712,8 @@ def layout_flick_arrow(
         case _:
             assert_never(direction)
     w = clamp(size, 0, 3) / 2
-    base_bl = transform_vec(Vec2(lane - w, 1) * travel)
-    base_br = transform_vec(Vec2(lane + w, 1) * travel)
+    base_bl = transformed_vec_at(lane - w, travel)
+    base_br = transformed_vec_at(lane + w, travel)
     up = (base_br - base_bl).rotate(pi / 2)
     base_tl = base_bl + up
     base_tr = base_br + up
@@ -618,7 +721,7 @@ def layout_flick_arrow(
     offset = (
         Vec2(animation_top_x_offset * DynamicLayout.w_scale, 2 * DynamicLayout.w_scale).rotate(-DynamicLayout.rotate)
         * offset_scale
-        * travel
+        * tilt_width_factor(travel)
     )
     result = Quad(
         bl=base_bl,
@@ -667,25 +770,27 @@ def layout_flick_arrow_fallback(
 
     w = clamp(size / 2, 1, 2)
     offset_scale = animation_progress if not is_down else 1 - animation_progress
-    offset = Vec2(animation_top_x_offset * DynamicLayout.w_scale, 2 * DynamicLayout.w_scale) * offset_scale * travel
+    width = tilt_width_factor(travel)
+    offset = Vec2(animation_top_x_offset * DynamicLayout.w_scale, 2 * DynamicLayout.w_scale) * offset_scale * width
     return (
         Rect(l=-1, r=1, t=1, b=-1)
         .as_quad()
         .rotate(rotation)
-        .scale(Vec2(w, w) * DynamicLayout.w_scale * travel)
+        .scale(Vec2(w, w) * DynamicLayout.w_scale * width)
         .translate(offset)
         .rotate(-DynamicLayout.rotate)
-        .translate(transform_vec(Vec2(lane, 1) * travel))
+        .translate(transformed_vec_at(lane, travel))
     )
 
 
 def layout_slot_effect(lane: float, y_offset: float = 0.0) -> Quad:
     travel = approach(1 - y_offset)
+    nh = DynamicLayout.note_h
     return perspective_rect(
         l=lane - 0.5,
         r=lane + 0.5,
-        b=1 + DynamicLayout.note_h,
-        t=1 - DynamicLayout.note_h,
+        b=1 + nh,
+        t=1 - nh,
         travel=travel,
     )
 
@@ -693,7 +798,7 @@ def layout_slot_effect(lane: float, y_offset: float = 0.0) -> Quad:
 def layout_slot_glow_effect(lane: float, size: float, height: float, y_offset: float = 0.0) -> Quad:
     s = 1 + 0.25 * Options.slot_effect_size
     travel = approach(1 - y_offset)
-    h = 4.25 * DynamicLayout.w_scale * Options.slot_effect_size * travel
+    h = 4.25 * DynamicLayout.w_scale * Options.slot_effect_size * tilt_width_factor(travel)
     up = Vec2(0, h).rotate(-DynamicLayout.rotate)
     l_min = transformed_vec_at(lane - size, travel)
     r_min = transformed_vec_at(lane + size, travel)
@@ -737,23 +842,26 @@ def layout_rotated_linear_effect(lane: float, shear: float, y_offset: float = 0.
 
 def layout_circular_effect(lane: float, w: float, h: float, y_offset: float = 0.0) -> Quad:
     travel = approach(1 - y_offset)
-    w *= Options.note_effect_size * travel
+    width = tilt_width_factor(travel)
+    w *= Options.note_effect_size * width
     h *= Options.note_effect_size * DynamicLayout.w_scale / DynamicLayout.h_scale
-    t = (1 + h) * travel
-    b = (1 - h) * travel
+    t = travel + h * width
+    b = travel - h * width
+    wb = tilt_width_factor(b)
+    wt = tilt_width_factor(t)
     return transform_quad(
         Quad(
-            bl=Vec2(lane * b - w, b),
-            br=Vec2(lane * b + w, b),
-            tl=Vec2(lane * t - w, t),
-            tr=Vec2(lane * t + w, t),
+            bl=Vec2(lane * wb - w, b),
+            br=Vec2(lane * wb + w, b),
+            tl=Vec2(lane * wt - w, t),
+            tr=Vec2(lane * wt + w, t),
         )
     )
 
 
 def layout_tick_effect(lane: float, y_offset: float = 0.0) -> Quad:
     travel = approach(1 - y_offset)
-    w = 4 * DynamicLayout.w_scale * Options.note_effect_size * travel
+    w = 4 * DynamicLayout.w_scale * Options.note_effect_size * tilt_width_factor(travel)
     center = transformed_vec_at(lane, travel)
     rot = -DynamicLayout.rotate
     dx = Vec2(w, 0).rotate(rot)
@@ -778,13 +886,11 @@ def layout_slide_connector_segment(
         start_lane, end_lane = end_lane, start_lane
         start_size, end_size = end_size, start_size
         start_travel, end_travel = end_travel, start_travel
-    return transform_quad(
-        Quad(
-            bl=Vec2(start_lane - start_size, 1) * start_travel,
-            br=Vec2(start_lane + start_size, 1) * start_travel,
-            tl=Vec2(end_lane - end_size, 1) * end_travel,
-            tr=Vec2(end_lane + end_size, 1) * end_travel,
-        )
+    return Quad(
+        bl=perspective_vec(start_lane - start_size, 1, start_travel),
+        br=perspective_vec(start_lane + start_size, 1, start_travel),
+        tl=perspective_vec(end_lane - end_size, 1, end_travel),
+        tr=perspective_vec(end_lane + end_size, 1, end_travel),
     )
 
 
@@ -800,11 +906,13 @@ def layout_sim_line(
     ml = perspective_vec(left_lane, 1, left_travel)
     mr = perspective_vec(right_lane, 1, right_travel)
     ort = (mr - ml).orthogonal().normalize()
+    left_h = DynamicLayout.scaled_note_h * tilt_width_factor(left_travel)
+    right_h = DynamicLayout.scaled_note_h * tilt_width_factor(right_travel)
     return Quad(
-        bl=ml + ort * DynamicLayout.note_h * DynamicLayout.h_scale * left_travel,
-        br=mr + ort * DynamicLayout.note_h * DynamicLayout.h_scale * right_travel,
-        tl=ml - ort * DynamicLayout.note_h * DynamicLayout.h_scale * left_travel,
-        tr=mr - ort * DynamicLayout.note_h * DynamicLayout.h_scale * right_travel,
+        bl=ml + ort * left_h,
+        br=mr + ort * right_h,
+        tl=ml - ort * left_h,
+        tr=mr - ort * right_h,
     )
 
 
@@ -820,9 +928,11 @@ class Hitbox(Record):
 
 def compute_hitbox(lane: float, size: float, leniency: float, y_offset: float = 0.0) -> Hitbox:
     travel = approach(1 - y_offset)
-    l_x = (lane - size) * travel * DynamicLayout.w_scale + DynamicLayout.x_translate
-    r_x = (lane + size) * travel * DynamicLayout.w_scale + DynamicLayout.x_translate
+    width_factor = tilt_width_factor(travel)
+    l_x = (lane - size) * width_factor * DynamicLayout.w_scale + DynamicLayout.x_translate
+    r_x = (lane + size) * width_factor * DynamicLayout.w_scale + DynamicLayout.x_translate
     note_y = travel * DynamicLayout.h_scale + DynamicLayout.t
+    # We intentionally don't adjust for tilt to give the same screen-space leniency at low tilt
     lane_w = DynamicLayout.w_scale
     vertical_half_lanes = 2.0 if LevelConfig.dynamic_stages else 4.0
     if (

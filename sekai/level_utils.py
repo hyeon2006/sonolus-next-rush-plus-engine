@@ -137,6 +137,7 @@ class LevelCameraChange:
     zoom_target_y: float = 0.0
     zoom_vertical_align: ZoomVerticalAlign = ZoomVerticalAlign.DEFAULT
     rotate: float = 0.0
+    stage_tilt: float = 1.0
     ease: EaseType = EaseType.LINEAR
 
 
@@ -449,6 +450,7 @@ def _build_camera_changes(
             zoom_target_y=c.zoom_target_y,
             zoom_vertical_align=c.zoom_vertical_align,
             rotate=c.rotate,
+            stage_tilt=c.stage_tilt,
             ease=c.ease,
         )
         for c in sorted(level_cameras, key=lambda c: c.beat)

@@ -3,6 +3,7 @@ from __future__ import annotations
 from math import pi
 
 from sonolus.script.archetype import EntityRef, PreviewArchetype, StandardImport, callback, entity_data, imported
+from sonolus.script.interval import clamp
 from sonolus.script.timing import beat_to_bpm, beat_to_time
 
 from sekai.lib import archetype_names
@@ -34,6 +35,7 @@ class PreviewCameraChange(PreviewArchetype, BaseEvent):
     zoom_target_y: float = imported(name="zoomTargetY")
     zoom_vertical_align: ZoomVerticalAlign = imported(name="zoomVerticalAlign")
     rotate: float = imported()
+    stage_tilt: float = imported(name="stageTilt", default=1)
     ease: EaseType = imported()
     next_ref: EntityRef[PreviewCameraChange] = imported(name="next")
 
@@ -45,6 +47,7 @@ class PreviewCameraChange(PreviewArchetype, BaseEvent):
         self.time = beat_to_time(self.beat)
         self.zoom = max(self.zoom, 0.01)
         self.rotate = self.rotate * pi / 180
+        self.stage_tilt = clamp(self.stage_tilt, 0, 1)
         if Options.mirror:
             self.lane *= -1
             self.zoom_target_lane *= -1

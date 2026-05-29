@@ -25,6 +25,7 @@ A camera change event. The presence of at least one **CameraChange** entity enab
   * DEFAULT = 0
   * CENTER = 1
 * **rotate (float)**: Camera rotation in degrees about the screen center. Positive values rotate the camera to the left (or equivalently, rotates the world to the right).
+* **stageTilt (float)**: Tilt of the stage perspective, in the range `[0, 1]` where 1 is the default and 0 means a flat vertical stage.
 * **ease (EaseType)**
 * **next (ref?[CameraChange])**: A reference to the next **CameraChange** event.
 

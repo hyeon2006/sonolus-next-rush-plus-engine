@@ -47,9 +47,9 @@ from sekai.lib.layer import (
     get_z_alt,
 )
 from sekai.lib.layout import (
+    DynamicLayout,
     FlickDirection,
     Hitbox,
-    Layout,
     approach,
     get_alpha,
     iter_slot_lanes,
@@ -331,7 +331,7 @@ def draw_note(
     direction: FlickDirection,
     target_time: float,
 ):
-    if not Layout.progress_start <= visual_progress <= Layout.progress_cutoff:
+    if not DynamicLayout.progress_start <= visual_progress <= DynamicLayout.progress_cutoff:
         return
     travel = approach(visual_progress)
     sprite_set = get_note_sprite_set(kind, direction)

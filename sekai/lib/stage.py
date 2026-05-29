@@ -19,6 +19,7 @@ from sekai.lib.layer import LAYER_COVER, LAYER_STAGE, get_z, get_z_alt
 from sekai.lib.layout import (
     DynamicLayout,
     approach,
+    current_stage_tilt,
     layout_full_width_stage_cover,
     layout_hidden_cover,
     layout_lane,
@@ -27,6 +28,9 @@ from sekai.lib.layout import (
     layout_stage_cover,
     layout_stage_cover_and_line,
     perspective_rect,
+    tilt_depth,
+    tilt_widened_edge,
+    tilt_width_factor,
     transformed_vec_at,
 )
 from sekai.lib.level_config import LevelConfig
@@ -470,6 +474,7 @@ def draw_dynamic_stage(
         return
 
     travel = approach(1 - y_offset)
+    nh = DynamicLayout.note_h
     l = lane - width
     r = lane + width
     z_bg0 = get_z_alt(LAYER_STAGE, order * 15)
@@ -497,13 +502,15 @@ def draw_dynamic_stage(
                 layout_b = layout_lane_by_edges(
                     l - 0.08 * scale, l
                 )  # Artificially thicken the top so it renders better
-                layout_t = layout_lane_by_edges(l - 0.64 * scale, l)
+                layout_t = layout_lane_by_edges(tilt_widened_edge(l - 0.08 * scale, l - 0.64 * scale), l)
                 ActiveSkin.stage_border.draw(
                     Quad(bl=layout_b.bl, tl=layout_t.tl, tr=layout_t.tr, br=layout_b.br), z=z, a=a
                 )
             case StageBorderStyle.LIGHT:
                 layout_b = layout_lane_by_edges(l - 0.0125, l + 0.0125)
-                layout_t = layout_lane_by_edges(l - 0.1, l + 0.1)
+                layout_t = layout_lane_by_edges(
+                    tilt_widened_edge(l - 0.0125, l - 0.1), tilt_widened_edge(l + 0.0125, l + 0.1)
+                )
                 ActiveSkin.lane_divider.draw(
                     Quad(bl=layout_b.bl, tl=layout_t.tl, tr=layout_t.tr, br=layout_b.br), z=z, a=a
                 )
@@ -517,13 +524,15 @@ def draw_dynamic_stage(
             case StageBorderStyle.DEFAULT | StageBorderStyle.MEDIUM:
                 scale = 0.5 if style == StageBorderStyle.MEDIUM else 1.0
                 layout_b = layout_lane_by_edges(r + 0.08 * scale, r)  # Flip horizontally
-                layout_t = layout_lane_by_edges(r + 0.64 * scale, r)
+                layout_t = layout_lane_by_edges(tilt_widened_edge(r + 0.08 * scale, r + 0.64 * scale), r)
                 ActiveSkin.stage_border.draw(
                     Quad(bl=layout_b.bl, tl=layout_t.tl, tr=layout_t.tr, br=layout_b.br), z=z, a=a
                 )
             case StageBorderStyle.LIGHT:
                 layout_b = layout_lane_by_edges(r - 0.0125, r + 0.0125)
-                layout_t = layout_lane_by_edges(r - 0.1, r + 0.1)
+                layout_t = layout_lane_by_edges(
+                    tilt_widened_edge(r - 0.0125, r - 0.1), tilt_widened_edge(r + 0.0125, r + 0.1)
+                )
                 ActiveSkin.lane_divider.draw(
                     Quad(bl=layout_b.bl, tl=layout_t.tl, tr=layout_t.tr, br=layout_b.br), z=z, a=a
                 )
@@ -546,18 +555,20 @@ def draw_dynamic_stage(
         for k in range(k_start, k_end + 1):
             pos = shifted_pivot + k * division_size
             div_layout_b = layout_lane_by_edges(pos - 0.0125, pos + 0.0125)
-            div_layout_t = layout_lane_by_edges(pos - 0.1, pos + 0.1)
+            div_layout_t = layout_lane_by_edges(
+                tilt_widened_edge(pos - 0.0125, pos - 0.1), tilt_widened_edge(pos + 0.0125, pos + 0.1)
+            )
             ActiveSkin.lane_divider.draw(
                 Quad(bl=div_layout_b.bl, tl=div_layout_t.tl, tr=div_layout_t.tr, br=div_layout_b.br), z=z, a=a
             )
 
-    thickness_scale = clamp(1 / travel, 1, 4) if travel > 0 else 4
-    judgment_divider_size = 0.014 * thickness_scale * travel * DynamicLayout.w_scale
+    thickness_scale = lerp(1.0, clamp(1 / travel, 1, 4) if travel > 0 else 4, current_stage_tilt())
+    judgment_divider_size = 0.014 * thickness_scale * tilt_width_factor(travel) * DynamicLayout.w_scale
     judgment_divider_offset = Vec2(judgment_divider_size, 0).rotate(-DynamicLayout.rotate)
 
     def layout_judgment_divider(lane: float):
-        b = transformed_vec_at(lane, (1 + DynamicLayout.note_h - DynamicLayout.note_h / f + 0.001) * travel)
-        t = transformed_vec_at(lane, (1 - DynamicLayout.note_h + DynamicLayout.note_h / f - 0.001) * travel)
+        b = transformed_vec_at(lane, tilt_depth(1 + nh - nh / f + 0.001, travel))
+        t = transformed_vec_at(lane, tilt_depth(1 - nh + nh / f - 0.001, travel))
         return Quad(
             bl=b - judgment_divider_offset,
             tl=t - judgment_divider_offset,
@@ -589,8 +600,8 @@ def draw_dynamic_stage(
                 layout = perspective_rect(
                     l,
                     min(l + 1 / f / 2, lane),
-                    1 - DynamicLayout.note_h + DynamicLayout.note_h / f,
-                    1 + DynamicLayout.note_h - DynamicLayout.note_h / f,
+                    1 - nh + nh / f,
+                    1 + nh - nh / f,
                     travel,
                 )
                 sprites.judgment_edge_left.draw(layout, z=z, a=a)
@@ -610,8 +621,8 @@ def draw_dynamic_stage(
                 layout = perspective_rect(
                     r,
                     max(r - 1 / f / 2, lane),
-                    1 - DynamicLayout.note_h + DynamicLayout.note_h / f,
-                    1 + DynamicLayout.note_h - DynamicLayout.note_h / f,
+                    1 - nh + nh / f,
+                    1 + nh - nh / f,
                     travel,
                 )
                 sprites.judgment_edge_left.draw(layout, z=z, a=a)
@@ -624,21 +635,13 @@ def draw_dynamic_stage(
                 assert_never(style)
 
     def draw_gradient(sprites: JudgmentSpriteSet, z: float, a: float):
-        layout = perspective_rect(
-            l, lane, 1 + DynamicLayout.note_h, 1 + DynamicLayout.note_h - DynamicLayout.note_h / f, travel
-        )
+        layout = perspective_rect(l, lane, 1 + nh, 1 + nh - nh / f, travel)
         sprites.judgment_gradient.draw(layout, z=z, a=a)
-        layout = perspective_rect(
-            r, lane, 1 + DynamicLayout.note_h, 1 + DynamicLayout.note_h - DynamicLayout.note_h / f, travel
-        )
+        layout = perspective_rect(r, lane, 1 + nh, 1 + nh - nh / f, travel)
         sprites.judgment_gradient.draw(layout, z=z, a=a)
-        layout = perspective_rect(
-            l, lane, 1 - DynamicLayout.note_h, 1 - DynamicLayout.note_h + DynamicLayout.note_h / f, travel
-        )
+        layout = perspective_rect(l, lane, 1 - nh, 1 - nh + nh / f, travel)
         sprites.judgment_gradient.draw(layout, z=z, a=a)
-        layout = perspective_rect(
-            r, lane, 1 - DynamicLayout.note_h, 1 - DynamicLayout.note_h + DynamicLayout.note_h / f, travel
-        )
+        layout = perspective_rect(r, lane, 1 - nh, 1 - nh + nh / f, travel)
         sprites.judgment_gradient.draw(layout, z=z, a=a)
 
     if lane_alpha > 0:
@@ -669,7 +672,7 @@ def draw_dynamic_stage(
                 draw_dividers(division.end.size, division.end.parity, pivot_lane, z_lane1, la * p_div)
 
     ja = a * judge_line_alpha
-    bg_layout = perspective_rect(l, r, 1 - DynamicLayout.note_h, 1 + DynamicLayout.note_h, travel)
+    bg_layout = perspective_rect(l, r, 1 - nh, 1 + nh, travel)
     if sprites_same:
         sprites_a.judgment_background.draw(bg_layout, z=z_bg1_a, a=ja)
     else:
@@ -760,6 +763,7 @@ def draw_fallback_stage(
     y_offset: float = 0,
 ):
     travel = approach(1 - y_offset)
+    nh = DynamicLayout.note_h
     l = lane - width
     r = lane + width
     z_lo = get_z_alt(LAYER_STAGE, z * 3)
@@ -768,13 +772,14 @@ def draw_fallback_stage(
     la = a * lane_alpha
     ja = a * judge_line_alpha
     if la > 0:
-        layout_b = layout_lane_by_edges(l - 0.25, l)  # Artificially thicken the top so it renders better
-        layout_t = layout_lane_by_edges(l - 1, l)
+        # Artificially thicken the top so it renders better
+        layout_b = layout_lane_by_edges(l - 0.25, l)
+        layout_t = layout_lane_by_edges(tilt_widened_edge(l - 0.25, l - 1), l)
         ActiveSkin.stage_left_border.draw(
             Quad(bl=layout_b.bl, tl=layout_t.tl, tr=layout_t.tr, br=layout_b.br), z=z_mid, a=la
         )
         layout_b = layout_lane_by_edges(r, r + 0.25)
-        layout_t = layout_lane_by_edges(r, r + 1)
+        layout_t = layout_lane_by_edges(r, tilt_widened_edge(r + 0.25, r + 1))
         ActiveSkin.stage_right_border.draw(
             Quad(bl=layout_b.bl, tl=layout_t.tl, tr=layout_t.tr, br=layout_b.br), z=z_mid, a=la
         )
@@ -792,7 +797,7 @@ def draw_fallback_stage(
                 prev = pos
         ActiveSkin.lane.draw(layout_lane_by_edges(prev, r), a=la, z=z_lo)
 
-    layout = perspective_rect(l, r, t=1 - DynamicLayout.note_h, b=1 + DynamicLayout.note_h, travel=travel)
+    layout = perspective_rect(l, r, t=1 - nh, b=1 + nh, travel=travel)
     ActiveSkin.judgment_line.draw(layout, z=z_hi, a=ja)
 
     draw_per_stage_cover(l, r, a, lane_alpha, z)
