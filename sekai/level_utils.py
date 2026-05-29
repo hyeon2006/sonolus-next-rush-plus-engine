@@ -12,7 +12,7 @@ from sonolus.script.timing import TimescaleEase
 
 from sekai.lib.connector import ConnectorKind, ConnectorLayer
 from sekai.lib.ease import EaseType
-from sekai.lib.layout import FlickDirection
+from sekai.lib.layout import FlickDirection, ZoomVerticalAlign
 from sekai.lib.level_config import EngineRevision
 from sekai.lib.note import NoteKind
 from sekai.lib.stage import DivisionParity, JudgeLineColor, StageBorderStyle
@@ -135,6 +135,7 @@ class LevelCameraChange:
     zoom: float = 1.0
     zoom_target_lane: float = 0.0
     zoom_target_y: float = 0.0
+    zoom_vertical_align: ZoomVerticalAlign = ZoomVerticalAlign.DEFAULT
     rotate: float = 0.0
     ease: EaseType = EaseType.LINEAR
 
@@ -446,6 +447,7 @@ def _build_camera_changes(
             zoom=c.zoom,
             zoom_target_lane=c.zoom_target_lane,
             zoom_target_y=c.zoom_target_y,
+            zoom_vertical_align=c.zoom_vertical_align,
             rotate=c.rotate,
             ease=c.ease,
         )

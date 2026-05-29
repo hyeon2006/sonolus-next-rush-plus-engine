@@ -31,6 +31,10 @@ NOTE_SLIM_EDGE_W = 0.125
 
 TARGET_ASPECT_RATIO = 16 / 9
 
+FIELD_T_FACTOR = 0.5 + 1.15875 * (47 / 1176)
+FIELD_B_FACTOR = 0.5 - 1.15875 * (803 / 1176)
+FIELD_W_FACTOR = (1.15875 * (1420 / 1176)) / TARGET_ASPECT_RATIO / 12
+
 # Value between 0 and 1 where smaller values mean a 'harsher' approach with more acceleration.
 APPROACH_SCALE = 1.06**-45
 
@@ -46,6 +50,11 @@ class FlickDirection(IntEnum):
     DOWN_OMNI = 3
     DOWN_LEFT = 4
     DOWN_RIGHT = 5
+
+
+class ZoomVerticalAlign(IntEnum):
+    DEFAULT = 0
+    CENTER = 1
 
 
 @level_data
@@ -74,8 +83,9 @@ class CameraInfo(Record):
     lane: float
     size: float
     zoom: float
-    zoom_target_lane: float
-    zoom_target_y: float
+    zoom_target_lane: float  # lane-space, for the preview timeline marker only
+    zoom_target: Vec2  # screen-space zoom target
+    zoom_anchor: Vec2  # screen-space anchor (encodes the vertical align)
     rotate: float
 
 
@@ -125,6 +135,7 @@ class CameraChangeLike(Protocol):
     zoom: float
     zoom_target_lane: float
     zoom_target_y: float
+    zoom_vertical_align: ZoomVerticalAlign
     rotate: float
     ease: EaseType
     next_ref: EntityRef
@@ -156,7 +167,15 @@ def get_camera_info(target_time: float | None = None, left_limit: bool = False) 
     result = +CameraInfo
     first_camera_ref = _initialization_archetype().at(0).first_camera_ref
     if first_camera_ref.index <= 0:
-        result @= CameraInfo(lane=0.0, size=6.0, zoom=1.0, zoom_target_lane=0.0, zoom_target_y=0.0, rotate=0.0)
+        result @= CameraInfo(
+            lane=0.0,
+            size=6.0,
+            zoom=1.0,
+            zoom_target_lane=0.0,
+            zoom_target=Vec2(0.0, 0.0),
+            zoom_anchor=Vec2(0.0, 0.0),
+            rotate=0.0,
+        )
         return result
     t = time() if target_time is None else target_time
     camera_a_ref, camera_b_ref = query_event_list(first_camera_ref, t, lambda e: e.time)
@@ -178,12 +197,21 @@ def get_camera_info(target_time: float | None = None, left_limit: bool = False) 
             camera_b = get_event_as(camera_b_ref, camera_archetype)
             if camera_b.time > camera_a.time:
                 p = ease(camera_a.ease, unlerp(camera_a.time, camera_b.time, t))
+                ta = camera_zoom_target_at(
+                    camera_a.lane, camera_a.size, camera_a.zoom_target_lane, camera_a.zoom_target_y
+                )
+                tb = camera_zoom_target_at(
+                    camera_b.lane, camera_b.size, camera_b.zoom_target_lane, camera_b.zoom_target_y
+                )
+                aa = camera_zoom_anchor(camera_a.zoom_vertical_align)
+                ab = camera_zoom_anchor(camera_b.zoom_vertical_align)
                 result @= CameraInfo(
                     lane=lerp(camera_a.lane, camera_b.lane, p),
                     size=lerp(camera_a.size, camera_b.size, p),
                     zoom=lerp(camera_a.zoom, camera_b.zoom, p),
                     zoom_target_lane=lerp(camera_a.zoom_target_lane, camera_b.zoom_target_lane, p),
-                    zoom_target_y=lerp(camera_a.zoom_target_y, camera_b.zoom_target_y, p),
+                    zoom_target=Vec2(lerp(ta.x, tb.x, p), lerp(ta.y, tb.y, p)),
+                    zoom_anchor=Vec2(lerp(aa.x, ab.x, p), lerp(aa.y, ab.y, p)),
                     rotate=lerp(camera_a.rotate, camera_b.rotate, p),
                 )
                 return result
@@ -192,7 +220,10 @@ def get_camera_info(target_time: float | None = None, left_limit: bool = False) 
             size=camera_a.size,
             zoom=camera_a.zoom,
             zoom_target_lane=camera_a.zoom_target_lane,
-            zoom_target_y=camera_a.zoom_target_y,
+            zoom_target=camera_zoom_target_at(
+                camera_a.lane, camera_a.size, camera_a.zoom_target_lane, camera_a.zoom_target_y
+            ),
+            zoom_anchor=camera_zoom_anchor(camera_a.zoom_vertical_align),
             rotate=camera_a.rotate,
         )
         return result
@@ -203,11 +234,22 @@ def get_camera_info(target_time: float | None = None, left_limit: bool = False) 
             size=camera_b.size,
             zoom=camera_b.zoom,
             zoom_target_lane=camera_b.zoom_target_lane,
-            zoom_target_y=camera_b.zoom_target_y,
+            zoom_target=camera_zoom_target_at(
+                camera_b.lane, camera_b.size, camera_b.zoom_target_lane, camera_b.zoom_target_y
+            ),
+            zoom_anchor=camera_zoom_anchor(camera_b.zoom_vertical_align),
             rotate=camera_b.rotate,
         )
         return result
-    result @= CameraInfo(lane=0.0, size=6.0, zoom=1.0, zoom_target_lane=0.0, zoom_target_y=0.0, rotate=0.0)
+    result @= CameraInfo(
+        lane=0.0,
+        size=6.0,
+        zoom=1.0,
+        zoom_target_lane=0.0,
+        zoom_target=Vec2(0.0, 0.0),
+        zoom_anchor=Vec2(0.0, 0.0),
+        rotate=0.0,
+    )
     return result
 
 
@@ -226,13 +268,21 @@ def refresh_layout():
     if is_play() or is_watch():
         camera @= get_camera_info()
     else:
-        camera @= CameraInfo(lane=0.0, size=6.0, zoom=1.0, zoom_target_lane=0.0, zoom_target_y=0.0, rotate=0.0)
+        camera @= CameraInfo(
+            lane=0.0,
+            size=6.0,
+            zoom=1.0,
+            zoom_target_lane=0.0,
+            zoom_target=Vec2(0.0, 0.0),
+            zoom_anchor=Vec2(0.0, 0.0),
+            rotate=0.0,
+        )
 
     size_zoom = 6.0 / camera.size
 
-    t = Layout.field_h * (0.5 + 1.15875 * (47 / 1176))
-    b = Layout.field_h * (0.5 - 1.15875 * (803 / 1176))
-    w = Layout.field_w * ((1.15875 * (1420 / 1176)) / TARGET_ASPECT_RATIO / 12) * size_zoom
+    t = Layout.field_h * FIELD_T_FACTOR
+    b = Layout.field_h * FIELD_B_FACTOR
+    w = Layout.field_w * FIELD_W_FACTOR * size_zoom
 
     DynamicLayout.t = t
     DynamicLayout.w_scale = w
@@ -242,14 +292,32 @@ def refresh_layout():
     DynamicLayout.note_h = NOTE_H * (0.6 * size_zoom + 0.4)
 
     if is_play() or is_watch():
-        apply_camera_zoom(camera.zoom, camera.zoom_target_lane, camera.zoom_target_y, camera.rotate, camera.lane)
+        apply_camera_zoom(camera.zoom, camera.zoom_target, camera.zoom_anchor, camera.rotate)
 
     DynamicLayout.scaled_note_h = DynamicLayout.note_h * DynamicLayout.h_scale
 
 
-def apply_camera_zoom(zoom: float, target_lane: float, target_y: float, rotate: float = 0.0, camera_lane: float = 0.0):
-    anchor = transformed_vec_at(camera_lane, 1.0)
-    target = transformed_vec_at(camera_lane + target_lane, approach(1 - target_y))
+def camera_zoom_target_at(lane: float, size: float, target_lane: float, target_y: float) -> Vec2:
+    # Screen-space position of the zoom target under the base (pre-zoom) camera transform.
+    # Mirrors transform_vec for the base transform, where rotate == 0.
+    size_zoom = 6.0 / size
+    w = Layout.field_w * FIELD_W_FACTOR * size_zoom
+    t_top = Layout.field_h * FIELD_T_FACTOR
+    b = Layout.field_h * FIELD_B_FACTOR
+    travel = approach(1 - target_y)
+    target_total_lane = lane + target_lane
+    return Vec2(target_total_lane * travel * w - lane * w, travel * (b - t_top) + t_top)
+
+
+def camera_zoom_anchor(align: ZoomVerticalAlign) -> Vec2:
+    if align == ZoomVerticalAlign.CENTER:
+        anchor_y = 0.0
+    else:
+        anchor_y = Layout.field_h * FIELD_B_FACTOR
+    return Vec2(0.0, anchor_y)
+
+
+def apply_camera_zoom(zoom: float, target: Vec2, anchor: Vec2, rotate: float = 0.0):
     DynamicLayout.x_translate = zoom * (DynamicLayout.x_translate - target.x) + anchor.x
     DynamicLayout.w_scale = zoom * DynamicLayout.w_scale
     DynamicLayout.t = zoom * (DynamicLayout.t - target.y) + anchor.y

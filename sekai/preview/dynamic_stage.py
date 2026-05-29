@@ -8,7 +8,7 @@ from sonolus.script.timing import beat_to_bpm, beat_to_time
 from sekai.lib import archetype_names
 from sekai.lib.baseevent import BaseEvent, init_event_list
 from sekai.lib.ease import EaseType
-from sekai.lib.layout import preempt_time
+from sekai.lib.layout import ZoomVerticalAlign, preempt_time
 from sekai.lib.level_config import LevelConfig
 from sekai.lib.options import Options
 from sekai.lib.stage import (
@@ -32,6 +32,7 @@ class PreviewCameraChange(PreviewArchetype, BaseEvent):
     zoom: float = imported(default=1)
     zoom_target_lane: float = imported(name="zoomTargetLane")
     zoom_target_y: float = imported(name="zoomTargetY")
+    zoom_vertical_align: ZoomVerticalAlign = imported(name="zoomVerticalAlign")
     rotate: float = imported()
     ease: EaseType = imported()
     next_ref: EntityRef[PreviewCameraChange] = imported(name="next")

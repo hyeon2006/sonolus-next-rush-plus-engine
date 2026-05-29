@@ -11,6 +11,7 @@ from sekai.level_utils import (
 )
 from sekai.lib.connector import ConnectorKind
 from sekai.lib.ease import EaseType
+from sekai.lib.layout import ZoomVerticalAlign
 from sekai.lib.note import NoteKind
 from sekai.lib.stage import DivisionParity, JudgeLineColor, StageBorderStyle
 
@@ -165,6 +166,38 @@ camera_changes = [
         zoom=1.0,
         zoom_target_lane=6.0,
         zoom_target_y=0.0,
+        rotate=0.0,
+        ease=EaseType.IN_OUT_QUAD,
+    ),
+    LevelCameraChange(
+        beat=28.0,
+        lane=0.0,
+        size=6.0,
+        zoom=1.0,
+        zoom_target_lane=0.0,
+        zoom_target_y=0.0,
+        rotate=0.0,
+        ease=EaseType.IN_OUT_QUAD,
+    ),
+    LevelCameraChange(
+        beat=32.0,
+        lane=0.0,
+        size=6.0,
+        zoom=1.0,
+        zoom_target_lane=0.0,
+        zoom_target_y=0.0,
+        zoom_vertical_align=ZoomVerticalAlign.CENTER,
+        rotate=0.0,
+        ease=EaseType.IN_OUT_QUAD,
+    ),
+    LevelCameraChange(
+        beat=36.0,
+        lane=0.0,
+        size=6.0,
+        zoom=1.0,
+        zoom_target_lane=0.0,
+        zoom_target_y=0.0,
+        zoom_vertical_align=ZoomVerticalAlign.DEFAULT,
         rotate=0.0,
         ease=EaseType.IN_OUT_QUAD,
     ),

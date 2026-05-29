@@ -20,7 +20,10 @@ A camera change event. The presence of at least one **CameraChange** entity enab
 * **size (float)**: Visible width of the field, in lanes (half-width). A `size` of 6 covers the full default stage; smaller values zoom in (e.g. `size=3` is 2x zoom). Defaults to 6.
 * **zoom (float)**: Uniform zoom on top of the perspective field. `1` is no zoom, `2` is 2x zoomed in, values below `1` zoom out.
 * **zoomTargetLane (float)**: The lane that the zoom focuses on, **relative to `lane`**. `0` means the zoom expands around the camera's current center (the lane currently sitting at the judge line); positive values shift the focus right (in the lane direction), negative values shift it left. Defaults to 0.
-* **zoomTargetY (float)**: The vertical point mapped onto the same anchor, expressed like a pivot `yOffset` (`0` at the judge line, positive moves up the stage along the approach curve). Defaults to 0.
+* **zoomTargetY (float)**: The vertical point mapped onto the anchor, expressed like a pivot `yOffset` (`0` at the judge line, positive moves up the stage along the approach curve). Defaults to 0.
+* **zoomVerticalAlign (ZoomVerticalAlign)**: Where the zoom target is placed vertically on screen. Takes on one of the following values:
+  * DEFAULT = 0
+  * CENTER = 1
 * **rotate (float)**: Camera rotation in degrees about the screen center. Positive values rotate the camera to the left (or equivalently, rotates the world to the right).
 * **ease (EaseType)**
 * **next (ref?[CameraChange])**: A reference to the next **CameraChange** event.
