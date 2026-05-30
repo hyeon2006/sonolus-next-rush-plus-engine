@@ -11,6 +11,7 @@ from sekai.level_utils import (
 )
 from sekai.lib.connector import ConnectorKind
 from sekai.lib.ease import EaseType
+from sekai.lib.layout import ZoomVerticalAlign
 from sekai.lib.note import NoteKind
 from sekai.lib.stage import DivisionParity, JudgeLineColor, StageBorderStyle
 
@@ -120,9 +121,13 @@ stage_b = LevelStage(
 camera_changes = [
     LevelCameraChange(beat=0.0, stage_tilt=1.0, ease=EaseType.IN_OUT_QUAD),  # classic perspective
     LevelCameraChange(beat=4.0, stage_tilt=1.0, ease=EaseType.IN_OUT_QUAD),
-    LevelCameraChange(beat=10.0, stage_tilt=0.0, ease=EaseType.IN_OUT_QUAD),  # flat: vertical lanes, square notes
-    LevelCameraChange(beat=14.0, stage_tilt=0.0, ease=EaseType.IN_OUT_QUAD),  # hold flat for inspection
-    LevelCameraChange(beat=20.0, stage_tilt=1.0, ease=EaseType.IN_OUT_QUAD),  # back to classic
+    LevelCameraChange(
+        beat=10.0, stage_tilt=0.4, zoom=0.25, zoom_vertical_align=ZoomVerticalAlign.CENTER, ease=EaseType.IN_OUT_QUAD
+    ),  # flat: vertical lanes, square notes
+    LevelCameraChange(
+        beat=14.0, stage_tilt=0.4, zoom=0.25, zoom_vertical_align=ZoomVerticalAlign.CENTER, ease=EaseType.IN_OUT_QUAD
+    ),  # hold flat for inspection
+    LevelCameraChange(beat=20.0, stage_tilt=0.99, ease=EaseType.IN_OUT_QUAD),  # back to classic
 ]
 
 regular_beats = [
@@ -275,7 +280,7 @@ right_flicks = [
         beat=float(b),
         lane=0.0,  # at the right stage's pivot
         size=1.0,
-        kind=NoteKind.NORM_FLICK,
+        kind=NoteKind.CRIT_FLICK,
         stage=right_flick_stage,
     )
     for b in range(1, int(SLIDE_END_BEAT) + 1)
