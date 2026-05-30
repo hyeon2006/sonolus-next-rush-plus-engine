@@ -334,7 +334,7 @@ def refresh_layout():
     if Options.stage_cover:
         DynamicLayout.progress_start = inverse_approach_tilt(Layout.cover_depth)
     else:
-        DynamicLayout.progress_start = inverse_approach_tilt(Layout.cover_depth - vanish_ext + 1e-3)
+        DynamicLayout.progress_start = inverse_approach_tilt(Layout.cover_depth - vanish_ext)
     DynamicLayout.progress_cutoff = inverse_approach_tilt(Layout.cutoff_depth)
 
 
