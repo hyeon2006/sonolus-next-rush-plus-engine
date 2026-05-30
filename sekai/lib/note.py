@@ -297,9 +297,9 @@ def get_visual_spawn_time(
         target_scaled_time = target_scaled_time.total
     force_speed = group_force_note_speed(timescale_group)
     return min(
-        group_scaled_time_to_first_time(timescale_group, target_scaled_time - preempt_time(force_speed) * 2),
-        group_scaled_time_to_first_time_2(timescale_group, target_scaled_time + preempt_time(force_speed) * 2),
-        -2 if -2 <= progress_to(target_scaled_time, -2, force_speed) <= 4 else 1e8,
+        group_scaled_time_to_first_time(timescale_group, target_scaled_time - preempt_time(force_speed) * 3),
+        group_scaled_time_to_first_time_2(timescale_group, target_scaled_time + preempt_time(force_speed) * 3),
+        -2 if -3 <= progress_to(target_scaled_time, -2, force_speed) <= 6 else 1e8,
     )
 
 

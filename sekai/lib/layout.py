@@ -40,7 +40,7 @@ APPROACH_SCALE = 1.06**-45
 
 # Value above 1 where we cut off drawing sprites. Doesn't really matter as long as it's high enough,
 # such that something like a flick arrow below the judge line isn't obviously suddenly cut off.
-DEFAULT_APPROACH_CUTOFF = 2.5
+DEFAULT_APPROACH_CUTOFF = 5
 
 # Stage width at 0 tilt
 STAGE_WIDTH_MID = (APPROACH_SCALE + 1) / 2
@@ -48,7 +48,7 @@ STAGE_WIDTH_MID = (APPROACH_SCALE + 1) / 2
 # As tilt decreases, the perspective vanishing point (where the width factor reaches 0) recedes
 # upward and the stage top is extended toward it. This floors the effective tilt used for that
 # extent so it stays finite (instead of diverging) as tilt approaches 0.
-STAGE_TILT_VANISH_MIN = 0.4
+STAGE_TILT_VANISH_MIN = 0.3
 
 # Tilt at/below which (with no stage cover) notes spawn from the very top of the stage bounding box
 # (LANE_T = top of screen on landscape) instead of the usual spawn depth, so the extended flatter
@@ -336,7 +336,10 @@ def refresh_layout():
 
     DynamicLayout.scaled_note_h = DynamicLayout.note_h * DynamicLayout.h_scale
 
-    DynamicLayout.progress_start = inverse_approach_tilt(spawn_depth_at(tilt))
+    if Options.stage_cover:
+        DynamicLayout.progress_start = inverse_approach_tilt(spawn_depth_at(tilt))
+    else:
+        DynamicLayout.progress_start = inverse_approach_tilt(-vanish_ext + 1e-3)
     DynamicLayout.progress_cutoff = inverse_approach_tilt(Layout.cutoff_depth)
 
 
@@ -433,7 +436,7 @@ def inverse_approach_tilt(approach_value: float) -> float:
     tilt = current_stage_tilt()
     if tilt >= 1.0:
         return inverse_approach_untilted(approach_value)
-    lo = -1.0
+    lo = -4.0
     hi = 4.0
     for _ in range(20):
         mid = (lo + hi) / 2
