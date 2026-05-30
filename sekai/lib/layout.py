@@ -7,7 +7,7 @@ from typing import Protocol, assert_never, cast
 from sonolus.script.archetype import EntityRef, get_archetype_by_name
 from sonolus.script.debug import static_error
 from sonolus.script.globals import level_data, level_memory
-from sonolus.script.interval import clamp, lerp, remap, remap_clamped, unlerp
+from sonolus.script.interval import clamp, lerp, remap, unlerp
 from sonolus.script.num import Num
 from sonolus.script.quad import Quad, QuadLike, Rect
 from sonolus.script.record import Record
@@ -53,7 +53,7 @@ STAGE_TILT_VANISH_MIN = 0.3
 # Tilt at/below which (with no stage cover) notes spawn from the very top of the stage bounding box
 # (LANE_T = top of screen on landscape) instead of the usual spawn depth, so the extended flatter
 # stage has no empty-lane gap above the notes. Between this and tilt 1 the spawn depth interpolates.
-STAGE_TILT_SPAWN_TOP = 0.99
+STAGE_TILT_SPAWN_TOP = 0.9
 
 
 class FlickDirection(IntEnum):
@@ -337,9 +337,9 @@ def refresh_layout():
     DynamicLayout.scaled_note_h = DynamicLayout.note_h * DynamicLayout.h_scale
 
     if Options.stage_cover:
-        DynamicLayout.progress_start = inverse_approach_tilt(spawn_depth_at(tilt))
+        DynamicLayout.progress_start = inverse_approach_tilt(Layout.cover_depth)
     else:
-        DynamicLayout.progress_start = inverse_approach_tilt(-vanish_ext + 1e-3)
+        DynamicLayout.progress_start = inverse_approach_tilt(Layout.cover_depth - vanish_ext + 1e-3)
     DynamicLayout.progress_cutoff = inverse_approach_tilt(Layout.cutoff_depth)
 
 
@@ -385,13 +385,6 @@ def current_stage_tilt() -> float:
     return 1.0
 
 
-def spawn_depth_at(tilt: float) -> float:
-    if Options.stage_cover:
-        return Layout.cover_depth
-    spawn_blend = remap_clamped(STAGE_TILT_SPAWN_TOP, 1.0, 0.0, 1.0, tilt)
-    return lerp(LANE_T, Layout.cover_depth, spawn_blend)
-
-
 def approach_curve_base(x: float) -> float:
     if Options.alternative_approach_curve:
         d_0 = 1 / APPROACH_SCALE
@@ -410,7 +403,7 @@ def approach_at_tilt(progress: float, tilt: float) -> float:
     linear = lerp(APPROACH_SCALE, 1.0, x)
     raw = lerp(linear, base, tilt)
     natural_spawn = lerp(lerp(APPROACH_SCALE, 1.0, Layout.approach_start), Layout.cover_depth, tilt)
-    return remap(natural_spawn, 1.0, min(natural_spawn, spawn_depth_at(tilt)), 1.0, raw)
+    return remap(natural_spawn, 1.0, min(natural_spawn, Layout.cover_depth), 1.0, raw)
 
 
 def approach(progress: float) -> float:
