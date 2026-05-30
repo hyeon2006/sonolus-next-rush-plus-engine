@@ -50,11 +50,6 @@ STAGE_WIDTH_MID = (APPROACH_SCALE + 1) / 2
 # extent so it stays finite (instead of diverging) as tilt approaches 0.
 STAGE_TILT_VANISH_MIN = 0.3
 
-# Tilt at/below which (with no stage cover) notes spawn from the very top of the stage bounding box
-# (LANE_T = top of screen on landscape) instead of the usual spawn depth, so the extended flatter
-# stage has no empty-lane gap above the notes. Between this and tilt 1 the spawn depth interpolates.
-STAGE_TILT_SPAWN_TOP = 0.9
-
 
 class FlickDirection(IntEnum):
     UP_OMNI = 0
