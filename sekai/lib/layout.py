@@ -336,12 +336,7 @@ def refresh_layout():
 
     DynamicLayout.scaled_note_h = DynamicLayout.note_h * DynamicLayout.h_scale
 
-    if Options.stage_cover:
-        spawn_depth = Layout.cover_depth
-    else:
-        spawn_blend = remap_clamped(STAGE_TILT_SPAWN_TOP, 1.0, 0.0, 1.0, DynamicLayout.stage_tilt)
-        spawn_depth = lerp(LANE_T, Layout.cover_depth, spawn_blend)
-    DynamicLayout.progress_start = inverse_approach_tilt(spawn_depth)
+    DynamicLayout.progress_start = inverse_approach_tilt(spawn_depth_at(tilt))
     DynamicLayout.progress_cutoff = inverse_approach_tilt(Layout.cutoff_depth)
 
 
@@ -387,6 +382,13 @@ def current_stage_tilt() -> float:
     return 1.0
 
 
+def spawn_depth_at(tilt: float) -> float:
+    if Options.stage_cover:
+        return Layout.cover_depth
+    spawn_blend = remap_clamped(STAGE_TILT_SPAWN_TOP, 1.0, 0.0, 1.0, tilt)
+    return lerp(LANE_T, Layout.cover_depth, spawn_blend)
+
+
 def approach_curve_base(x: float) -> float:
     if Options.alternative_approach_curve:
         d_0 = 1 / APPROACH_SCALE
@@ -403,7 +405,9 @@ def approach_at_tilt(progress: float, tilt: float) -> float:
     if tilt >= 1.0:
         return base
     linear = lerp(APPROACH_SCALE, 1.0, x)
-    return lerp(linear, base, tilt)
+    raw = lerp(linear, base, tilt)
+    natural_spawn = lerp(lerp(APPROACH_SCALE, 1.0, Layout.approach_start), Layout.cover_depth, tilt)
+    return remap(natural_spawn, 1.0, min(natural_spawn, spawn_depth_at(tilt)), 1.0, raw)
 
 
 def approach(progress: float) -> float:
