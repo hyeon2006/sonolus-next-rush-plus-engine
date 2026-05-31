@@ -31,7 +31,7 @@ from sekai.lib.connector import (
     update_linear_connector_particle,
 )
 from sekai.lib.ease import EaseType, ease
-from sekai.lib.layout import compute_hitbox
+from sekai.lib.layout import compute_hitbox, current_layout_transform
 from sekai.lib.note import draw_hitbox_bounds_overlay, draw_slide_note_head, get_attach_params
 from sekai.lib.options import Options
 from sekai.lib.streams import Streams
@@ -151,6 +151,7 @@ class Connector(PlayArchetype):
                     oat,
                 )
                 self.active_connector_info.input_bounds @= compute_hitbox(
+                    current_layout_transform(),
                     input_lane,
                     input_size,
                     CONNECTOR_LENIENCY,

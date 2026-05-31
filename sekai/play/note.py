@@ -27,7 +27,7 @@ from sekai.lib import archetype_names
 from sekai.lib.buckets import WINDOW_SCALE, SekaiWindow
 from sekai.lib.connector import ActiveConnectorInfo, ConnectorKind, ConnectorLayer
 from sekai.lib.ease import EaseType, ease
-from sekai.lib.layout import DynamicLayout, FlickDirection, Hitbox, Layout, compute_hitbox, progress_to
+from sekai.lib.layout import DynamicLayout, FlickDirection, Hitbox, Layout, compute_hitbox_at_time, progress_to
 from sekai.lib.note import (
     NoteEffectKind,
     NoteKind,
@@ -192,6 +192,14 @@ class BaseNote(PlayArchetype):
 
         if self.is_scored:
             schedule_note_auto_sfx(self.effect_kind, self.target_time)
+            self.hitbox @= compute_hitbox_at_time(
+                self.lane,
+                self.size,
+                get_leniency(self.kind),
+                self.target_time,
+                self.target_y_offset,
+                left_limit=True,
+            )
 
         if self.stage_ref.index > 0:
             stage = self.stage_ref.get()
@@ -213,17 +221,6 @@ class BaseNote(PlayArchetype):
             return
 
         update_timescale_group(self.timescale_group)
-
-        hitbox_start = self.input_interval.start
-        if Options.show_hitboxes:
-            hitbox_start = min(hitbox_start, self.target_time - HITBOX_DRAW_MIN_EARLY_WINDOW)
-        if self.is_scored and time() >= hitbox_start:
-            self.hitbox @= compute_hitbox(
-                self.lane,
-                self.size,
-                get_leniency(self.kind),
-                self.target_y_offset,
-            )
 
         if self.should_do_delayed_trigger():
             if self.best_touch_matches_direction:

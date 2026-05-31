@@ -18,7 +18,7 @@ from sonolus.script.timing import beat_to_time
 from sekai.debug import DISABLE_NOTES
 from sekai.lib.connector import ActiveConnectorInfo, ConnectorKind, ConnectorLayer
 from sekai.lib.ease import EaseType, ease
-from sekai.lib.layout import FlickDirection, compute_hitbox, progress_to
+from sekai.lib.layout import FlickDirection, Hitbox, compute_hitbox_at_time, progress_to
 from sekai.lib.note import (
     NoteEffectKind,
     NoteKind,
@@ -84,6 +84,8 @@ class WatchBaseNote(WatchArchetype):
     target_y_offset: float = entity_data()
 
     active_connector_info: ActiveConnectorInfo = shared_memory()
+
+    hitbox: Hitbox = shared_memory()
 
     end_time: float = imported()
     played_hit_effects: bool = imported()
@@ -154,6 +156,16 @@ class WatchBaseNote(WatchArchetype):
                 attach_head._basic_y_offset_at(self.target_time, left_limit=True),
                 attach_tail._basic_y_offset_at(self.target_time, left_limit=True),
                 self.target_time,
+            )
+
+        if self.is_scored:
+            self.hitbox @= compute_hitbox_at_time(
+                self.lane,
+                self.size,
+                get_leniency(self.kind),
+                self.target_time,
+                self.target_y_offset,
+                left_limit=True,
             )
 
         if is_replay():
@@ -233,14 +245,8 @@ class WatchBaseNote(WatchArchetype):
             input_interval = get_note_window(self.kind).bad + self.target_time
             draw_start = min(input_interval.start, self.target_time - HITBOX_DRAW_MIN_EARLY_WINDOW)
             if draw_start <= time() <= input_interval.end:
-                hitbox = compute_hitbox(
-                    self.lane,
-                    self.size,
-                    get_leniency(self.kind),
-                    self.target_y_offset,
-                )
                 draw_hitbox_overlay(
-                    hitbox,
+                    self.hitbox,
                     has_tap_input(self.kind) or has_release_input(self.kind),
                     unlerp_clamped(draw_start, self.target_time, time()),
                 )

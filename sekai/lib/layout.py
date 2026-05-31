@@ -84,6 +84,7 @@ class DynamicLayout:
     x_translate: float
     rotate: float
     stage_tilt: float
+    size_zoom: float
     note_h: float
     scaled_note_h: float
     progress_start: float
@@ -302,18 +303,14 @@ def refresh_layout():
             stage_tilt=1.0,
         )
 
-    size_zoom = 6.0 / camera.size
-
-    t = Layout.field_h * FIELD_T_FACTOR
-    b = Layout.field_h * FIELD_B_FACTOR
-    w = Layout.field_w * FIELD_W_FACTOR * size_zoom
-
-    DynamicLayout.t = t
-    DynamicLayout.w_scale = w
-    DynamicLayout.h_scale = b - t
-    DynamicLayout.x_translate = -camera.lane * w
-    DynamicLayout.rotate = 0.0
-    DynamicLayout.stage_tilt = clamp(camera.stage_tilt, 0.0, 1.0)
+    base = base_layout_transform(camera)
+    DynamicLayout.t = base.t
+    DynamicLayout.w_scale = base.w_scale
+    DynamicLayout.h_scale = base.h_scale
+    DynamicLayout.x_translate = base.x_translate
+    DynamicLayout.rotate = base.rotate
+    DynamicLayout.stage_tilt = base.stage_tilt
+    DynamicLayout.size_zoom = base.size_zoom
     tilt = current_stage_tilt()
 
     DynamicLayout.width_offset = (1 - tilt) * STAGE_WIDTH_MID
@@ -322,12 +319,12 @@ def refresh_layout():
     DynamicLayout.lane_t = LANE_T - vanish_ext
     DynamicLayout.lane_b = LANE_B + vanish_ext
 
-    base_note_h = NOTE_H * (0.6 * size_zoom + 0.4)
+    base_note_h = NOTE_H * (0.6 * base.size_zoom + 0.4)
     flat_note_h = STAGE_WIDTH_MID * DynamicLayout.w_scale / (2 * abs(DynamicLayout.h_scale))
     DynamicLayout.note_h = lerp(flat_note_h, base_note_h, tilt)
 
     if is_play() or is_watch():
-        apply_camera_zoom(camera.zoom, camera.zoom_target, camera.zoom_anchor, camera.rotate)
+        apply_camera_zoom(base, camera.zoom, camera.zoom_target, camera.zoom_anchor, camera.rotate)
 
     DynamicLayout.scaled_note_h = DynamicLayout.note_h * DynamicLayout.h_scale
 
@@ -356,14 +353,15 @@ def camera_zoom_anchor(align: ZoomVerticalAlign) -> Vec2:
     return Vec2(0.0, anchor_y)
 
 
-def apply_camera_zoom(zoom: float, target: Vec2, anchor: Vec2, rotate: float = 0.0):
-    DynamicLayout.x_translate = zoom * (DynamicLayout.x_translate - target.x) + anchor.x
-    DynamicLayout.w_scale = zoom * DynamicLayout.w_scale
-    DynamicLayout.t = zoom * (DynamicLayout.t - target.y) + anchor.y
-    DynamicLayout.h_scale = zoom * DynamicLayout.h_scale
+def apply_camera_zoom(transform: LayoutTransform, zoom: float, target: Vec2, anchor: Vec2, rotate: float = 0.0):
+    zoomed = zoomed_layout_transform(transform, zoom, target, anchor, rotate)
+    DynamicLayout.t = zoomed.t
+    DynamicLayout.w_scale = zoomed.w_scale
+    DynamicLayout.h_scale = zoomed.h_scale
+    DynamicLayout.x_translate = zoomed.x_translate
+    DynamicLayout.rotate = zoomed.rotate
     bg = Layout.initial_background
     rot = -rotate
-    DynamicLayout.rotate = rotate
     set_background(
         Quad(
             bl=Vec2(zoom * (bg.bl.x - target.x) + anchor.x, zoom * (bg.bl.y - target.y) + anchor.y).rotate(rot),
@@ -920,14 +918,78 @@ class Hitbox(Record):
     bounds: Quad
 
 
-def compute_hitbox(lane: float, size: float, leniency: float, y_offset: float = 0.0) -> Hitbox:
-    travel = approach(1 - y_offset)
-    width_factor = tilt_width_factor(travel)
-    l_x = (lane - size) * width_factor * DynamicLayout.w_scale + DynamicLayout.x_translate
-    r_x = (lane + size) * width_factor * DynamicLayout.w_scale + DynamicLayout.x_translate
-    note_y = travel * DynamicLayout.h_scale + DynamicLayout.t
+class LayoutTransform(Record):
+    t: float
+    w_scale: float
+    h_scale: float
+    x_translate: float
+    rotate: float
+    stage_tilt: float
+    size_zoom: float
+
+
+def current_layout_transform() -> LayoutTransform:
+    return LayoutTransform(
+        t=DynamicLayout.t,
+        w_scale=DynamicLayout.w_scale,
+        h_scale=DynamicLayout.h_scale,
+        x_translate=DynamicLayout.x_translate,
+        rotate=DynamicLayout.rotate,
+        stage_tilt=DynamicLayout.stage_tilt,
+        size_zoom=DynamicLayout.size_zoom,
+    )
+
+
+def base_layout_transform(camera: CameraInfo) -> LayoutTransform:
+    size_zoom = 6.0 / camera.size
+    t = Layout.field_h * FIELD_T_FACTOR
+    w = Layout.field_w * FIELD_W_FACTOR * size_zoom
+    return LayoutTransform(
+        t=t,
+        w_scale=w,
+        h_scale=Layout.field_h * FIELD_B_FACTOR - t,
+        x_translate=-camera.lane * w,
+        rotate=0.0,
+        stage_tilt=clamp(camera.stage_tilt, 0.0, 1.0),
+        size_zoom=size_zoom,
+    )
+
+
+def zoomed_layout_transform(
+    transform: LayoutTransform, zoom: float, target: Vec2, anchor: Vec2, rotate: float
+) -> LayoutTransform:
+    return LayoutTransform(
+        t=zoom * (transform.t - target.y) + anchor.y,
+        w_scale=zoom * transform.w_scale,
+        h_scale=zoom * transform.h_scale,
+        x_translate=zoom * (transform.x_translate - target.x) + anchor.x,
+        rotate=rotate,
+        stage_tilt=transform.stage_tilt,
+        size_zoom=transform.size_zoom,
+    )
+
+
+def layout_transform_at_camera(camera: CameraInfo) -> LayoutTransform:
+    return zoomed_layout_transform(
+        base_layout_transform(camera),
+        camera.zoom,
+        camera.zoom_target,
+        camera.zoom_anchor,
+        camera.rotate,
+    )
+
+
+def compute_hitbox(
+    transform: LayoutTransform, lane: float, size: float, leniency: float, y_offset: float = 0.0
+) -> Hitbox:
+    tilt = transform.stage_tilt
+    travel = approach_at_tilt(1 - y_offset, tilt)
+    width_factor = width_factor_at_tilt(travel, tilt)
+    l_x = (lane - size) * width_factor * transform.w_scale + transform.x_translate
+    r_x = (lane + size) * width_factor * transform.w_scale + transform.x_translate
+    note_y = travel * transform.h_scale + transform.t
     # We intentionally don't adjust for tilt to give the same screen-space leniency at low tilt
-    lane_w = DynamicLayout.w_scale
+    lane_w = transform.w_scale
     vertical_half_lanes = 2.0 if LevelConfig.dynamic_stages else 4.0
     if (
         Options.stage_cover_scroll_speed_compensation != StageCoverNoteSpeedCompensation.OFF
@@ -936,7 +998,7 @@ def compute_hitbox(lane: float, size: float, leniency: float, y_offset: float = 
         cover_travel = lerp(APPROACH_SCALE, 1.0, Options.stage_cover)
         vertical_half_lanes *= clamp((1 - cover_travel) / (1 - APPROACH_SCALE), 0, 1)
     vertical_extent = vertical_half_lanes * lane_w
-    rot = -DynamicLayout.rotate
+    rot = -transform.rotate
     bl_x = l_x - leniency * lane_w
     br_x = r_x + leniency * lane_w
     b_y = note_y - vertical_extent
@@ -952,6 +1014,23 @@ def compute_hitbox(lane: float, size: float, leniency: float, y_offset: float = 
             tl=Vec2(bl_x, t_y).rotate(rot),
             tr=Vec2(br_x, t_y).rotate(rot),
         ),
+    )
+
+
+def compute_hitbox_at_time(
+    lane: float,
+    size: float,
+    leniency: float,
+    target_time: float,
+    y_offset: float = 0.0,
+    left_limit: bool = False,
+) -> Hitbox:
+    return compute_hitbox(
+        layout_transform_at_camera(get_camera_info(target_time, left_limit=left_limit)),
+        lane,
+        size,
+        leniency,
+        y_offset,
     )
 
 
