@@ -7,7 +7,7 @@ from sonolus.script.bucket import Bucket, Judgment
 from sonolus.script.easing import ease_in_cubic
 from sonolus.script.effect import Effect
 from sonolus.script.interval import lerp, remap_clamped
-from sonolus.script.quad import Quad, Rect
+from sonolus.script.quad import Quad
 from sonolus.script.runtime import is_tutorial, is_watch, level_life, level_score, time
 from sonolus.script.sprite import Sprite
 from sonolus.script.vec import Vec2
@@ -1163,9 +1163,8 @@ def draw_hitbox_line(sprite: Sprite, p1: Vec2, p2: Vec2, thickness: float, z: fl
 
 
 def draw_hitbox_marker(
-    l_x: float,
-    r_x: float,
-    y: float,
+    l: Vec2,
+    r: Vec2,
     main_sprite: Sprite,
     dot_sprite: Sprite,
     z: float,
@@ -1176,38 +1175,57 @@ def draw_hitbox_marker(
     end_h = HITBOX_DEBUG_END_HALF_HEIGHT
     end_w = HITBOX_DEBUG_END_WIDTH
     dot = HITBOX_DEBUG_DOT_HALF
-    main_sprite.draw(
-        Rect(l=l_x + end_w, r=r_x - end_w, t=y + t, b=y - t).as_quad(),
-        z=z,
-        a=a,
-    )
+    axis = (r - l).normalize()
+    ortho = axis.orthogonal()
+    li = l + axis * end_w
+    ri = r - axis * end_w
     main_sprite.draw(
         Quad(
-            bl=Vec2(l_x, y - end_h),
-            tl=Vec2(l_x, y + end_h),
-            tr=Vec2(l_x + end_w, y + t),
-            br=Vec2(l_x + end_w, y - t),
+            bl=li - ortho * t,
+            tl=li + ortho * t,
+            tr=ri + ortho * t,
+            br=ri - ortho * t,
         ),
         z=z,
         a=a,
     )
     main_sprite.draw(
         Quad(
-            bl=Vec2(r_x - end_w, y - t),
-            tl=Vec2(r_x - end_w, y + t),
-            tr=Vec2(r_x, y + end_h),
-            br=Vec2(r_x, y - end_h),
+            bl=l - ortho * end_h,
+            tl=l + ortho * end_h,
+            tr=li + ortho * t,
+            br=li - ortho * t,
+        ),
+        z=z,
+        a=a,
+    )
+    main_sprite.draw(
+        Quad(
+            bl=ri - ortho * t,
+            tl=ri + ortho * t,
+            tr=r + ortho * end_h,
+            br=r - ortho * end_h,
         ),
         z=z,
         a=a,
     )
     dot_sprite.draw(
-        Rect(l=l_x, r=l_x + 2 * dot, t=y + dot, b=y - dot).as_quad(),
+        Quad(
+            bl=l - ortho * dot,
+            tl=l + ortho * dot,
+            tr=l + axis * (2 * dot) + ortho * dot,
+            br=l + axis * (2 * dot) - ortho * dot,
+        ),
         z=z_dot,
         a=a,
     )
     dot_sprite.draw(
-        Rect(l=r_x - 2 * dot, r=r_x, t=y + dot, b=y - dot).as_quad(),
+        Quad(
+            bl=r - axis * (2 * dot) - ortho * dot,
+            tl=r - axis * (2 * dot) + ortho * dot,
+            tr=r + ortho * dot,
+            br=r - ortho * dot,
+        ),
         z=z_dot,
         a=a,
     )
@@ -1226,7 +1244,6 @@ def draw_hitbox_bounds_overlay(bounds: Quad, alpha: float = 1.0):
 
 
 def draw_hitbox_overlay(hitbox: Hitbox, draw_target: bool, alpha: float = 1.0):
-    note_y = (hitbox.target.l.y + hitbox.target.r.y) / 2
     t = HITBOX_DEBUG_BORDER_THICKNESS
     a = alpha
     z_triangle = get_z_alt(LAYER_GUIDE_CONNECTOR_OVER, 1)
@@ -1237,12 +1254,15 @@ def draw_hitbox_overlay(hitbox: Hitbox, draw_target: bool, alpha: float = 1.0):
     draw_hitbox_bounds_overlay(hitbox.bounds, alpha)
 
     if draw_target:
+        l = hitbox.target.l
+        r = hitbox.target.r
+        axis = (r - l).normalize()
+        ortho = axis.orthogonal()
         apex_half = HITBOX_DEBUG_APEX_HALF
-        target_center_x = (hitbox.target.l.x + hitbox.target.r.x) / 2
-        target_apex = Vec2(target_center_x, note_y + HITBOX_DEBUG_TRIANGLE_HEIGHT)
+        target_apex = (l + r) / 2 + ortho * HITBOX_DEBUG_TRIANGLE_HEIGHT
         draw_hitbox_line(
             ActiveSkin.guide_red,
-            hitbox.target.l,
+            l,
             target_apex,
             t,
             z_triangle,
@@ -1250,26 +1270,25 @@ def draw_hitbox_overlay(hitbox: Hitbox, draw_target: bool, alpha: float = 1.0):
         )
         draw_hitbox_line(
             ActiveSkin.guide_red,
-            hitbox.target.r,
+            r,
             target_apex,
             t,
             z_triangle,
             a,
         )
         ActiveSkin.guide_red.draw(
-            Rect(
-                l=target_apex.x - apex_half,
-                r=target_apex.x + apex_half,
-                t=target_apex.y + apex_half,
-                b=target_apex.y - apex_half,
-            ).as_quad(),
+            Quad(
+                bl=target_apex - axis * apex_half - ortho * apex_half,
+                tl=target_apex - axis * apex_half + ortho * apex_half,
+                tr=target_apex + axis * apex_half + ortho * apex_half,
+                br=target_apex + axis * apex_half - ortho * apex_half,
+            ),
             z=z_apex,
             a=a,
         )
         draw_hitbox_marker(
-            l_x=hitbox.target.l.x,
-            r_x=hitbox.target.r.x,
-            y=note_y,
+            l=l,
+            r=r,
             main_sprite=ActiveSkin.guide_red,
             dot_sprite=ActiveSkin.guide_black,
             z=z_target,
