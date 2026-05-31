@@ -990,8 +990,7 @@ def compute_hitbox(
     note_y = travel * transform.h_scale + transform.t
     # We intentionally don't adjust for tilt to give the same screen-space leniency at low tilt
     lane_w = transform.w_scale
-    vertical_offset = 0.5 * lane_w
-    vertical_half_lanes = 2.0 if LevelConfig.dynamic_stages else 5.0
+    vertical_half_lanes = 2.5 if LevelConfig.dynamic_stages else 5.0
     if (
         Options.stage_cover_scroll_speed_compensation != StageCoverNoteSpeedCompensation.OFF
         and LevelConfig.dynamic_stages
@@ -1002,8 +1001,8 @@ def compute_hitbox(
     rot = -transform.rotate
     bl_x = l_x - leniency * lane_w
     br_x = r_x + leniency * lane_w
-    b_y = note_y - vertical_extent + vertical_offset
-    t_y = note_y + vertical_extent + vertical_offset
+    b_y = note_y - vertical_extent
+    t_y = note_y + vertical_extent
     return Hitbox(
         target=HitboxTarget(
             l=Vec2(l_x, note_y).rotate(rot),
