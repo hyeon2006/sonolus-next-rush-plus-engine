@@ -899,7 +899,7 @@ def layout_sim_line(
         left_travel, right_travel = right_travel, left_travel
     ml = perspective_vec(left_lane, 1, left_travel)
     mr = perspective_vec(right_lane, 1, right_travel)
-    ort = (mr - ml).orthogonal().normalize()
+    ort = (mr - ml).orthogonal().normalize_or_zero()
     left_h = DynamicLayout.scaled_note_h * tilt_width_factor(left_travel)
     right_h = DynamicLayout.scaled_note_h * tilt_width_factor(right_travel)
     return Quad(

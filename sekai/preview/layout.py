@@ -141,7 +141,7 @@ def layout_preview_lane_rotated_strip(
 ) -> Quad:
     center_a = Vec2(lane_to_preview_x(pos_a, col), time_to_preview_y(t_a, col))
     center_b = Vec2(lane_to_preview_x(pos_b, col), time_to_preview_y(t_b, col))
-    offset = (center_b - center_a).orthogonal().normalize() * (width / 2 * PREVIEW_LANE_W)
+    offset = (center_b - center_a).orthogonal().normalize_or_zero() * (width / 2 * PREVIEW_LANE_W)
     return Quad(
         bl=center_a + offset,
         br=center_a - offset,

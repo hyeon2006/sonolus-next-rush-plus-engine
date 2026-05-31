@@ -1149,7 +1149,7 @@ HITBOX_DEBUG_APEX_HALF = 0.012
 
 
 def draw_hitbox_line(sprite: Sprite, p1: Vec2, p2: Vec2, thickness: float, z: float, a: float):
-    ortho = (p2 - p1).orthogonal().normalize() * (thickness / 2)
+    ortho = (p2 - p1).orthogonal().normalize_or_zero() * (thickness / 2)
     sprite.draw(
         Quad(
             bl=p1 - ortho,
@@ -1175,7 +1175,7 @@ def draw_hitbox_marker(
     end_h = HITBOX_DEBUG_END_HALF_HEIGHT
     end_w = HITBOX_DEBUG_END_WIDTH
     dot = HITBOX_DEBUG_DOT_HALF
-    axis = (r - l).normalize()
+    axis = (r - l).normalize_or_zero()
     ortho = axis.orthogonal()
     li = l + axis * end_w
     ri = r - axis * end_w
@@ -1256,7 +1256,7 @@ def draw_hitbox_overlay(hitbox: Hitbox, draw_target: bool, alpha: float = 1.0):
     if draw_target:
         l = hitbox.target.l
         r = hitbox.target.r
-        axis = (r - l).normalize()
+        axis = (r - l).normalize_or_zero()
         ortho = axis.orthogonal()
         apex_half = HITBOX_DEBUG_APEX_HALF
         target_apex = (l + r) / 2 + ortho * HITBOX_DEBUG_TRIANGLE_HEIGHT
