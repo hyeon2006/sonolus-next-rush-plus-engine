@@ -150,6 +150,8 @@ class Connector(PlayArchetype):
                     tail.y_offset_at(oat),
                     oat,
                 )
+                # We could offset adjust this, but it doesn't really matter since this is just for the visual
+                # active state of the connector.
                 self.active_connector_info.input_bounds @= compute_hitbox(
                     current_layout_transform(),
                     input_lane,
